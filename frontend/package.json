@@ -1,0 +1,13 @@
+{
+  "name": "braille-typing-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for Braille Typing Practice Application",
+  "scripts": {
+    "test": "playwright test",
+    "serve": "npx http-server -p 8080"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "http-server": "^14.1.1"
+  }
+}
