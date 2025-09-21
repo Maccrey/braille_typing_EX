@@ -3,7 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const { getProfile, getStats } = require('../controllers/protectedController');
 const { upload, uploadFile } = require('../controllers/uploadController');
-const { getMyCategoriesWithCount, searchPublicCategories, addToFavorites, removeFromFavorites, getFavorites } = require('../controllers/dataController');
+const { getMyCategoriesWithCount, searchPublicCategories, addToFavorites, removeFromFavorites, getFavorites, getRandomBrailleData } = require('../controllers/dataController');
 
 // Apply auth middleware to all routes in this router
 router.use(authMiddleware);
@@ -23,5 +23,8 @@ router.get('/favorites', getFavorites);
 
 // Upload route
 router.post('/upload', upload, uploadFile);
+
+// Braille practice routes - Task 7.1
+router.get('/braille/:categoryId/random', getRandomBrailleData);
 
 module.exports = router;

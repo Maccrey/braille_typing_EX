@@ -254,10 +254,54 @@ const getFavorites = async (req, res) => {
   }
 };
 
+// Task 7.1: Random Braille Data API
+const getRandomBrailleData = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { categoryId } = req.params;
+    const db = getDb();
+
+    // Get random braille data from accessible category
+    const brailleData = await new Promise((resolve, reject) => {
+      const query = `
+        SELECT bd.character, bd.braille_pattern
+        FROM braille_data bd
+        JOIN categories c ON bd.category_id = c.id
+        WHERE bd.category_id = ?
+          AND (c.created_by = ? OR c.is_public = 1)
+        ORDER BY RANDOM()
+        LIMIT 1
+      `;
+
+      db.get(query, [categoryId, userId], (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row);
+        }
+      });
+    });
+
+    if (!brailleData) {
+      return res.status(404).json({ error: 'No braille data found in this category' });
+    }
+
+    res.status(200).json({
+      character: brailleData.character,
+      braille_pattern: brailleData.braille_pattern
+    });
+
+  } catch (error) {
+    console.error('Get random braille data error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 module.exports = {
   getMyCategoriesWithCount,
   searchPublicCategories,
   addToFavorites,
   removeFromFavorites,
-  getFavorites
+  getFavorites,
+  getRandomBrailleData
 };

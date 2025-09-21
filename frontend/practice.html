@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>점자 타자 연습기 - 연습하기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #practice-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            min-height: 600px;
+        }
+
+        .practice-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .practice-header h1 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        #character-display {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        #current-char {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        #braille-blocks {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            min-height: 120px;
+            align-items: center;
+        }
+
+        .braille-block {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            padding: 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            background: white;
+            width: 80px;
+            height: 120px;
+        }
+
+        .dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #e1e5e9;
+            border: 2px solid #ccc;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .dot.active {
+            background: #667eea;
+            border-color: #5a6fd8;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        .dot.correct {
+            background: #28a745;
+            border-color: #1e7e34;
+        }
+
+        .dot.wrong {
+            background: #dc3545;
+            border-color: #bd2130;
+        }
+
+        .control-panel {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .control-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #next-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        #hint-btn {
+            background: #17a2b8;
+            color: white;
+        }
+
+        #back-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #keyboard-help {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .keyboard-mapping {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .key-map {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .key {
+            background: #333;
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-bottom: 0.2rem;
+        }
+
+        #progress-indicator {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        #error-message {
+            display: none;
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .hint-overlay {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            display: none;
+        }
+
+        .braille-block {
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            #practice-container {
+                padding: 1.5rem;
+            }
+
+            #current-char {
+                font-size: 2rem;
+            }
+
+            .braille-block {
+                width: 60px;
+                height: 90px;
+            }
+
+            .dot {
+                width: 15px;
+                height: 15px;
+            }
+
+            .control-panel {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .keyboard-mapping {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="practice-container">
+        <div class="practice-header">
+            <h1>점자 연습하기</h1>
+            <p>화면에 표시된 문자를 점자로 입력하세요</p>
+        </div>
+
+        <div id="error-message"></div>
+
+        <div id="progress-indicator">
+            준비 중...
+        </div>
+
+        <div id="character-display">
+            <div id="current-char">-</div>
+            <div>위 문자를 점자로 입력하세요</div>
+        </div>
+
+        <div id="braille-blocks">
+            <!-- 동적으로 생성됨 -->
+        </div>
+
+        <div class="control-panel">
+            <button id="next-btn" class="control-btn">다음 문제</button>
+            <button id="hint-btn" class="control-btn">힌트 토글</button>
+            <button id="back-btn" class="control-btn">메인으로</button>
+        </div>
+
+        <div id="keyboard-help">
+            <strong>키보드 매핑:</strong>
+            <div class="keyboard-mapping">
+                <div class="key-map">
+                    <span class="key">F</span>
+                    <span>점 1</span>
+                </div>
+                <div class="key-map">
+                    <span class="key">D</span>
+                    <span>점 2</span>
+                </div>
+                <div class="key-map">
+                    <span class="key">S</span>
+                    <span>점 3</span>
+                </div>
+                <div class="key-map">
+                    <span class="key">J</span>
+                    <span>점 4</span>
+                </div>
+                <div class="key-map">
+                    <span class="key">K</span>
+                    <span>점 5</span>
+                </div>
+                <div class="key-map">
+                    <span class="key">L</span>
+                    <span>점 6</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/practice.js"></script>
+</body>
+</html>

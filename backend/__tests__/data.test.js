@@ -688,4 +688,110 @@ describe('Data API Tests', () => {
       });
     });
   }
+
+  // Task 7.1: Random Braille Data API Tests
+  describe('GET /api/protected/braille/:categoryId/random', () => {
+    test('should require authentication', async () => {
+      const response = await request(app)
+        .get('/api/protected/braille/1/random');
+
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe('Access token required');
+    });
+
+    test('should return random braille character from category', async () => {
+      // Create test category
+      const categoryId = await createTestCategory('Test Category', 'Description', false, testUserId);
+
+      // Add test braille data
+      await createTestBrailleData(categoryId, 'α', [[1, 6]]);
+      await createTestBrailleData(categoryId, 'β', [[1, 2]]);
+      await createTestBrailleData(categoryId, 'γ', [[1, 2, 4, 5]]);
+
+      const response = await request(app)
+        .get(`/api/protected/braille/${categoryId}/random`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.character).toBeDefined();
+      expect(response.body.braille_pattern).toBeDefined();
+      expect(['α', 'β', 'γ']).toContain(response.body.character);
+
+      // Verify braille pattern is valid JSON array
+      const pattern = JSON.parse(response.body.braille_pattern);
+      expect(Array.isArray(pattern)).toBe(true);
+    });
+
+    test('should return 404 for empty category', async () => {
+      // Create category without braille data
+      const categoryId = await createTestCategory('Empty Category', 'No data', false, testUserId);
+
+      const response = await request(app)
+        .get(`/api/protected/braille/${categoryId}/random`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('No braille data found in this category');
+    });
+
+    test('should return 404 for non-existent category', async () => {
+      const response = await request(app)
+        .get('/api/protected/braille/99999/random')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('No braille data found in this category');
+    });
+
+    test('should only return data from accessible categories', async () => {
+      // Create private category by another user
+      const privateCategory = await createTestCategory('Private Category', 'Private', false, testUserId2);
+      await createTestBrailleData(privateCategory, 'δ', [[1, 4, 5]]);
+
+      const response = await request(app)
+        .get(`/api/protected/braille/${privateCategory}/random`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('No braille data found in this category');
+    });
+
+    test('should allow access to public categories', async () => {
+      // Create public category by another user
+      const publicCategory = await createTestCategory('Public Category', 'Public', true, testUserId2);
+      await createTestBrailleData(publicCategory, 'ε', [[1, 5]]);
+
+      const response = await request(app)
+        .get(`/api/protected/braille/${publicCategory}/random`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.character).toBe('ε');
+    });
+
+    test('should return different characters on multiple requests', async () => {
+      // Create category with multiple characters
+      const categoryId = await createTestCategory('Multi Character', 'Multiple', false, testUserId);
+      await createTestBrailleData(categoryId, 'α', [[1, 6]]);
+      await createTestBrailleData(categoryId, 'β', [[1, 2]]);
+      await createTestBrailleData(categoryId, 'γ', [[1, 2, 4, 5]]);
+      await createTestBrailleData(categoryId, 'δ', [[1, 4, 5]]);
+      await createTestBrailleData(categoryId, 'ε', [[1, 5]]);
+
+      const responses = [];
+      // Make 10 requests to test randomness
+      for (let i = 0; i < 10; i++) {
+        const response = await request(app)
+          .get(`/api/protected/braille/${categoryId}/random`)
+          .set('Authorization', `Bearer ${authToken}`);
+
+        expect(response.status).toBe(200);
+        responses.push(response.body.character);
+      }
+
+      // Should get at least 2 different characters (very high probability)
+      const uniqueCharacters = new Set(responses);
+      expect(uniqueCharacters.size).toBeGreaterThan(1);
+    });
+  });
 });
