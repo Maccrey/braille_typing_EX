@@ -37,15 +37,20 @@ app.use('/api/practice', practiceRoutes);
 // Profile routes
 app.use('/api/profile', profileRoutes);
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
+// Import error handler
+const errorHandler = require('./middleware/errorHandler');
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  res.status(404).json({
+    success: false,
+    error: '요청하신 경로를 찾을 수 없습니다.',
+    path: req.originalUrl,
+    timestamp: new Date().toISOString()
+  });
 });
+
+// Global error handling middleware (must be last)
+app.use(errorHandler);
 
 module.exports = app;
