@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>점자 타자 연습기 - 메인</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .welcome {
+            text-align: center;
+            padding: 20px;
+            background: #e8f5e8;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .logout-button {
+            float: right;
+            padding: 8px 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="logout-button" onclick="logout()">로그아웃</button>
+        <h1>점자 타자 연습기</h1>
+        <div class="welcome" data-testid="welcome-message">
+            메인 페이지에 오신 것을 환영합니다! 로그인이 성공했습니다.
+        </div>
+        <div data-testid="user-info">
+            <p id="user-info">로딩 중...</p>
+        </div>
+    </div>
+
+    <script>
+        // Display user information
+        function displayUserInfo() {
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            const userInfoElement = document.getElementById('user-info');
+
+            if (userData.username) {
+                userInfoElement.textContent = `안녕하세요, ${userData.username}님!`;
+            } else {
+                userInfoElement.textContent = '사용자 정보를 불러올 수 없습니다.';
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            window.location.href = 'login.html';
+        }
+
+        // Check authentication on page load
+        function checkAuth() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            displayUserInfo();
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', checkAuth);
+    </script>
+</body>
+</html>

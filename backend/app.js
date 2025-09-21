@@ -16,6 +16,7 @@ app.get('/', (req, res) => {
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
+const protectedRoutes = require('./routes/protectedRoutes');
 
 // API routes
 app.get('/api/health', (req, res) => {
@@ -24,6 +25,9 @@ app.get('/api/health', (req, res) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+
+// Protected routes
+app.use('/api/protected', protectedRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

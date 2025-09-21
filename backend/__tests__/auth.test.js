@@ -351,4 +351,126 @@ describe('Authentication API Tests', () => {
       expect(response.body.error).toContain('Username and password are required');
     });
   });
+
+  describe('JWT Authentication Middleware', () => {
+    let validToken;
+    let testUserId;
+
+    beforeEach(async () => {
+      // Create a test user and get valid token
+      const testUser = {
+        username: 'middlewaretest' + Math.random(),
+        password: 'testpassword123'
+      };
+
+      await request(app)
+        .post('/api/auth/signup')
+        .send(testUser)
+        .expect(201);
+
+      const loginResponse = await request(app)
+        .post('/api/auth/login')
+        .send(testUser)
+        .expect(200);
+
+      validToken = loginResponse.body.token;
+      testUserId = loginResponse.body.user.id;
+    });
+
+    test('should allow access to protected route with valid token', async () => {
+      const response = await request(app)
+        .get('/api/protected/profile')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect('Content-Type', /json/)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('message');
+      expect(response.body).toHaveProperty('user');
+      expect(response.body.user).toHaveProperty('id');
+      expect(response.body.user.id).toBe(testUserId);
+    });
+
+    test('should reject access without token', async () => {
+      const response = await request(app)
+        .get('/api/protected/profile')
+        .expect('Content-Type', /json/)
+        .expect(401);
+
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toBe('Access token required');
+    });
+
+    test('should reject access with invalid token', async () => {
+      const response = await request(app)
+        .get('/api/protected/profile')
+        .set('Authorization', 'Bearer invalid-token-here')
+        .expect('Content-Type', /json/)
+        .expect(401);
+
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toBe('Invalid token');
+    });
+
+    test('should reject access with malformed Authorization header', async () => {
+      const response = await request(app)
+        .get('/api/protected/profile')
+        .set('Authorization', 'InvalidFormat token')
+        .expect('Content-Type', /json/)
+        .expect(401);
+
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toBe('Invalid token format');
+    });
+
+    test('should reject access with expired token', async () => {
+      // Create a token with very short expiration for testing
+      const jwt = require('jsonwebtoken');
+      const expiredToken = jwt.sign(
+        { userId: testUserId, username: 'test' },
+        process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+        { expiresIn: '1ms' } // Expires immediately
+      );
+
+      // Wait a bit to ensure token is expired
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      const response = await request(app)
+        .get('/api/protected/profile')
+        .set('Authorization', `Bearer ${expiredToken}`)
+        .expect('Content-Type', /json/)
+        .expect(401);
+
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toBe('Token expired');
+    });
+
+    test('should add user information to request object', async () => {
+      const response = await request(app)
+        .get('/api/protected/profile')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(200);
+
+      // The response should contain user info that was added by middleware
+      expect(response.body.user).toHaveProperty('id');
+      expect(response.body.user).toHaveProperty('username');
+      expect(typeof response.body.user.id).toBe('number');
+      expect(typeof response.body.user.username).toBe('string');
+    });
+
+    test('should allow access to multiple protected routes with same token', async () => {
+      // Test first protected route
+      const response1 = await request(app)
+        .get('/api/protected/profile')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(200);
+
+      // Test second protected route
+      const response2 = await request(app)
+        .get('/api/protected/stats')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(200);
+
+      expect(response1.body.user.id).toBe(response2.body.user.id);
+    });
+  });
 });
