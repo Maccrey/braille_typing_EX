@@ -6,6 +6,7 @@ class BraillePractice {
         this.currentBraillePattern = null;
         this.currentBlockIndex = 0;
         this.pressedDots = new Set();
+        this.dotInputOrder = []; // Track order of dot inputs for backspace
         this.categoryId = null;
         this.showHints = false;
 
@@ -56,6 +57,9 @@ class BraillePractice {
         try {
             this.updateProgress('문제를 불러오는 중...');
 
+            // Reset validation state first
+            this.resetValidationState();
+
             const token = localStorage.getItem('authToken');
             const response = await fetch(`/api/protected/braille/${this.categoryId}/random`, {
                 headers: {
@@ -99,6 +103,9 @@ class BraillePractice {
             const block = this.createSingleBrailleBlock(blockPattern, blockIndex);
             container.appendChild(block);
         });
+
+        // Update hint display after creating blocks
+        this.updateHintDisplay();
     }
 
     createSingleBrailleBlock(pattern, blockIndex) {
@@ -127,13 +134,45 @@ class BraillePractice {
 
     toggleHint() {
         this.showHints = !this.showHints;
+        this.updateHintDisplay();
+
+        const hintBtn = document.getElementById('hint-btn');
+        hintBtn.textContent = this.showHints ? '힌트 끄기' : '힌트 켜기';
+    }
+
+    updateHintDisplay() {
         const hints = document.querySelectorAll('.hint-overlay');
         hints.forEach(hint => {
             hint.style.display = this.showHints ? 'block' : 'none';
         });
 
-        const hintBtn = document.getElementById('hint-btn');
-        hintBtn.textContent = this.showHints ? '힌트 끄기' : '힌트 켜기';
+        // Update hint highlighting for current block
+        this.updateHintHighlighting();
+    }
+
+    updateHintHighlighting() {
+        // Clear all hint highlighting first
+        const allDots = document.querySelectorAll('.dot');
+        allDots.forEach(dot => {
+            dot.classList.remove('hint-active');
+        });
+
+        if (!this.showHints || !this.currentBraillePattern || this.currentBlockIndex >= this.currentBraillePattern.length) {
+            return;
+        }
+
+        // Highlight correct dots for current block
+        const currentPattern = this.currentBraillePattern[this.currentBlockIndex];
+        const currentBlock = document.querySelector(`.braille-block[data-block-index="${this.currentBlockIndex}"]`);
+
+        if (currentBlock && currentPattern) {
+            currentPattern.forEach(dotNumber => {
+                const dot = currentBlock.querySelector(`.dot[data-dot-number="${dotNumber}"]`);
+                if (dot) {
+                    dot.classList.add('hint-active');
+                }
+            });
+        }
     }
 
     handleKeyDown(event) {
@@ -161,6 +200,9 @@ class BraillePractice {
         } else if (key === 'escape') {
             event.preventDefault();
             this.clearAllDots();
+        } else if (key === 'backspace') {
+            event.preventDefault();
+            this.removeLastDot();
         }
     }
 
@@ -184,9 +226,16 @@ class BraillePractice {
         if (this.pressedDots.has(dotNumber)) {
             this.pressedDots.delete(dotNumber);
             dot.classList.remove('active');
+            // Remove from input order
+            const index = this.dotInputOrder.indexOf(dotNumber);
+            if (index > -1) {
+                this.dotInputOrder.splice(index, 1);
+            }
         } else {
             this.pressedDots.add(dotNumber);
             dot.classList.add('active');
+            // Add to input order
+            this.dotInputOrder.push(dotNumber);
         }
 
         // Auto-validate when user completes current block pattern
@@ -195,6 +244,7 @@ class BraillePractice {
 
     clearAllDots() {
         this.pressedDots.clear();
+        this.dotInputOrder = [];
 
         // Clear all active dots in current block
         const currentBlock = document.querySelector(`.braille-block[data-block-index="${this.currentBlockIndex}"]`);
@@ -206,6 +256,43 @@ class BraillePractice {
         }
     }
 
+    removeLastDot() {
+        // Only work with active dots, not correct/wrong ones
+        if (this.dotInputOrder.length === 0) {
+            return;
+        }
+
+        const currentBlock = document.querySelector(`.braille-block[data-block-index="${this.currentBlockIndex}"]`);
+        if (!currentBlock) {
+            return;
+        }
+
+        // Check if we have any wrong dots - if so, don't allow backspace
+        const wrongDots = currentBlock.querySelectorAll('.dot.wrong');
+        if (wrongDots.length > 0) {
+            return;
+        }
+
+        // Check if we have any correct dots - if so, don't allow backspace
+        const correctDots = currentBlock.querySelectorAll('.dot.correct');
+        if (correctDots.length > 0) {
+            return;
+        }
+
+        // Get the last input dot
+        const lastDotNumber = this.dotInputOrder[this.dotInputOrder.length - 1];
+        const lastDot = currentBlock.querySelector(`.dot[data-dot-number="${lastDotNumber}"]`);
+
+        if (lastDot && lastDot.classList.contains('active')) {
+            // Remove from sets and arrays
+            this.pressedDots.delete(lastDotNumber);
+            this.dotInputOrder.pop();
+
+            // Remove visual feedback
+            lastDot.classList.remove('active');
+        }
+    }
+
     checkCurrentBlock() {
         if (!this.currentBraillePattern || this.currentBlockIndex >= this.currentBraillePattern.length) {
             return;
@@ -213,13 +300,97 @@ class BraillePractice {
 
         const correctPattern = this.currentBraillePattern[this.currentBlockIndex];
         const pressedArray = Array.from(this.pressedDots).sort((a, b) => a - b);
-        const correctArray = correctPattern.sort((a, b) => a - b);
+        const correctArray = [...correctPattern].sort((a, b) => a - b);
 
-        // Check if user has pressed the same number of dots as the correct pattern
-        if (pressedArray.length === correctArray.length) {
-            // Auto-validate (will be implemented in Task 7.4)
-            console.log('Block complete - validation will be implemented in Task 7.4');
+        // Check if user has pressed at least as many dots as the correct pattern
+        if (pressedArray.length >= correctArray.length) {
+            this.validateCurrentBlock(pressedArray, correctArray);
         }
+    }
+
+    validateCurrentBlock(pressedArray, correctArray) {
+        const currentBlock = document.querySelector(`.braille-block[data-block-index="${this.currentBlockIndex}"]`);
+        if (!currentBlock) {
+            return;
+        }
+
+        // Check if patterns match
+        const isCorrect = this.arraysEqual(pressedArray, correctArray);
+
+        if (isCorrect) {
+            this.handleCorrectInput(currentBlock);
+        } else {
+            this.handleWrongInput(currentBlock);
+        }
+    }
+
+    arraysEqual(arr1, arr2) {
+        if (arr1.length !== arr2.length) return false;
+        return arr1.every((val, index) => val === arr2[index]);
+    }
+
+    handleCorrectInput(currentBlock) {
+        // Mark all pressed dots as correct
+        const activeDots = currentBlock.querySelectorAll('.dot.active');
+        activeDots.forEach(dot => {
+            dot.classList.remove('active');
+            dot.classList.add('correct');
+        });
+
+        this.updateProgress(`정답! 잘하셨습니다.`);
+
+        // Move to next block or complete character
+        this.currentBlockIndex++;
+        this.pressedDots.clear();
+        this.dotInputOrder = [];
+
+        // Update hint highlighting for next block
+        this.updateHintHighlighting();
+
+        if (this.currentBlockIndex >= this.currentBraillePattern.length) {
+            // Character complete - auto progress after delay
+            setTimeout(() => {
+                this.loadNextCharacter();
+            }, 1000);
+        }
+    }
+
+    handleWrongInput(currentBlock) {
+        // Mark all pressed dots as wrong
+        const activeDots = currentBlock.querySelectorAll('.dot.active');
+        activeDots.forEach(dot => {
+            dot.classList.remove('active');
+            dot.classList.add('wrong');
+        });
+
+        this.updateProgress(`틀렸습니다. 다시 시도해보세요.`);
+
+        // Clear wrong feedback after delay
+        setTimeout(() => {
+            this.clearWrongFeedback(currentBlock);
+        }, 500);
+    }
+
+    clearWrongFeedback(currentBlock) {
+        const wrongDots = currentBlock.querySelectorAll('.dot.wrong');
+        wrongDots.forEach(dot => {
+            dot.classList.remove('wrong');
+        });
+
+        this.pressedDots.clear();
+        this.dotInputOrder = [];
+        this.updateProgress(`문자: ${this.currentChar}`);
+    }
+
+    // Reset all validation states
+    resetValidationState() {
+        const allDots = document.querySelectorAll('.dot');
+        allDots.forEach(dot => {
+            dot.classList.remove('active', 'correct', 'wrong');
+        });
+        this.pressedDots.clear();
+        this.dotInputOrder = [];
+        this.currentBlockIndex = 0;
     }
 
     updateProgress(message) {
