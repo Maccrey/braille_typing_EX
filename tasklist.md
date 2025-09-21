@@ -2,6 +2,12 @@
 
 본 문서는 TDD(Test-Driven Development) 방식으로 점자 타자 연습기를 개발하기 위한 최소 단위 작업 목록입니다.
 
+## 진행 상태 표시
+- ✅ **완료**: 구현 및 테스트 완료
+- 🔄 **진행중**: 현재 작업 중
+- ⏳ **대기**: 구현 예정
+- ❌ **블록**: 의존성 문제로 대기
+
 ## 개발 원칙
 
 - **RED-GREEN-REFACTOR**: 실패하는 테스트 작성 → 최소 구현 → 리팩토링
@@ -9,9 +15,31 @@
 - **테스트 우선**: 모든 기능은 테스트 코드부터 작성
 - **버전 관리**: 각 작업 완료 후 즉시 커밋
 
+## 진행 상태 관리 방법
+
+### 상태 업데이트 규칙
+1. **작업 시작 시**: `⏳ 대기` → `🔄 진행중`으로 변경
+2. **작업 완료 시**: `🔄 진행중` → `✅ 완료`로 변경
+3. **의존성 문제 발생**: `⏳ 대기` → `❌ 블록`으로 변경
+4. **완료 시 추가 정보**: 완료 날짜와 커밋 해시 추가 권장
+
+### 완료 마킹 예시
+```
+### Task 1.1: 백엔드 기본 구조 설정 ✅
+- **완료일**: 2024-09-21
+- **커밋**: feat: Setup basic Express server structure (abc1234)
+```
+
+### 현재 진행 상황 요약
+- **전체 태스크**: 28개
+- **완료**: 0개 (0%)
+- **진행중**: 0개
+- **대기**: 28개
+- **블록**: 0개
+
 ## Phase 1: 프로젝트 초기 설정
 
-### Task 1.1: 백엔드 기본 구조 설정
+### Task 1.1: 백엔드 기본 구조 설정 ⏳
 - **목표**: Express 서버 기본 구조 생성
 - **구현**:
   - `backend/package.json` 생성 (express, jest, supertest, sqlite3, bcrypt, jsonwebtoken 의존성)
@@ -21,7 +49,7 @@
 - **완료 조건**: `npm test` 실행 시 기본 테스트 통과
 - **커밋**: `feat: Setup basic Express server structure`
 
-### Task 1.2: 프론트엔드 기본 구조 설정
+### Task 1.2: 프론트엔드 기본 구조 설정 ⏳
 - **목표**: 프론트엔드 테스트 환경 구축
 - **구현**:
   - `frontend/package.json` 생성 (playwright, http-server 의존성)
@@ -31,7 +59,7 @@
 - **완료 조건**: `npm test` 실행 시 E2E 테스트 통과
 - **커밋**: `feat: Setup frontend test environment with Playwright`
 
-### Task 1.3: 데이터베이스 스키마 초기화
+### Task 1.3: 데이터베이스 스키마 초기화 ⏳
 - **목표**: SQLite 데이터베이스 테이블 생성
 - **구현**:
   - `backend/init-db.js` 스키마 생성 스크립트
@@ -42,7 +70,7 @@
 
 ## Phase 2: 사용자 인증 시스템
 
-### Task 2.1: 회원가입 API (RED)
+### Task 2.1: 회원가입 API (RED) ⏳
 - **목표**: 회원가입 테스트 케이스 작성
 - **구현**: `backend/__tests__/auth.test.js`
   - POST /api/auth/signup 성공 케이스
@@ -52,7 +80,7 @@
 - **완료 조건**: 테스트 실행 시 예상된 실패 발생
 - **커밋**: `test: Add failing tests for user signup API`
 
-### Task 2.2: 회원가입 API (GREEN)
+### Task 2.2: 회원가입 API (GREEN) ⏳
 - **목표**: 회원가입 API 최소 구현
 - **구현**:
   - `backend/controllers/authController.js` - signup 함수
@@ -62,7 +90,7 @@
 - **완료 조건**: `npm test` 실행 시 회원가입 테스트 통과
 - **커밋**: `feat: Implement user signup API with password hashing`
 
-### Task 2.3: 로그인 API (RED)
+### Task 2.3: 로그인 API (RED) ⏳
 - **목표**: 로그인 테스트 케이스 작성
 - **구현**: `backend/__tests__/auth.test.js`에 추가
   - POST /api/auth/login 성공 케이스
@@ -72,7 +100,7 @@
 - **완료 조건**: 로그인 관련 테스트가 예상대로 실패
 - **커밋**: `test: Add failing tests for user login API`
 
-### Task 2.4: 로그인 API (GREEN)
+### Task 2.4: 로그인 API (GREEN) ⏳
 - **목표**: 로그인 API 구현
 - **구현**:
   - `authController.js`에 login 함수 추가
@@ -82,7 +110,7 @@
 - **완료 조건**: 모든 인증 테스트 통과
 - **커밋**: `feat: Implement user login API with JWT tokens`
 
-### Task 2.5: 인증 미들웨어 (RED)
+### Task 2.5: 인증 미들웨어 (RED) ⏳
 - **목표**: JWT 토큰 검증 미들웨어 테스트
 - **구현**: `backend/__tests__/auth.test.js`에 추가
   - 유효한 토큰으로 보호된 경로 접근 성공
@@ -92,7 +120,7 @@
 - **완료 조건**: 미들웨어 테스트가 예상대로 실패
 - **커밋**: `test: Add failing tests for JWT authentication middleware`
 
-### Task 2.6: 인증 미들웨어 (GREEN)
+### Task 2.6: 인증 미들웨어 (GREEN) ⏳
 - **목표**: JWT 인증 미들웨어 구현
 - **구현**:
   - `backend/middleware/authMiddleware.js` 생성
@@ -104,7 +132,7 @@
 
 ## Phase 3: 프론트엔드 인증 UI
 
-### Task 3.1: 로그인 페이지 UI (RED)
+### Task 3.1: 로그인 페이지 UI (RED) ⏳
 - **목표**: 로그인 페이지 E2E 테스트 작성
 - **구현**: `frontend/tests/login.spec.js`
   - 로그인 폼 존재 확인
@@ -114,7 +142,7 @@
 - **완료 조건**: E2E 테스트가 예상대로 실패
 - **커밋**: `test: Add failing E2E tests for login page`
 
-### Task 3.2: 로그인 페이지 UI (GREEN)
+### Task 3.2: 로그인 페이지 UI (GREEN) ⏳
 - **목표**: 기본 로그인 페이지 구현
 - **구현**:
   - `frontend/login.html` 로그인 폼
@@ -124,7 +152,7 @@
 - **완료 조건**: 로그인 플로우 E2E 테스트 통과
 - **커밋**: `feat: Implement basic login page with API integration`
 
-### Task 3.3: 회원가입 페이지 (RED→GREEN)
+### Task 3.3: 회원가입 페이지 (RED→GREEN) ⏳
 - **목표**: 회원가입 페이지 구현
 - **구현**:
   - E2E 테스트 작성: `frontend/tests/signup.spec.js`
@@ -136,7 +164,7 @@
 
 ## Phase 4: 데이터 업로드 시스템
 
-### Task 4.1: 카테고리 생성 API (RED)
+### Task 4.1: 카테고리 생성 API (RED) ⏳
 - **목표**: 카테고리 생성 테스트 작성
 - **구현**: `backend/__tests__/upload.test.js`
   - POST /api/upload 성공 케이스
@@ -146,7 +174,7 @@
 - **완료 조건**: 업로드 API 테스트가 예상대로 실패
 - **커밋**: `test: Add failing tests for category upload API`
 
-### Task 4.2: Excel 파일 업로드 API (GREEN)
+### Task 4.2: Excel 파일 업로드 API (GREEN) ⏳
 - **목표**: Excel 업로드 기능 구현
 - **구현**:
   - `backend/controllers/uploadController.js`
@@ -157,7 +185,7 @@
 - **완료 조건**: Excel 파일이 정상적으로 파싱되고 저장됨
 - **커밋**: `feat: Implement Excel file upload and parsing`
 
-### Task 4.3: 업로드 UI (RED→GREEN)
+### Task 4.3: 업로드 UI (RED→GREEN) ⏳
 - **목표**: 파일 업로드 인터페이스 구현
 - **구현**:
   - E2E 테스트: `frontend/tests/upload.spec.js`
@@ -169,7 +197,7 @@
 
 ## Phase 5: 카테고리 조회 및 검색
 
-### Task 5.1: 내 카테고리 조회 API (RED→GREEN)
+### Task 5.1: 내 카테고리 조회 API (RED→GREEN) ⏳
 - **목표**: 사용자별 카테고리 목록 API
 - **구현**:
   - 테스트: `backend/__tests__/data.test.js`
@@ -179,7 +207,7 @@
 - **완료 조건**: 사용자별 카테고리만 반환
 - **커밋**: `feat: Implement user categories listing API`
 
-### Task 5.2: 공개 카테고리 검색 API (RED→GREEN)
+### Task 5.2: 공개 카테고리 검색 API (RED→GREEN) ⏳
 - **목표**: 키워드 기반 카테고리 검색
 - **구현**:
   - 테스트: `backend/__tests__/data.test.js`에 추가
@@ -189,7 +217,7 @@
 - **완료 조건**: 키워드 매칭 카테고리 반환
 - **커밋**: `feat: Implement public category search API`
 
-### Task 5.3: 즐겨찾기 API (RED→GREEN)
+### Task 5.3: 즐겨찾기 API (RED→GREEN) ⏳
 - **목표**: 즐겨찾기 추가/제거 기능
 - **구현**:
   - 테스트: `backend/__tests__/favorites.test.js`
@@ -201,7 +229,7 @@
 
 ## Phase 6: 메인 메뉴 UI
 
-### Task 6.1: 카테고리 목록 UI (RED→GREEN)
+### Task 6.1: 카테고리 목록 UI (RED→GREEN) ⏳
 - **목표**: 메인 메뉴 카테고리 표시
 - **구현**:
   - E2E 테스트: `frontend/tests/main-menu.spec.js`
@@ -211,7 +239,7 @@
 - **완료 조건**: 카테고리 목록이 탭별로 표시
 - **커밋**: `feat: Implement main menu with category tabs`
 
-### Task 6.2: 검색 기능 UI (RED→GREEN)
+### Task 6.2: 검색 기능 UI (RED→GREEN) ⏳
 - **목표**: 카테고리 검색 인터페이스
 - **구현**:
   - E2E 테스트: `frontend/tests/search.spec.js`
@@ -223,7 +251,7 @@
 
 ## Phase 7: 점자 연습 시스템
 
-### Task 7.1: 점자 데이터 조회 API (RED→GREEN)
+### Task 7.1: 점자 데이터 조회 API (RED→GREEN) ⏳
 - **목표**: 카테고리별 랜덤 문제 제공
 - **구현**:
   - 테스트: `backend/__tests__/data.test.js`에 추가
@@ -233,7 +261,7 @@
 - **완료 조건**: 점자 데이터가 정상 반환
 - **커밋**: `feat: Implement random braille character API`
 
-### Task 7.2: 점자 입력 UI - 기본 구조 (RED→GREEN)
+### Task 7.2: 점자 입력 UI - 기본 구조 (RED→GREEN) ⏳
 - **목표**: sample.md 기반 점자 입력 인터페이스
 - **구현**:
   - E2E 테스트: `frontend/tests/practice-basic.spec.js`
@@ -243,7 +271,7 @@
 - **완료 조건**: 점자 블록이 화면에 표시
 - **커밋**: `feat: Implement basic braille practice UI structure`
 
-### Task 7.3: 키보드 입력 처리 (RED→GREEN)
+### Task 7.3: 키보드 입력 처리 (RED→GREEN) ⏳
 - **목표**: F,D,S,J,K,L 키 입력 처리
 - **구현**:
   - E2E 테스트: 키보드 입력 시뮬레이션
@@ -253,7 +281,7 @@
 - **완료 조건**: 키 입력 시 점자 활성화
 - **커밋**: `feat: Implement keyboard input handling for braille dots`
 
-### Task 7.4: 점자 검증 시스템 (RED→GREEN)
+### Task 7.4: 점자 검증 시스템 (RED→GREEN) ⏳
 - **목표**: 입력 검증 및 블록 진행
 - **구현**:
   - E2E 테스트: 정답/오답 처리 테스트
@@ -263,7 +291,7 @@
 - **완료 조건**: 정답 시 다음 블록 진행
 - **커밋**: `feat: Implement braille input validation and progression`
 
-### Task 7.5: 힌트 기능 (RED→GREEN)
+### Task 7.5: 힌트 기능 (RED→GREEN) ⏳
 - **목표**: 힌트 표시/숨김 기능
 - **구현**:
   - E2E 테스트: 힌트 토글 테스트
@@ -273,7 +301,7 @@
 - **완료 조건**: 힌트가 정상 표시/숨김
 - **커밋**: `feat: Implement hint toggle functionality`
 
-### Task 7.6: Backspace 처리 (RED→GREEN)
+### Task 7.6: Backspace 처리 (RED→GREEN) ⏳
 - **목표**: 마지막 점 제거 기능
 - **구현**:
   - E2E 테스트: Backspace 키 테스트
@@ -284,7 +312,7 @@
 
 ## Phase 8: 학습 기록 시스템
 
-### Task 8.1: 연습 기록 API (RED→GREEN)
+### Task 8.1: 연습 기록 API (RED→GREEN) ⏳
 - **목표**: 연습 시간 및 출석 기록
 - **구현**:
   - 테스트: `backend/__tests__/profile.test.js`
@@ -294,7 +322,7 @@
 - **완료 조건**: 연습 시간이 DB에 저장
 - **커밋**: `feat: Implement practice session logging`
 
-### Task 8.2: 통계 조회 API (RED→GREEN)
+### Task 8.2: 통계 조회 API (RED→GREEN) ⏳
 - **목표**: 사용자 통계 제공
 - **구현**:
   - 테스트: `backend/__tests__/profile.test.js`에 추가
@@ -304,7 +332,7 @@
 - **완료 조건**: 정확한 통계 데이터 반환
 - **커밋**: `feat: Implement user statistics API`
 
-### Task 8.3: 출석 달력 UI (RED→GREEN)
+### Task 8.3: 출석 달력 UI (RED→GREEN) ⏳
 - **목표**: 출석 현황 시각화
 - **구현**:
   - E2E 테스트: 달력 표시 테스트
@@ -316,7 +344,7 @@
 
 ## Phase 9: 통합 테스트 및 최적화
 
-### Task 9.1: 전체 플로우 E2E 테스트
+### Task 9.1: 전체 플로우 E2E 테스트 ⏳
 - **목표**: 사용자 전체 여정 테스트
 - **구현**:
   - `frontend/tests/full-flow.spec.js`
@@ -325,7 +353,7 @@
 - **완료 조건**: 모든 기능이 연결되어 동작
 - **커밋**: `test: Add comprehensive end-to-end user flow test`
 
-### Task 9.2: 에러 처리 및 검증 강화
+### Task 9.2: 에러 처리 및 검증 강화 ⏳
 - **목표**: 예외 상황 처리 개선
 - **구현**:
   - API 에러 응답 표준화
@@ -335,7 +363,7 @@
 - **완료 조건**: 모든 에러가 적절히 처리
 - **커밋**: `feat: Improve error handling and input validation`
 
-### Task 9.3: 성능 최적화
+### Task 9.3: 성능 최적화 ⏳
 - **목표**: 응답 속도 및 UI 개선
 - **구현**:
   - 데이터베이스 인덱스 추가
@@ -387,3 +415,29 @@
 4. **사용자 경험**: 실제 사용 시나리오를 고려한 구현
 
 이 tasklist를 순서대로 진행하면 안정적이고 테스트 커버리지가 높은 점자 타자 연습기를 구축할 수 있습니다.
+
+---
+
+## 빠른 참조 (Quick Reference)
+
+### 상태 이모지 복사용
+- ✅ (완료)
+- 🔄 (진행중)
+- ⏳ (대기)
+- ❌ (블록)
+
+### 진행 상태 업데이트 명령어
+```bash
+# 현재 진행 상황 확인
+grep -E "###.*Task.*[✅🔄⏳❌]" tasklist.md
+
+# 완료된 작업 수 확인
+grep -c "✅" tasklist.md
+
+# 진행중인 작업 확인
+grep "🔄" tasklist.md
+```
+
+### 마지막 업데이트
+- **업데이트 일시**: 2024-09-21
+- **상태**: 초기 설정 - 모든 태스크 대기 상태
