@@ -14,10 +14,16 @@ app.get('/', (req, res) => {
   res.json({ message: 'Braille Typing Practice API is running' });
 });
 
-// API routes placeholder
+// Import routes
+const authRoutes = require('./routes/authRoutes');
+
+// API routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Auth routes
+app.use('/api/auth', authRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

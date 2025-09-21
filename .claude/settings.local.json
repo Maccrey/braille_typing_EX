@@ -5,7 +5,10 @@
       "Bash(npm test)",
       "Bash(npx playwright:*)",
       "Bash(node:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm test:*)",
+      "Bash(sqlite3:*)"
     ],
     "deny": [],
     "ask": []
