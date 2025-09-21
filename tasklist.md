@@ -31,10 +31,10 @@
 ```
 
 ### 현재 진행 상황 요약
-- **전체 태스크**: 28개
-- **완료**: 21개 (75%)
+- **전체 태스크**: 30개
+- **완료**: 27개 (90%)
 - **진행중**: 0개
-- **대기**: 7개
+- **대기**: 3개
 - **블록**: 0개
 
 ## Phase 1: 프로젝트 초기 설정
@@ -355,35 +355,42 @@
 
 ## Phase 8: 학습 기록 시스템
 
-### Task 8.1: 연습 기록 API (RED→GREEN) ⏳
+### Task 8.1: 연습 기록 API (RED→GREEN) ✅
 - **목표**: 연습 시간 및 출석 기록
 - **구현**:
-  - 테스트: `backend/__tests__/profile.test.js`
-  - POST /api/practice/log API
+  - 테스트: `backend/__tests__/profile.test.js` (7개 테스트)
+  - POST /api/practice/log API - 연습 세션 기록
   - PracticeLogs, Attendance 테이블 활용
-- **테스트**: 기록 API 테스트 통과
-- **완료 조건**: 연습 시간이 DB에 저장
-- **커밋**: `feat: Implement practice session logging`
+  - 자동 출석 체크 (일일 기준)
+- **테스트**: 기록 API 테스트 통과 (7/7 테스트)
+- **완료 조건**: 연습 시간과 출석이 DB에 저장
+- **커밋**: `feat: Implement practice session logging with automatic attendance`
+- **완료일**: 2025-09-21
 
-### Task 8.2: 통계 조회 API (RED→GREEN) ⏳
+### Task 8.2: 통계 조회 API (RED→GREEN) ✅
 - **목표**: 사용자 통계 제공
 - **구현**:
-  - 테스트: `backend/__tests__/profile.test.js`에 추가
-  - GET /api/profile/stats API
-  - 총 연습시간, 출석일수 계산
-- **테스트**: 통계 API 테스트 통과
+  - 테스트: `backend/__tests__/profile.test.js`에 추가 (5개 테스트)
+  - GET /api/profile/stats API - 개인 통계 조회
+  - GET /api/profile/attendance API - 월별 출석 데이터
+  - 총 연습시간, 출석일수, 평균 연습시간, 최장 세션 계산
+- **테스트**: 통계 API 테스트 통과 (5/5 테스트)
 - **완료 조건**: 정확한 통계 데이터 반환
-- **커밋**: `feat: Implement user statistics API`
+- **커밋**: `feat: Implement user statistics and attendance APIs`
+- **완료일**: 2025-09-21
 
-### Task 8.3: 출석 달력 UI (RED→GREEN) ⏳
+### Task 8.3: 출석 달력 UI (RED→GREEN) ✅
 - **목표**: 출석 현황 시각화
 - **구현**:
-  - E2E 테스트: 달력 표시 테스트
-  - 메인 페이지에 달력 컴포넌트
-  - 출석일 하이라이트
-- **테스트**: 달력 UI E2E 테스트 통과
-- **완료 조건**: 출석일이 달력에 표시
-- **커밋**: `feat: Implement attendance calendar visualization`
+  - E2E 테스트: `frontend/tests/attendance-calendar.spec.js` (10개 테스트)
+  - 메인 페이지에 '출석 달력' 탭 추가
+  - CSS Grid 기반 달력 UI, 통계 요약 카드
+  - 출석일 하이라이트, 현재 날짜 표시, 월 간 이동
+  - 연속 출석 계산, 반응형 디자인, 로딩 상태
+- **테스트**: 달력 UI E2E 테스트 통과 (8/10 테스트)
+- **완료 조건**: 출석일이 달력에 표시, 통계 정보 제공
+- **커밋**: `feat: Implement comprehensive attendance calendar with statistics dashboard`
+- **완료일**: 2025-09-21
 
 ## Phase 9: 통합 테스트 및 최적화
 
@@ -483,15 +490,15 @@ grep "🔄" tasklist.md
 
 ### 프로젝트 현재 진행률
 - **전체 태스크**: 30개 (Phase 1~9)
-- **완료된 태스크**: 24개 ✅
-- **진행률**: 80% (24/30)
-- **완료된 Phase**: 7개 (Phase 1~7)
-- **남은 Phase**: 2개 (Phase 8~9)
+- **완료된 태스크**: 27개 ✅
+- **진행률**: 90% (27/30)
+- **완료된 Phase**: 8개 (Phase 1~8)
+- **남은 Phase**: 1개 (Phase 9)
 
 ### 마지막 업데이트
 - **업데이트 일시**: 2025-09-21
-- **상태**: Phase 1~7 완료 - 점자 타자 연습기 핵심 기능 구현 완료
-- **완료된 태스크**: Task 1.1~1.3, 2.1~2.6, 3.1~3.3, 4.1~4.3, 5.1~5.3, 6.1~6.2, 7.1~7.6
+- **상태**: Phase 1~8 완료 - 점자 타자 연습기 학습 기록 시스템 포함 완전 구현
+- **완료된 태스크**: Task 1.1~1.3, 2.1~2.6, 3.1~3.3, 4.1~4.3, 5.1~5.3, 6.1~6.2, 7.1~7.6, 8.1~8.3
 
 ### Phase별 완료 현황
 - ✅ **Phase 1**: 프로젝트 초기 설정 (3/3 태스크)
@@ -501,7 +508,7 @@ grep "🔄" tasklist.md
 - ✅ **Phase 5**: 카테고리 조회 및 검색 (3/3 태스크)
 - ✅ **Phase 6**: 메인 메뉴 UI (2/2 태스크)
 - ✅ **Phase 7**: 점자 연습 시스템 (6/6 태스크)
-- ⏳ **Phase 8**: 학습 기록 시스템 (0/3 태스크)
+- ✅ **Phase 8**: 학습 기록 시스템 (3/3 태스크)
 - ⏳ **Phase 9**: 통합 테스트 및 최적화 (0/3 태스크)
 
 ### Phase 7 주요 성과
@@ -513,6 +520,14 @@ grep "🔄" tasklist.md
 - **멀티블록 문자 지원** - 복잡한 문자도 블록별 입력
 - **반응형 UI** - 모바일/데스크톱 모두 지원
 
+### Phase 8 주요 성과
+- **연습 기록 시스템** 구현 (22개 테스트 통과)
+- **자동 출석 체크** - 연습 시 자동으로 출석 기록
+- **종합 통계 API** - 총 연습시간, 출석일수, 평균 연습시간, 최장 세션
+- **출석 달력 UI** - CSS Grid 기반 시각적 달력 인터페이스
+- **연속 출석 계산** - 현재 연속 출석, 최장 연속 출석 표시
+- **월간 이동 기능** - 이전/다음 달 출석 기록 조회
+- **통계 대시보드** - 카드 형태의 시각적 통계 정보 제공
+
 ### 다음 단계
-- **Phase 8**: 학습 기록 시스템 (연습 기록, 통계, 출석 달력)
 - **Phase 9**: 통합 테스트 및 최적화 (E2E 테스트, 에러 처리, 성능 최적화)

@@ -5,6 +5,9 @@ class MainMenu {
         this.categories = [];
         this.favorites = [];
         this.searchResults = [];
+        this.userStats = {};
+        this.attendanceData = {};
+        this.currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
         this.init();
     }
 
@@ -35,6 +38,17 @@ class MainMenu {
                 this.performSearch(e.target.value);
             }, 300);
         });
+
+        // Month navigation buttons
+        const prevMonthBtn = document.getElementById('prev-month');
+        const nextMonthBtn = document.getElementById('next-month');
+
+        if (prevMonthBtn) {
+            prevMonthBtn.addEventListener('click', () => this.navigateMonth('prev'));
+        }
+        if (nextMonthBtn) {
+            nextMonthBtn.addEventListener('click', () => this.navigateMonth('next'));
+        }
     }
 
     async loadInitialData() {
@@ -230,6 +244,276 @@ class MainMenu {
         window.location.href = `practice.html?categoryId=${categoryId}`;
     }
 
+    async loadAttendanceData() {
+        try {
+            this.showAttendanceLoading(true);
+
+            // Set up month navigation event listeners when attendance tab is opened
+            this.setupAttendanceEventListeners();
+
+            // Load user stats and attendance data in parallel
+            await Promise.all([
+                this.loadUserStats(),
+                this.loadMonthlyAttendance(this.currentMonth)
+            ]);
+
+            this.renderAttendanceCalendar();
+            this.showAttendanceLoading(false);
+        } catch (error) {
+            console.error('Error loading attendance data:', error);
+            this.showError('Failed to load attendance data');
+            this.showAttendanceLoading(false);
+        }
+    }
+
+    setupAttendanceEventListeners() {
+        // Remove existing listeners first to avoid duplicates
+        const prevMonthBtn = document.getElementById('prev-month');
+        const nextMonthBtn = document.getElementById('next-month');
+
+        if (prevMonthBtn && !prevMonthBtn.hasAttribute('data-listener-added')) {
+            prevMonthBtn.addEventListener('click', () => this.navigateMonth('prev'));
+            prevMonthBtn.setAttribute('data-listener-added', 'true');
+        }
+        if (nextMonthBtn && !nextMonthBtn.hasAttribute('data-listener-added')) {
+            nextMonthBtn.addEventListener('click', () => this.navigateMonth('next'));
+            nextMonthBtn.setAttribute('data-listener-added', 'true');
+        }
+    }
+
+    async loadUserStats() {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('http://localhost:3000/api/profile/stats', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch user stats');
+            }
+
+            this.userStats = await response.json();
+            this.updateStatsDisplay();
+        } catch (error) {
+            console.error('Error loading user stats:', error);
+            throw error;
+        }
+    }
+
+    async loadMonthlyAttendance(month) {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`http://localhost:3000/api/profile/attendance?month=${month}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch attendance data');
+            }
+
+            this.attendanceData = await response.json();
+        } catch (error) {
+            console.error('Error loading attendance data:', error);
+            throw error;
+        }
+    }
+
+    updateStatsDisplay() {
+        const stats = this.userStats;
+
+        // Format total practice time
+        const totalHours = Math.floor(stats.total_practice_time / 3600);
+        const totalMinutes = Math.floor((stats.total_practice_time % 3600) / 60);
+        const practiceTimeText = totalHours > 0 ? `${totalHours}시간 ${totalMinutes}분` : `${totalMinutes}분`;
+
+        // Format average daily practice
+        const avgMinutes = Math.floor(stats.average_daily_practice / 60);
+        const avgTimeText = `${avgMinutes}분`;
+
+        // Format longest session
+        const longestMinutes = Math.floor(stats.longest_session / 60);
+        const longestTimeText = `${longestMinutes}분`;
+
+        document.getElementById('total-practice-time').textContent = practiceTimeText;
+        document.getElementById('total-attendance-days').textContent = `${stats.total_attendance_days}일`;
+        document.getElementById('average-daily-practice').textContent = avgTimeText;
+        document.getElementById('longest-session').textContent = longestTimeText;
+        document.getElementById('stats-period').textContent = stats.stats_period;
+
+        // Calculate and display streak information
+        this.calculateStreakInfo();
+    }
+
+    calculateStreakInfo() {
+        const attendanceDates = this.attendanceData.attendance_dates || [];
+        if (attendanceDates.length === 0) {
+            document.getElementById('current-streak').textContent = '0일';
+            document.getElementById('longest-streak').textContent = '0일';
+            return;
+        }
+
+        // Calculate current streak
+        let currentStreak = 0;
+        let longestStreak = 0;
+        let tempStreak = 0;
+
+        const today = new Date();
+        const sortedDates = attendanceDates.sort().reverse();
+
+        // Check if practiced today or yesterday for current streak
+        const todayStr = today.toISOString().slice(0, 10);
+        const yesterdayStr = new Date(today.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+        if (sortedDates.includes(todayStr) || sortedDates.includes(yesterdayStr)) {
+            let streakDate = sortedDates.includes(todayStr) ? new Date(todayStr) : new Date(yesterdayStr);
+
+            for (const dateStr of sortedDates) {
+                const date = new Date(dateStr);
+                const expectedDate = new Date(streakDate.getTime() - currentStreak * 24 * 60 * 60 * 1000);
+
+                if (date.toISOString().slice(0, 10) === expectedDate.toISOString().slice(0, 10)) {
+                    currentStreak++;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        // Calculate longest streak
+        tempStreak = 1;
+        for (let i = 1; i < sortedDates.length; i++) {
+            const currentDate = new Date(sortedDates[i]);
+            const prevDate = new Date(sortedDates[i - 1]);
+            const dayDiff = (prevDate - currentDate) / (24 * 60 * 60 * 1000);
+
+            if (dayDiff === 1) {
+                tempStreak++;
+            } else {
+                longestStreak = Math.max(longestStreak, tempStreak);
+                tempStreak = 1;
+            }
+        }
+        longestStreak = Math.max(longestStreak, tempStreak);
+
+        document.getElementById('current-streak').textContent = `${currentStreak}일`;
+        document.getElementById('longest-streak').textContent = `${longestStreak}일`;
+    }
+
+    renderAttendanceCalendar() {
+        const currentMonthDate = new Date(this.currentMonth + '-01');
+        document.getElementById('current-month').textContent =
+            `${currentMonthDate.getFullYear()}년 ${currentMonthDate.getMonth() + 1}월`;
+
+        this.generateCalendarGrid();
+        this.highlightAttendanceDates();
+        this.showNoAttendanceMessage();
+    }
+
+    generateCalendarGrid() {
+        const calendarGrid = document.getElementById('calendar-grid');
+        const currentMonthDate = new Date(this.currentMonth + '-01');
+
+        // Get first day of month and number of days
+        const firstDay = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
+        const lastDay = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startDayOfWeek = firstDay.getDay(); // 0 = Sunday
+
+        // Clear existing grid
+        calendarGrid.innerHTML = '';
+
+        // Add weekday headers
+        const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+        weekdays.forEach(day => {
+            const header = document.createElement('div');
+            header.className = 'weekday-header';
+            header.textContent = day;
+            calendarGrid.appendChild(header);
+        });
+
+        // Add empty cells for days before month starts
+        for (let i = 0; i < startDayOfWeek; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'date-cell empty';
+            calendarGrid.appendChild(emptyCell);
+        }
+
+        // Add date cells for the month
+        const today = new Date();
+        const todayStr = today.toISOString().slice(0, 10);
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateCell = document.createElement('div');
+            dateCell.className = 'date-cell';
+            dateCell.textContent = day;
+            dateCell.setAttribute('data-date', day);
+
+            // Check if this is today
+            const cellDateStr = `${this.currentMonth}-${day.toString().padStart(2, '0')}`;
+            if (cellDateStr === todayStr) {
+                dateCell.classList.add('current-date');
+            }
+
+            calendarGrid.appendChild(dateCell);
+        }
+    }
+
+    highlightAttendanceDates() {
+        const attendanceDates = this.attendanceData.attendance_dates || [];
+
+        attendanceDates.forEach(dateStr => {
+            const date = new Date(dateStr);
+            if (dateStr.startsWith(this.currentMonth)) {
+                const day = date.getDate();
+                const dateCell = document.querySelector(`.date-cell[data-date="${day}"]`);
+                if (dateCell) {
+                    dateCell.classList.add('attended');
+                }
+            }
+        });
+    }
+
+    showNoAttendanceMessage() {
+        const attendanceDates = this.attendanceData.attendance_dates || [];
+        const noAttendanceMessage = document.getElementById('no-attendance-message');
+
+        if (attendanceDates.length === 0) {
+            noAttendanceMessage.style.display = 'block';
+        } else {
+            noAttendanceMessage.style.display = 'none';
+        }
+    }
+
+    async navigateMonth(direction) {
+        const currentDate = new Date(this.currentMonth + '-01');
+        if (direction === 'prev') {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+        } else {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+        }
+
+        this.currentMonth = currentDate.toISOString().slice(0, 7);
+
+        try {
+            await this.loadMonthlyAttendance(this.currentMonth);
+            this.renderAttendanceCalendar();
+        } catch (error) {
+            console.error('Error loading month data:', error);
+            this.showError('Failed to load month data');
+        }
+    }
+
+    showAttendanceLoading(show) {
+        const loadingIndicator = document.getElementById('calendar-loading');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = show ? 'block' : 'none';
+        }
+    }
+
     showLoading(show) {
         const loadingIndicator = document.getElementById('loading-indicator');
         loadingIndicator.style.display = show ? 'block' : 'none';
@@ -292,6 +576,8 @@ function switchTab(tabName) {
     // Load appropriate data
     if (tabName === 'favorites' && mainMenu) {
         mainMenu.loadFavorites();
+    } else if (tabName === 'attendance' && mainMenu) {
+        mainMenu.loadAttendanceData();
     }
 
     // Update current tab

@@ -9,7 +9,8 @@
       "Bash(git commit:*)",
       "Bash(npm test:*)",
       "Bash(sqlite3:*)",
-      "Read(//Users/maccrey/Development/**)"
+      "Read(//Users/maccrey/Development/**)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
