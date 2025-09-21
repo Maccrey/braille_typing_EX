@@ -10,7 +10,8 @@
       "Bash(npm test:*)",
       "Bash(sqlite3:*)",
       "Read(//Users/maccrey/Development/**)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []
