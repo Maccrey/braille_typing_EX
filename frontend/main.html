@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Braille Typing Practice - Main Menu</title>
+    <title>점자 타자 연습기 - 메인 메뉴</title>
     <style>
         * {
             margin: 0;
@@ -507,23 +507,23 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Braille Typing Practice</h1>
+            <h1>점자 타자 연습기</h1>
             <div class="user-menu" id="user-menu">
-                <a href="upload.html" class="btn btn-primary" id="upload-btn">Upload Category</a>
-                <button class="btn btn-secondary" id="logout-btn">Logout</button>
+                <a href="upload.html" class="btn btn-primary" id="upload-btn">카테고리 업로드</a>
+                <button class="btn btn-secondary" id="logout-btn">로그아웃</button>
             </div>
         </div>
 
         <div class="main-content">
             <div class="tabs">
                 <button class="tab active" id="my-categories-tab" onclick="switchTab('my-categories')">
-                    My Categories
+                    내 카테고리
                 </button>
                 <button class="tab" id="favorites-tab" onclick="switchTab('favorites')">
-                    Favorites
+                    즐겨찾기
                 </button>
                 <button class="tab" id="search-tab" onclick="switchTab('search')">
-                    Search
+                    검색
                 </button>
                 <button class="tab" id="attendance-tab" onclick="switchTab('attendance')">
                     출석 달력
@@ -534,7 +534,7 @@
                 <!-- Loading Indicator -->
                 <div id="loading-indicator" class="loading-indicator" style="display: none;">
                     <div class="loading-spinner"></div>
-                    <p>Loading categories...</p>
+                    <p>카테고리를 불러오는 중...</p>
                 </div>
 
                 <!-- Error Message -->
@@ -545,15 +545,15 @@
                     <div id="category-stats" class="category-stats">
                         <div class="stat-card">
                             <div class="stat-number" id="total-categories">0</div>
-                            <div class="stat-label">Total Categories</div>
+                            <div class="stat-label">총 카테고리</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-number" id="total-characters">0</div>
-                            <div class="stat-label">Total Characters</div>
+                            <div class="stat-label">총 문자</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-number" id="practice-time">0h</div>
-                            <div class="stat-label">Practice Time</div>
+                            <div class="stat-label">연습 시간</div>
                         </div>
                     </div>
 
@@ -562,7 +562,7 @@
                     </div>
 
                     <div id="empty-message" class="empty-message" style="display: none;">
-                        No categories found. <a href="upload.html">Upload your first category</a> to get started!
+                        카테고리가 없습니다. <a href="upload.html">첫 번째 카테고리를 업로드</a>해서 시작해보세요!
                     </div>
                 </div>
 
@@ -573,14 +573,14 @@
                     </div>
 
                     <div id="favorites-empty-message" class="empty-message" style="display: none;">
-                        No favorite categories yet. Search for public categories and add them to your favorites!
+                        아직 즐겨찾기한 카테고리가 없습니다. 공개 카테고리를 검색해서 즐겨찾기에 추가해보세요!
                     </div>
                 </div>
 
                 <!-- Search Tab -->
                 <div id="search-content" class="content-section">
                     <div class="search-container">
-                        <input type="text" class="search-input" id="search-input" placeholder="Search public categories..." />
+                        <input type="text" class="search-input" id="search-input" placeholder="공개 카테고리 검색..." />
                     </div>
 
                     <div id="search-results" class="category-list">
@@ -588,7 +588,7 @@
                     </div>
 
                     <div id="search-empty-message" class="empty-message" style="display: none;">
-                        No categories found. Try different search terms.
+                        검색 결과가 없습니다. 다른 검색어를 시도해보세요.
                     </div>
                 </div>
 

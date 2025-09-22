@@ -57,7 +57,7 @@ class MainMenu {
             await this.loadMyCategories();
             this.showLoading(false);
         } catch (error) {
-            this.showError('Failed to load categories. Please try again.');
+            this.showError('카테고리를 불러오는데 실패했습니다. 다시 시도해주세요.');
             this.showLoading(false);
         }
     }
@@ -103,7 +103,7 @@ class MainMenu {
             this.renderFavorites();
         } catch (error) {
             console.error('Error loading favorites:', error);
-            this.showError('Failed to load favorites');
+            this.showError('즐겨찾기를 불러오는데 실패했습니다.');
         }
     }
 
@@ -131,7 +131,7 @@ class MainMenu {
             this.renderSearchResults();
         } catch (error) {
             console.error('Error searching categories:', error);
-            this.showError('Failed to search categories');
+            this.showError('카테고리 검색에 실패했습니다.');
         }
     }
 
@@ -187,13 +187,13 @@ class MainMenu {
     createCategoryHTML(category, type) {
         const favoriteButton = type === 'search' ? `
             <button class="btn favorite-btn" onclick="mainMenu.toggleFavorite(${category.id})">
-                Add to Favorites
+                즐겨찾기 추가
             </button>
         ` : '';
 
         const practiceButton = `
             <button class="btn practice-btn" onclick="mainMenu.startPractice(${category.id})">
-                Practice
+                연습하기
             </button>
         `;
 
@@ -201,7 +201,7 @@ class MainMenu {
             <div class="category-item" data-category-id="${category.id}">
                 <div class="category-name">${this.escapeHtml(category.name)}</div>
                 <div class="category-description">${this.escapeHtml(category.description || '')}</div>
-                <div class="category-count">${category.braille_count || 0} characters</div>
+                <div class="category-count">${category.braille_count || 0}개 문자</div>
                 <div class="category-actions">
                     ${favoriteButton}
                     ${practiceButton}
@@ -223,7 +223,7 @@ class MainMenu {
             });
 
             if (response.ok) {
-                this.showSuccess('Category added to favorites!');
+                this.showSuccess('즐겨찾기에 추가되었습니다!');
                 // Refresh search results to update button state
                 const searchInput = document.getElementById('search-input');
                 if (searchInput.value.trim()) {
@@ -231,11 +231,11 @@ class MainMenu {
                 }
             } else {
                 const error = await response.json();
-                this.showError(error.error || 'Failed to add to favorites');
+                this.showError(error.error || '즐겨찾기 추가에 실패했습니다.');
             }
         } catch (error) {
             console.error('Error toggling favorite:', error);
-            this.showError('Failed to add to favorites');
+            this.showError('즐겨찾기 추가에 실패했습니다.');
         }
     }
 
@@ -261,7 +261,7 @@ class MainMenu {
             this.showAttendanceLoading(false);
         } catch (error) {
             console.error('Error loading attendance data:', error);
-            this.showError('Failed to load attendance data');
+            this.showError('출석 데이터를 불러오는데 실패했습니다.');
             this.showAttendanceLoading(false);
         }
     }
@@ -503,7 +503,7 @@ class MainMenu {
             this.renderAttendanceCalendar();
         } catch (error) {
             console.error('Error loading month data:', error);
-            this.showError('Failed to load month data');
+            this.showError('월별 데이터를 불러오는데 실패했습니다.');
         }
     }
 
