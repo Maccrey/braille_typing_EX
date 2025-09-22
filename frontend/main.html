@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>점자 타자 연습기 - 메인 메뉴</title>
+    <link rel="stylesheet" href="css/dark-mode.css">
     <style>
         * {
             margin: 0;
@@ -509,6 +510,12 @@
         <div class="header">
             <h1>점자 타자 연습기</h1>
             <div class="user-menu" id="user-menu">
+                <div class="dark-mode-toggle">
+                    <span class="toggle-label">라이트모드</span>
+                    <div class="toggle-switch">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
                 <a href="upload.html" class="btn btn-primary" id="upload-btn">카테고리 업로드</a>
                 <button class="btn btn-secondary" id="logout-btn">로그아웃</button>
             </div>
@@ -699,6 +706,18 @@
         </div>
     </div>
 
+    <script src="js/dark-mode.js"></script>
     <script src="js/main.js"></script>
+    <script>
+        // Initialize dark mode toggle for main page
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleSwitch = document.querySelector('.toggle-switch');
+            if (toggleSwitch) {
+                toggleSwitch.addEventListener('click', () => {
+                    window.darkModeManager.toggle();
+                });
+            }
+        });
+    </script>
 </body>
 </html>
