@@ -50,21 +50,23 @@ const searchPublicCategories = async (req, res) => {
 
     const db = getDb();
 
-    // Search public categories (excluding user's own categories)
+    // Search public categories (including user's own public categories)
     const categories = await new Promise((resolve, reject) => {
       let query = `
         SELECT
           c.*,
-          0 as braille_count
+          COUNT(bd.id) as braille_count
         FROM categories c
-        WHERE c.is_public = 1 AND c.created_by != ?
+        LEFT JOIN braille_data bd ON c.id = bd.category_id
+        WHERE c.is_public = 1
+        GROUP BY c.id
       `;
 
-      let params = [userId];
+      let params = [];
 
       // Add search filter if query is not empty
       if (searchQuery && searchQuery.trim() !== '') {
-        query += ` AND (LOWER(c.name) LIKE LOWER(?) OR LOWER(c.description) LIKE LOWER(?))`;
+        query += ` HAVING (LOWER(c.name) LIKE LOWER(?) OR LOWER(c.description) LIKE LOWER(?))`;
         const searchTerm = `%${searchQuery}%`;
         params.push(searchTerm, searchTerm);
       }

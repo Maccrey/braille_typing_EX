@@ -104,7 +104,7 @@
             border: none;
             font-size: 16px;
             font-weight: 600;
-            color: black;
+            color: #495057 !important;
             border-right: 1px solid #e0e0e0;
         }
 
@@ -121,12 +121,12 @@
 
         .tab:hover {
             background: #e9ecef;
-            color: black;
+            color: #343a40 !important;
         }
 
         .tab.active:hover {
             background: white;
-            color: #667eea;
+            color: #667eea !important;
         }
 
         .tab-content {
@@ -1039,11 +1039,18 @@
     <script>
         // Initialize dark mode toggle for main page
         document.addEventListener('DOMContentLoaded', () => {
+            // The dark mode manager will automatically update toggle switches
+            // Just need to add event listener to existing toggle
             const toggleSwitch = document.querySelector('.toggle-switch');
             if (toggleSwitch) {
                 toggleSwitch.addEventListener('click', () => {
                     window.darkModeManager.toggle();
                 });
+            }
+
+            // Force initial update of toggle appearance
+            if (window.darkModeManager) {
+                window.darkModeManager.updateToggleSwitches();
             }
         });
     </script>

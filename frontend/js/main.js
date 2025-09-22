@@ -124,15 +124,9 @@ class MainMenu {
     }
 
     async performSearch(query) {
-        if (!query.trim()) {
-            this.searchResults = [];
-            this.renderSearchResults();
-            return;
-        }
-
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3000/api/protected/categories/search?q=${encodeURIComponent(query)}`, {
+            const response = await fetch(`http://localhost:3000/api/protected/categories/search?q=${encodeURIComponent(query || '')}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -148,6 +142,28 @@ class MainMenu {
         } catch (error) {
             console.error('Error searching categories:', error);
             this.showError('카테고리 검색에 실패했습니다.');
+        }
+    }
+
+    async loadAllPublicCategories() {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`http://localhost:3000/api/protected/categories/search?q=`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load public categories');
+            }
+
+            const data = await response.json();
+            this.searchResults = data.categories;
+            this.renderSearchResults();
+        } catch (error) {
+            console.error('Error loading public categories:', error);
+            this.showError('공개 카테고리를 불러오는데 실패했습니다.');
         }
     }
 
@@ -250,9 +266,15 @@ class MainMenu {
     renderSearchResults() {
         const container = document.getElementById('search-results');
         const emptyMessage = document.getElementById('search-empty-message');
+        const searchInput = document.getElementById('search-input');
 
         if (this.searchResults.length === 0) {
             container.innerHTML = '';
+            if (searchInput && searchInput.value.trim()) {
+                emptyMessage.textContent = '검색 결과가 없습니다. 다른 검색어를 시도해보세요.';
+            } else {
+                emptyMessage.textContent = '현재 공개된 카테고리가 없습니다.';
+            }
             emptyMessage.style.display = 'block';
         } else {
             emptyMessage.style.display = 'none';
@@ -261,7 +283,11 @@ class MainMenu {
     }
 
     createCategoryHTML(category, type) {
-        const favoriteButton = type === 'search' ? `
+        // Check if user owns this category - don't show favorite button for own categories
+        const currentUserId = this.getCurrentUserId();
+        const isOwnCategory = category.created_by === currentUserId;
+
+        const favoriteButton = (type === 'search' && !isOwnCategory) ? `
             <button class="btn favorite-btn" onclick="mainMenu.toggleFavorite(${category.id})">
                 즐겨찾기 추가
             </button>
@@ -677,6 +703,20 @@ class MainMenu {
         return div.innerHTML;
     }
 
+    getCurrentUserId() {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) return null;
+
+            // Decode JWT token to get user ID
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.userId;
+        } catch (error) {
+            console.error('Error decoding token:', error);
+            return null;
+        }
+    }
+
     async deleteCategory(categoryId) {
         if (!confirm('정말로 이 카테고리를 삭제하시겠습니까? 모든 관련 데이터가 삭제되며 복구할 수 없습니다.')) {
             return;
@@ -998,6 +1038,8 @@ function switchTab(tabName) {
     // Load appropriate data
     if (tabName === 'favorites' && mainMenu) {
         mainMenu.loadFavorites();
+    } else if (tabName === 'search' && mainMenu) {
+        mainMenu.loadAllPublicCategories();
     } else if (tabName === 'attendance' && mainMenu) {
         mainMenu.loadAttendanceData();
     }
