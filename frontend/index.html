@@ -31,17 +31,97 @@
             border-radius: 4px;
             margin: 20px 0;
         }
+        .auth-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>점자 타자 연습기</h1>
-        <div class="status" data-testid="app-status">
-            애플리케이션이 정상적으로 로드되었습니다.
+        <div class="status" data-testid="app-status" id="app-status">
+            로딩 중...
         </div>
-        <div data-testid="page-content">
+        <div data-testid="page-content" id="page-content" style="display: none;">
             <p>환영합니다! 점자 타자 연습을 시작하세요.</p>
+            <div class="auth-buttons">
+                <a href="login.html" class="btn btn-primary">로그인</a>
+                <a href="signup.html" class="btn btn-secondary">회원가입</a>
+            </div>
         </div>
     </div>
+
+    <script>
+        // 로그인 상태 체크 및 자동 리다이렉트
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('authToken');
+            const appStatus = document.getElementById('app-status');
+            const pageContent = document.getElementById('page-content');
+
+            // JWT 토큰이 있는지 확인
+            if (token) {
+                // 토큰의 유효성을 간단히 체크 (만료 시간 확인)
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    const currentTime = Math.floor(Date.now() / 1000);
+
+                    if (payload.exp && payload.exp > currentTime) {
+                        // 유효한 토큰이면 메인 페이지로 리다이렉트
+                        appStatus.innerHTML = '로그인 상태입니다. 메인 페이지로 이동합니다...';
+                        setTimeout(() => {
+                            window.location.href = 'main.html';
+                        }, 1000);
+                        return;
+                    } else {
+                        // 만료된 토큰이면 제거
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('userData');
+                    }
+                } catch (error) {
+                    // 유효하지 않은 토큰이면 제거
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('userData');
+                }
+            }
+
+            // 로그인하지 않은 상태라면 로그인/회원가입 옵션 표시
+            appStatus.innerHTML = '애플리케이션이 정상적으로 로드되었습니다.';
+            pageContent.style.display = 'block';
+        });
+    </script>
 </body>
 </html>
