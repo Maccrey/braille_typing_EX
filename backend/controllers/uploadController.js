@@ -132,8 +132,10 @@ const uploadFile = async (req, res) => {
       console.log(`Processing row ${i + 1}: character="${character}"`);
 
       // Parse braille patterns from columns 1-2 (블록1, 블록2)
-      // Skip column 3 (설명) as it's not braille data
       const brailleBlocks = [];
+
+      // Get description from column 3 (D column, index 3)
+      const description = row[3] ? row[3].toString().trim() : '';
       for (let j = 1; j <= 2 && j < row.length; j++) {
         const cellValue = row[j];
         if (cellValue && cellValue.toString().trim() !== '') {
@@ -158,10 +160,11 @@ const uploadFile = async (req, res) => {
       }
 
       if (brailleBlocks.length > 0) {
-        console.log(`  Added entry for "${character}" with ${brailleBlocks.length} blocks`);
+        console.log(`  Added entry for "${character}" with ${brailleBlocks.length} blocks and description: "${description}"`);
         brailleEntries.push({
           character: character.toString().trim(),
-          pattern: brailleBlocks
+          pattern: brailleBlocks,
+          description: description
         });
       } else {
         console.log(`  No braille blocks found for "${character}"`);
@@ -331,14 +334,15 @@ function insertBrailleData(categoryId, brailleEntries) {
     const insertPromises = brailleEntries.map(entry => {
       return new Promise((resolveEntry, rejectEntry) => {
         const query = `
-          INSERT INTO braille_data (category_id, character, braille_pattern)
-          VALUES (?, ?, ?)
+          INSERT INTO braille_data (category_id, character, braille_pattern, description)
+          VALUES (?, ?, ?, ?)
         `;
 
         db.run(query, [
           categoryId,
           entry.character,
-          JSON.stringify(entry.pattern)
+          JSON.stringify(entry.pattern),
+          entry.description || ''
         ], function(err) {
           if (err) {
             rejectEntry(err);

@@ -289,7 +289,7 @@ const getRandomBrailleData = async (req, res) => {
     // Get random braille data from this category
     const brailleData = await new Promise((resolve, reject) => {
       const query = `
-        SELECT * FROM braille_data
+        SELECT id, category_id, character, braille_pattern, description FROM braille_data
         WHERE category_id = ?
         ORDER BY RANDOM()
         LIMIT 1
@@ -601,14 +601,15 @@ const updateCategoryBrailleData = async (req, res) => {
           }
 
           const query = `
-            INSERT INTO braille_data (category_id, character, braille_pattern)
-            VALUES (?, ?, ?)
+            INSERT INTO braille_data (category_id, character, braille_pattern, description)
+            VALUES (?, ?, ?, ?)
           `;
 
           db.run(query, [
             categoryId,
             item.character.trim(),
-            JSON.stringify(item.braille_pattern)
+            JSON.stringify(item.braille_pattern),
+            (item.description || '').trim()
           ], function(err) {
             if (err) {
               reject(err);

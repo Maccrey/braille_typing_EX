@@ -175,6 +175,10 @@ button {
   border-color: var(--border-color) !important;
 }
 
+[data-theme="dark"] #character-description {
+  color: var(--text-muted) !important;
+}
+
 [data-theme="dark"] #keyboard-help {
   background: var(--bg-secondary) !important;
 }

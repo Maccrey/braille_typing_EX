@@ -129,11 +129,11 @@ cd ../frontend
 npm install
 
 # 개발 서버 시작
-npx http-server -p 8080
+npx http-server -p 4000
 ```
 
 ### 4. 애플리케이션 접속
-- **프론트엔드**: http://localhost:8080
+- **프론트엔드**: http://localhost:4000
 - **백엔드 API**: http://localhost:3000
 
 ## 🚀 배포 가이드
@@ -481,7 +481,7 @@ docker-compose up -d
 ## 📖 사용법
 
 ### 1. 회원가입 및 로그인
-1. 브라우저에서 `http://localhost:8080/signup.html` 접속
+1. 브라우저에서 `http://localhost:4000/signup.html` 접속
 2. 사용자명과 비밀번호를 입력하여 계정 생성
 3. 로그인 페이지에서 인증 후 메인 메뉴로 이동
 
@@ -602,7 +602,7 @@ npm install -g nodemon
 nodemon app.js
 
 # 프론트엔드 개발 서버
-cd frontend && npx http-server -p 8080 -c-1
+cd frontend && npx http-server -p 4000 -c-1
 ```
 
 ### 코딩 컨벤션
@@ -641,6 +641,29 @@ Favorites (id, user_id, category_id, favorited_at)
 
 ## 🧪 테스트
 
+### 테스트를 위한 서버 실행
+
+테스트 실행 전에 백엔드 서버를 먼저 시작해야 합니다.
+
+#### 백엔드 서버 시작
+```bash
+cd backend
+
+# 데이터베이스 초기화 (최초 실행 시)
+node init-db.js
+
+# 개발 서버 시작 (테스트용)
+node -e "const app = require('./app'); app.listen(3000, () => console.log('Test server running on port 3000'));"
+```
+
+#### 프론트엔드 서버 시작 (E2E 테스트용)
+```bash
+cd frontend
+
+# 테스트 서버 시작 (별도 터미널에서)
+npx http-server -p 4000
+```
+
 ### 백엔드 테스트 실행
 ```bash
 cd backend
@@ -668,6 +691,12 @@ npm test -- tests/practice.spec.js
 # UI 모드로 실행
 npx playwright test --ui
 ```
+
+### 전체 테스트 실행 순서
+1. **백엔드 서버 시작**: `cd backend && node -e "const app = require('./app'); app.listen(3000, () => console.log('Server running'));"`
+2. **프론트엔드 서버 시작**: `cd frontend && npx http-server -p 4000` (별도 터미널)
+3. **백엔드 테스트**: `cd backend && npm test`
+4. **E2E 테스트**: `cd frontend && npm test`
 
 ### 테스트 커버리지
 - **백엔드**: Jest로 API 엔드포인트 테스트
@@ -786,7 +815,7 @@ chmod 644 backend/database.db
 ```bash
 # 사용 중인 포트 확인
 lsof -i :3000
-lsof -i :8080
+lsof -i :4000
 
 # 프로세스 종료
 kill -9 <PID>

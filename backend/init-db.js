@@ -35,6 +35,7 @@ const createTables = () => {
         category_id INTEGER NOT NULL,
         character VARCHAR(255) NOT NULL,
         braille_pattern TEXT NOT NULL,
+        description TEXT,
         FOREIGN KEY (category_id) REFERENCES categories(id)
       )
     `;

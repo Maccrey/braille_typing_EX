@@ -865,6 +865,8 @@ class MainMenu {
                 <input type="text" class="braille-character-input" value="${this.escapeHtml(item.character)}"
                        placeholder="문자 입력"
                        onchange="mainMenu.updateBrailleCharacter(${index}, this.value)">
+                <textarea class="braille-description-input" placeholder="문자 설명 (선택사항)"
+                         onchange="mainMenu.updateBrailleDescription(${index}, this.value)">${this.escapeHtml(item.description || '')}</textarea>
                 <div class="braille-pattern-section">
                     ${blocksHTML}
                     <button type="button" class="add-braille-block" onclick="mainMenu.addBrailleBlock(${index})">+ 블록 추가</button>
@@ -880,7 +882,8 @@ class MainMenu {
 
         this.currentBrailleData.push({
             character: '',
-            braille_pattern: [[]]
+            braille_pattern: [[]],
+            description: ''
         });
 
         this.renderBrailleDataEditor();
@@ -896,6 +899,12 @@ class MainMenu {
     updateBrailleCharacter(index, value) {
         if (this.currentBrailleData[index]) {
             this.currentBrailleData[index].character = value;
+        }
+    }
+
+    updateBrailleDescription(index, value) {
+        if (this.currentBrailleData[index]) {
+            this.currentBrailleData[index].description = value;
         }
     }
 

@@ -3,6 +3,7 @@
 class BraillePractice {
     constructor() {
         this.currentChar = null;
+        this.currentCharDescription = null;
         this.currentBraillePattern = null;
         this.currentBlockIndex = 0;
         this.pressedDots = new Set();
@@ -30,7 +31,7 @@ class BraillePractice {
 
         // Get category ID from URL params or use default
         const urlParams = new URLSearchParams(window.location.search);
-        this.categoryId = urlParams.get('category') || 4; // Default to public category 4
+        this.categoryId = urlParams.get('category') || 5; // Default to public category 5
     }
 
     bindEvents() {
@@ -118,12 +119,14 @@ class BraillePractice {
             const data = await response.json();
             console.log('📦 Received data:', data);
             this.currentChar = data.character;
+            this.currentCharDescription = data.description;
             this.currentBraillePattern = JSON.parse(data.braille_pattern);
             console.log('🎯 Parsed braille pattern:', this.currentBraillePattern);
             this.currentBlockIndex = 0;
             this.pressedDots.clear();
 
             this.displayCharacter();
+            this.displayCharacterDescription();
             this.createBrailleBlocks();
             this.updateProgress(`문자: ${this.currentChar}`);
             this.updateBlockProgress();
@@ -137,6 +140,13 @@ class BraillePractice {
     displayCharacter() {
         const currentCharEl = document.getElementById('current-char');
         currentCharEl.textContent = this.currentChar || '-';
+    }
+
+    displayCharacterDescription() {
+        const descriptionEl = document.getElementById('character-description');
+        if (descriptionEl) {
+            descriptionEl.textContent = this.currentCharDescription || '';
+        }
     }
 
     createBrailleBlocks() {
