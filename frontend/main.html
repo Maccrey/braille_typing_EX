@@ -90,7 +90,7 @@
 
         .tabs {
             display: flex;
-            background: rgba(255, 255, 255, 0.1);
+            background: #f8f9fa;
             border-bottom: 1px solid #e0e0e0;
         }
 
@@ -100,21 +100,33 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: transparent;
+            background: #f8f9fa;
             border: none;
             font-size: 16px;
             font-weight: 600;
-            color: #666;
+            color: black;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .tab:last-child {
+            border-right: none;
         }
 
         .tab.active {
             background: white;
             color: #667eea;
             border-bottom: 3px solid #667eea;
+            box-shadow: 0 -2px 8px rgba(102, 126, 234, 0.1);
         }
 
         .tab:hover {
-            background: rgba(255, 255, 255, 0.5);
+            background: #e9ecef;
+            color: black;
+        }
+
+        .tab.active:hover {
+            background: white;
+            color: #667eea;
         }
 
         .tab-content {
@@ -787,6 +799,7 @@
                         <div class="toggle-slider"></div>
                     </div>
                 </div>
+                <a href="statistics.html" class="btn btn-primary" id="statistics-btn">학습통계</a>
                 <a href="upload.html" class="btn btn-primary" id="upload-btn">카테고리 업로드</a>
                 <button class="btn btn-secondary" id="logout-btn">로그아웃</button>
             </div>

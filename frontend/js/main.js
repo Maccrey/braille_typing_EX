@@ -55,9 +55,10 @@ class MainMenu {
         this.showLoading(true);
         try {
             await this.loadMyCategories();
+            await this.loadUserStats();
             this.showLoading(false);
         } catch (error) {
-            this.showError('카테고리를 불러오는데 실패했습니다. 다시 시도해주세요.');
+            this.showError('데이터를 불러오는데 실패했습니다. 다시 시도해주세요.');
             this.showLoading(false);
         }
     }
@@ -156,8 +157,68 @@ class MainMenu {
 
         document.getElementById('total-categories').textContent = totalCategories;
         document.getElementById('total-characters').textContent = totalCharacters;
-        // Practice time would come from user stats API
-        document.getElementById('practice-time').textContent = '0h';
+    }
+
+    async loadUserStats() {
+        try {
+            const token = localStorage.getItem('authToken');
+            console.log('🔄 Loading user stats from API...');
+            const response = await fetch('http://localhost:3000/api/profile/stats', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load user stats');
+            }
+
+            const stats = await response.json();
+            console.log('📊 Received stats:', stats);
+
+            // Use the correct field name from API response
+            const practiceTimeSeconds = stats.total_practice_time || 0;
+            console.log('⏰ Practice time in seconds:', practiceTimeSeconds);
+
+            this.updatePracticeTimeDisplay(practiceTimeSeconds);
+        } catch (error) {
+            console.error('❌ Error loading user stats:', error);
+            // Show default value on error
+            document.getElementById('practice-time').textContent = '0분';
+        }
+    }
+
+    updatePracticeTimeDisplay(totalSeconds) {
+        console.log('🔄 Updating practice time display with:', totalSeconds, 'seconds');
+
+        const totalMinutes = Math.round(totalSeconds / 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+
+        console.log('📊 Calculated time:', {
+            totalSeconds,
+            totalMinutes,
+            hours,
+            minutes
+        });
+
+        let timeText;
+        if (hours > 0) {
+            timeText = `${hours}시간 ${minutes}분`;
+        } else {
+            timeText = `${minutes}분`;
+        }
+
+        console.log('📝 Setting time display to:', timeText);
+        const practiceTimeElement = document.getElementById('practice-time');
+
+        if (practiceTimeElement) {
+            practiceTimeElement.textContent = timeText;
+            console.log('✅ Practice time display updated successfully');
+        } else {
+            console.error('❌ Could not find practice-time element');
+        }
     }
 
     renderCategories() {
@@ -281,7 +342,7 @@ class MainMenu {
 
             // Load user stats and attendance data in parallel
             await Promise.all([
-                this.loadUserStats(),
+                this.loadUserStatsForAttendance(),
                 this.loadMonthlyAttendance(this.currentMonth)
             ]);
 
@@ -309,9 +370,10 @@ class MainMenu {
         }
     }
 
-    async loadUserStats() {
+    async loadUserStatsForAttendance() {
         try {
             const token = localStorage.getItem('authToken');
+            console.log('🔄 Loading user stats for attendance...');
             const response = await fetch('http://localhost:3000/api/profile/stats', {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -323,9 +385,10 @@ class MainMenu {
             }
 
             this.userStats = await response.json();
+            console.log('📊 Received attendance stats:', this.userStats);
             this.updateStatsDisplay();
         } catch (error) {
-            console.error('Error loading user stats:', error);
+            console.error('❌ Error loading user stats for attendance:', error);
             throw error;
         }
     }
@@ -352,6 +415,7 @@ class MainMenu {
 
     updateStatsDisplay() {
         const stats = this.userStats;
+        console.log('📊 Updating attendance stats display with:', stats);
 
         // Format total practice time
         const totalHours = Math.floor(stats.total_practice_time / 3600);
@@ -366,11 +430,46 @@ class MainMenu {
         const longestMinutes = Math.floor(stats.longest_session / 60);
         const longestTimeText = `${longestMinutes}분`;
 
-        document.getElementById('total-practice-time').textContent = practiceTimeText;
-        document.getElementById('total-attendance-days').textContent = `${stats.total_attendance_days}일`;
-        document.getElementById('average-daily-practice').textContent = avgTimeText;
-        document.getElementById('longest-session').textContent = longestTimeText;
-        document.getElementById('stats-period').textContent = stats.stats_period;
+        console.log('📝 Setting attendance stats:', {
+            practiceTimeText,
+            avgTimeText,
+            longestTimeText,
+            attendanceDays: stats.total_attendance_days
+        });
+
+        const totalPracticeTimeEl = document.getElementById('total-practice-time');
+        const totalAttendanceDaysEl = document.getElementById('total-attendance-days');
+        const avgDailyPracticeEl = document.getElementById('average-daily-practice');
+
+        if (totalPracticeTimeEl) {
+            totalPracticeTimeEl.textContent = practiceTimeText;
+        } else {
+            console.error('❌ Could not find total-practice-time element');
+        }
+
+        if (totalAttendanceDaysEl) {
+            totalAttendanceDaysEl.textContent = `${stats.total_attendance_days}일`;
+        } else {
+            console.error('❌ Could not find total-attendance-days element');
+        }
+
+        if (avgDailyPracticeEl) {
+            avgDailyPracticeEl.textContent = avgTimeText;
+        } else {
+            console.error('❌ Could not find average-daily-practice element');
+        }
+
+        // Additional stats elements that might not exist in all views
+        const longestSessionEl = document.getElementById('longest-session');
+        const statsPeriodEl = document.getElementById('stats-period');
+
+        if (longestSessionEl) {
+            longestSessionEl.textContent = longestTimeText;
+        }
+
+        if (statsPeriodEl && stats.stats_period) {
+            statsPeriodEl.textContent = stats.stats_period;
+        }
 
         // Calculate and display streak information
         this.calculateStreakInfo();

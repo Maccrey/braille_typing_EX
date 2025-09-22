@@ -229,11 +229,11 @@ const getFavorites = async (req, res) => {
         SELECT
           c.*,
           0 as braille_count,
-          f.created_at as favorited_at
+          f.favorited_at as favorited_at
         FROM favorites f
         JOIN categories c ON f.category_id = c.id
         WHERE f.user_id = ?
-        ORDER BY f.created_at DESC
+        ORDER BY f.favorited_at DESC
       `;
 
       db.all(query, [userId], (err, rows) => {
