@@ -32,7 +32,7 @@ const logPracticeSession = async (req, res) => {
     // Insert practice log
     const practiceLogId = await new Promise((resolve, reject) => {
       db.run(
-        'INSERT INTO PracticeLogs (user_id, duration_seconds, practiced_at) VALUES (?, ?, ?)',
+        'INSERT INTO practice_logs (user_id, duration_seconds, practiced_at) VALUES (?, ?, ?)',
         [userId, duration_seconds, practiced_at],
         function(err) {
           if (err) reject(err);
@@ -44,7 +44,7 @@ const logPracticeSession = async (req, res) => {
     // Check if attendance record exists for this date
     const existingAttendance = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT id FROM Attendance WHERE user_id = ? AND date = ?',
+        'SELECT id FROM attendance WHERE user_id = ? AND date = ?',
         [userId, practiced_at],
         (err, row) => {
           if (err) reject(err);
@@ -59,7 +59,7 @@ const logPracticeSession = async (req, res) => {
     if (!existingAttendance) {
       await new Promise((resolve, reject) => {
         db.run(
-          'INSERT INTO Attendance (user_id, date) VALUES (?, ?)',
+          'INSERT INTO attendance (user_id, date) VALUES (?, ?)',
           [userId, practiced_at],
           function(err) {
             if (err) reject(err);
@@ -73,7 +73,7 @@ const logPracticeSession = async (req, res) => {
     // Get the created practice log
     const practiceLog = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT * FROM PracticeLogs WHERE id = ?',
+        'SELECT * FROM practice_logs WHERE id = ?',
         [practiceLogId],
         (err, row) => {
           if (err) reject(err);

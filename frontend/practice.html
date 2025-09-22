@@ -43,6 +43,34 @@
             margin-bottom: 0.5rem;
         }
 
+        #practice-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e1e5e9;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.2rem;
+        }
+
+        .stat-item span:last-child {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+
         #character-display {
             text-align: center;
             margin-bottom: 2rem;
@@ -141,26 +169,26 @@
             cursor: pointer;
         }
 
-        .dot.active {
-            background: #667eea;
-            border-color: #5a6fd8;
-            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
-        }
-
-        .dot.correct {
-            background: #28a745;
-            border-color: #1e7e34;
-        }
-
-        .dot.wrong {
-            background: #dc3545;
-            border-color: #bd2130;
-        }
-
         .dot.hint-active {
             background: #ffc107;
             border-color: #e0a800;
             box-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
+        }
+
+        .dot.active {
+            background: #667eea !important;
+            border-color: #5a6fd8 !important;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5) !important;
+        }
+
+        .dot.correct {
+            background: #28a745 !important;
+            border-color: #1e7e34 !important;
+        }
+
+        .dot.wrong {
+            background: #dc3545 !important;
+            border-color: #bd2130 !important;
         }
 
         .control-panel {
@@ -322,6 +350,16 @@
         <div class="practice-header">
             <h1>점자 연습하기</h1>
             <p>화면에 표시된 문자를 점자로 입력하세요</p>
+            <div id="practice-stats">
+                <div class="stat-item">
+                    <span class="stat-label">현재 세션:</span>
+                    <span id="current-session-time">00:00</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">완성한 문자:</span>
+                    <span id="completed-chars">0개</span>
+                </div>
+            </div>
         </div>
 
         <div id="error-message"></div>

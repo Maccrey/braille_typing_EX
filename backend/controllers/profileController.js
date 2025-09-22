@@ -8,7 +8,7 @@ const getUserStats = async (req, res) => {
     // Get total practice time
     const totalPracticeTime = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT COALESCE(SUM(duration_seconds), 0) as total FROM PracticeLogs WHERE user_id = ?',
+        'SELECT COALESCE(SUM(duration_seconds), 0) as total FROM practice_logs WHERE user_id = ?',
         [userId],
         (err, row) => {
           if (err) reject(err);
@@ -18,9 +18,9 @@ const getUserStats = async (req, res) => {
     });
 
     // Get total attendance days
-    const totalAttendanceDays = await new Promise((resolve, reject) => {
+    const totalattendanceDays = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT COUNT(*) as count FROM Attendance WHERE user_id = ?',
+        'SELECT COUNT(*) as count FROM attendance WHERE user_id = ?',
         [userId],
         (err, row) => {
           if (err) reject(err);
@@ -30,14 +30,14 @@ const getUserStats = async (req, res) => {
     });
 
     // Calculate average daily practice
-    const averageDailyPractice = totalAttendanceDays > 0
-      ? Math.round(totalPracticeTime / totalAttendanceDays)
+    const averageDailyPractice = totalattendanceDays > 0
+      ? Math.round(totalPracticeTime / totalattendanceDays)
       : 0;
 
     // Get first practice date
     const firstPracticeDate = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT MIN(practiced_at) as first_date FROM PracticeLogs WHERE user_id = ?',
+        'SELECT MIN(practiced_at) as first_date FROM practice_logs WHERE user_id = ?',
         [userId],
         (err, row) => {
           if (err) reject(err);
@@ -49,7 +49,7 @@ const getUserStats = async (req, res) => {
     // Get last practice date
     const lastPracticeDate = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT MAX(practiced_at) as last_date FROM PracticeLogs WHERE user_id = ?',
+        'SELECT MAX(practiced_at) as last_date FROM practice_logs WHERE user_id = ?',
         [userId],
         (err, row) => {
           if (err) reject(err);
@@ -61,7 +61,7 @@ const getUserStats = async (req, res) => {
     // Get longest session
     const longestSession = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT COALESCE(MAX(duration_seconds), 0) as longest FROM PracticeLogs WHERE user_id = ?',
+        'SELECT COALESCE(MAX(duration_seconds), 0) as longest FROM practice_logs WHERE user_id = ?',
         [userId],
         (err, row) => {
           if (err) reject(err);
@@ -73,7 +73,7 @@ const getUserStats = async (req, res) => {
     // Build response
     const stats = {
       total_practice_time: totalPracticeTime,
-      total_attendance_days: totalAttendanceDays,
+      total_attendance_days: totalattendanceDays,
       average_daily_practice: averageDailyPractice,
       longest_session: longestSession,
       stats_period: `${firstPracticeDate || 'N/A'} ~ ${lastPracticeDate || 'N/A'}`
@@ -97,7 +97,7 @@ const getUserStats = async (req, res) => {
   }
 };
 
-const getAttendanceData = async (req, res) => {
+const getattendanceData = async (req, res) => {
   try {
     const userId = req.user.id;
     const { month } = req.query; // Format: YYYY-MM
@@ -109,7 +109,7 @@ const getAttendanceData = async (req, res) => {
     // Get attendance dates for the specified month
     const attendanceDates = await new Promise((resolve, reject) => {
       db.all(
-        'SELECT date FROM Attendance WHERE user_id = ? AND date LIKE ? ORDER BY date',
+        'SELECT date FROM attendance WHERE user_id = ? AND date LIKE ? ORDER BY date',
         [userId, `${targetMonth}%`],
         (err, rows) => {
           if (err) reject(err);
@@ -121,7 +121,7 @@ const getAttendanceData = async (req, res) => {
     // Get total attendance count
     const totalDays = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT COUNT(*) as count FROM Attendance WHERE user_id = ?',
+        'SELECT COUNT(*) as count FROM attendance WHERE user_id = ?',
         [userId],
         (err, row) => {
           if (err) reject(err);
@@ -146,5 +146,5 @@ const getAttendanceData = async (req, res) => {
 
 module.exports = {
   getUserStats,
-  getAttendanceData
+  getattendanceData
 };

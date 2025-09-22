@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const { getProfile, getStats } = require('../controllers/protectedController');
+const { getProfile, getStats, getPracticeLogs, logPracticeSession } = require('../controllers/protectedController');
+const { logPracticeSession: logPracticeSessionDedicated } = require('../controllers/practiceController');
 const { upload, uploadFile, downloadExampleFile } = require('../controllers/uploadController');
 const { getMyCategoriesWithCount, searchPublicCategories, addToFavorites, removeFromFavorites, getFavorites, getRandomBrailleData, deleteCategory, updateCategory, getCategoryBrailleData, updateCategoryBrailleData } = require('../controllers/dataController');
 
@@ -11,6 +12,8 @@ router.use(authMiddleware);
 // Protected routes
 router.get('/profile', getProfile);
 router.get('/stats', getStats);
+router.get('/practice-logs', getPracticeLogs);
+router.post('/practice-logs', logPracticeSession);
 
 // Category routes
 router.get('/categories/my', getMyCategoriesWithCount);
@@ -31,5 +34,8 @@ router.get('/download-example', downloadExampleFile);
 
 // Braille practice routes - Task 7.1
 router.get('/braille/:categoryId/random', getRandomBrailleData);
+
+// Practice session logging routes using dedicated practice controller
+router.post('/practice/log', logPracticeSessionDedicated);
 
 module.exports = router;

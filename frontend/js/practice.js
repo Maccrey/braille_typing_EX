@@ -10,6 +10,17 @@ class BraillePractice {
         this.categoryId = null;
         this.showHints = false;
 
+        // Practice session tracking
+        this.sessionStartTime = null;
+        this.practiceSessionData = {
+            startTime: null,
+            charactersCompleted: 0,
+            totalTime: 0
+        };
+
+        // UI update timer
+        this.uiUpdateInterval = null;
+
         this.init();
     }
 
@@ -42,6 +53,19 @@ class BraillePractice {
         document.addEventListener('click', () => {
             document.body.focus();
         });
+
+        // Add page unload handler to save practice session
+        window.addEventListener('beforeunload', () => {
+            this.endPracticeSession();
+        });
+
+        // Add page visibility change handler for better session tracking
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden' && this.sessionStartTime) {
+                // Record current session when page becomes hidden
+                this.checkAndRecordSession();
+            }
+        });
     }
 
     checkAuthentication() {
@@ -60,6 +84,15 @@ class BraillePractice {
         if (categoryId) {
             this.categoryId = categoryId;
         }
+
+        // Start practice session tracking
+        this.sessionStartTime = Date.now();
+        this.practiceSessionData.startTime = this.sessionStartTime;
+        console.log('📊 Practice session started at:', new Date(this.sessionStartTime));
+
+        // Start UI update timer
+        this.startUIUpdates();
+
         await this.loadNextCharacter();
     }
 
@@ -108,13 +141,28 @@ class BraillePractice {
 
     createBrailleBlocks() {
         const container = document.getElementById('braille-blocks');
+        console.log('🏗️ Creating braille blocks, container found:', !!container);
         container.innerHTML = '';
 
-        if (!this.currentBraillePattern) return;
+        if (!this.currentBraillePattern) {
+            console.log('❌ No braille pattern available');
+            return;
+        }
+
+        console.log('🧱 Creating blocks for pattern:', this.currentBraillePattern);
 
         this.currentBraillePattern.forEach((blockPattern, blockIndex) => {
             const block = this.createSingleBrailleBlock(blockPattern, blockIndex);
             container.appendChild(block);
+            console.log(`✅ Block ${blockIndex} created with pattern:`, blockPattern);
+        });
+
+        // Log final DOM structure
+        const createdBlocks = container.querySelectorAll('.braille-block');
+        console.log('🏗️ Total blocks created:', createdBlocks.length);
+        createdBlocks.forEach((block, index) => {
+            const dots = block.querySelectorAll('.dot');
+            console.log(`📊 Block ${index} has ${dots.length} dots`);
         });
 
         // Update hint display after creating blocks
@@ -128,7 +176,10 @@ class BraillePractice {
         block.dataset.blockNumber = blockIndex + 1; // For CSS pseudo-element
 
         // Create 6 dots in braille layout: 14/25/36 arrangement
-        // Order: 1, 4, 2, 5, 3, 6 (left column: 1,2,3, right column: 4,5,6)
+        // Grid positions: [0,0]=1, [0,1]=4, [1,0]=2, [1,1]=5, [2,0]=3, [2,1]=6
+        // Result: 1 4
+        //         2 5
+        //         3 6
         const dotOrder = [1, 4, 2, 5, 3, 6];
 
         for (let i = 0; i < 6; i++) {
@@ -137,12 +188,6 @@ class BraillePractice {
             dot.className = 'dot';
             dot.dataset.dotNumber = dotNumber;
             dot.dataset.blockIndex = blockIndex;
-
-            // Add hint overlay
-            const hint = document.createElement('div');
-            hint.className = 'hint-overlay';
-            hint.textContent = dotNumber;
-            dot.appendChild(hint);
 
             block.appendChild(dot);
         }
@@ -160,11 +205,6 @@ class BraillePractice {
     }
 
     updateHintDisplay() {
-        const hints = document.querySelectorAll('.hint-overlay');
-        hints.forEach(hint => {
-            hint.style.display = this.showHints ? 'block' : 'none';
-        });
-
         // Update hint highlighting for current block
         this.updateHintHighlighting();
     }
@@ -278,7 +318,7 @@ class BraillePractice {
         if (this.pressedDots.has(dotNumber)) {
             console.log('🔴 Removing dot:', dotNumber);
             this.pressedDots.delete(dotNumber);
-            dot.classList.remove('active');
+            dot.classList.remove('active', 'correct', 'wrong');
             console.log('🔍 Dot classes after remove:', dot.className);
             // Remove from input order
             const index = this.dotInputOrder.indexOf(dotNumber);
@@ -288,8 +328,16 @@ class BraillePractice {
         } else {
             console.log('🟢 Adding dot:', dotNumber);
             this.pressedDots.add(dotNumber);
+            // Remove any existing state classes first
+            dot.classList.remove('hint-active', 'correct', 'wrong');
             dot.classList.add('active');
             console.log('🔍 Dot classes after add:', dot.className);
+            console.log('🔍 Dot element style:', {
+                background: getComputedStyle(dot).backgroundColor,
+                border: getComputedStyle(dot).borderColor,
+                display: getComputedStyle(dot).display,
+                visibility: getComputedStyle(dot).visibility
+            });
             // Add to input order
             this.dotInputOrder.push(dotNumber);
         }
@@ -407,8 +455,18 @@ class BraillePractice {
         this.updateBlockProgress();
 
         if (this.currentBlockIndex >= this.currentBraillePattern.length) {
-            // Character complete - show completion message
+            // Character complete - record completion and show completion message
+            this.practiceSessionData.charactersCompleted++;
+            console.log('🎯 Character completed! Total characters:', this.practiceSessionData.charactersCompleted);
+
+            // Update completed characters display immediately
+            this.updateCompletedCharsDisplay();
+
             this.updateProgress(`✅ "${this.currentChar}" 완성! 다음 문자로 넘어갑니다...`);
+
+            // Record practice session every 5 characters or after significant time
+            this.checkAndRecordSession();
+
             setTimeout(() => {
                 this.loadNextCharacter();
             }, 1500);
@@ -455,6 +513,159 @@ class BraillePractice {
         this.pressedDots.clear();
         this.dotInputOrder = [];
         this.currentBlockIndex = 0;
+    }
+
+    // Check if we should record the current practice session
+    checkAndRecordSession() {
+        const currentTime = Date.now();
+        const sessionDuration = Math.floor((currentTime - this.sessionStartTime) / 1000); // in seconds
+
+        // Record session if:
+        // 1. Every 5 characters completed, OR
+        // 2. Session duration exceeds 2 minutes (120 seconds)
+        if (this.practiceSessionData.charactersCompleted % 5 === 0 || sessionDuration >= 120) {
+            this.recordPracticeSession(sessionDuration);
+        }
+    }
+
+    // Record current practice session to backend
+    async recordPracticeSession(duration = null) {
+        try {
+            const currentTime = Date.now();
+            const sessionDuration = duration || Math.floor((currentTime - this.sessionStartTime) / 1000);
+
+            // Only record if there's meaningful practice time (at least 10 seconds)
+            if (sessionDuration < 10) {
+                console.log('⏱️ Session too short to record:', sessionDuration, 'seconds');
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+            const token = localStorage.getItem('authToken');
+
+            console.log('📝 Recording practice session:', {
+                duration: sessionDuration,
+                characters: this.practiceSessionData.charactersCompleted,
+                date: today,
+                oldSessionStartTime: this.sessionStartTime,
+                newSessionStartTime: currentTime
+            });
+
+            const response = await fetch('http://localhost:3000/api/protected/practice/log', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    duration_seconds: sessionDuration,
+                    practiced_at: today
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Practice session recorded successfully:', result);
+
+                // BUGFIX: Don't reset sessionStartTime - this was causing the "reset" issue
+                // Instead, just accumulate the total time
+                console.log('🔧 NOT resetting sessionStartTime to prevent session reset appearance');
+                this.practiceSessionData.totalTime += sessionDuration;
+                console.log('📊 Updated total time:', this.practiceSessionData.totalTime);
+            } else {
+                const error = await response.json();
+                console.error('❌ Failed to record practice session:', error);
+            }
+
+        } catch (error) {
+            console.error('❌ Error recording practice session:', error);
+        }
+    }
+
+    // End practice session and record final time
+    async endPracticeSession() {
+        if (this.sessionStartTime) {
+            const currentTime = Date.now();
+            const finalDuration = Math.floor((currentTime - this.sessionStartTime) / 1000);
+
+            console.log('🏁 Ending practice session. Final duration:', finalDuration, 'seconds');
+
+            // Stop UI updates
+            this.stopUIUpdates();
+
+            // Record final session
+            await this.recordPracticeSession(finalDuration);
+
+            // Reset session data
+            this.sessionStartTime = null;
+            this.practiceSessionData = {
+                startTime: null,
+                charactersCompleted: 0,
+                totalTime: 0
+            };
+        }
+    }
+
+    // Start UI updates timer
+    startUIUpdates() {
+        console.log('▶️ Starting UI updates, session start time:', this.sessionStartTime);
+
+        // Update immediately
+        this.updateSessionTimeDisplay();
+        this.updateCompletedCharsDisplay();
+
+        // Clear any existing interval first
+        if (this.uiUpdateInterval) {
+            clearInterval(this.uiUpdateInterval);
+        }
+
+        // Update every second
+        this.uiUpdateInterval = setInterval(() => {
+            this.updateSessionTimeDisplay();
+        }, 1000);
+
+        console.log('✅ UI update interval started:', this.uiUpdateInterval);
+    }
+
+    // Stop UI updates timer
+    stopUIUpdates() {
+        if (this.uiUpdateInterval) {
+            clearInterval(this.uiUpdateInterval);
+            this.uiUpdateInterval = null;
+        }
+    }
+
+    // Update session time display
+    updateSessionTimeDisplay() {
+        if (!this.sessionStartTime) {
+            console.log('⚠️ updateSessionTimeDisplay: No sessionStartTime found');
+            return;
+        }
+
+        const currentTime = Date.now();
+        const elapsedSeconds = Math.floor((currentTime - this.sessionStartTime) / 1000);
+
+        const minutes = Math.floor(elapsedSeconds / 60);
+        const seconds = elapsedSeconds % 60;
+        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        const timeElement = document.getElementById('current-session-time');
+        if (timeElement) {
+            timeElement.textContent = timeString;
+        }
+
+        // Debug log every 10 seconds
+        if (elapsedSeconds % 10 === 0) {
+            console.log('⏰ Session time update:', timeString, 'Characters:', this.practiceSessionData.charactersCompleted);
+        }
+    }
+
+    // Update completed characters display
+    updateCompletedCharsDisplay() {
+        const charsElement = document.getElementById('completed-chars');
+        if (charsElement) {
+            charsElement.textContent = `${this.practiceSessionData.charactersCompleted}개`;
+        }
     }
 
     updateProgress(message) {
