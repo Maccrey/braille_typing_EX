@@ -65,11 +65,26 @@ class MainMenu {
     async loadMyCategories() {
         try {
             const token = localStorage.getItem('authToken');
+
+            if (!token) {
+                console.log('No auth token found, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+
             const response = await fetch('http://localhost:3000/api/protected/categories/my', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
+
+            if (response.status === 401) {
+                console.log('Unauthorized, removing invalid token and redirecting to login');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userData');
+                window.location.href = 'login.html';
+                return;
+            }
 
             if (!response.ok) {
                 throw new Error('Failed to fetch categories');
@@ -197,6 +212,18 @@ class MainMenu {
             </button>
         `;
 
+        // Owner buttons for my categories only
+        const ownerButtons = type === 'my' ? `
+            <div class="owner-actions">
+                <button class="btn edit-btn" onclick="mainMenu.editCategory(${category.id})">
+                    수정
+                </button>
+                <button class="btn delete-btn" onclick="mainMenu.deleteCategory(${category.id})">
+                    삭제
+                </button>
+            </div>
+        ` : '';
+
         return `
             <div class="category-item" data-category-id="${category.id}">
                 <div class="category-name">${this.escapeHtml(category.name)}</div>
@@ -205,6 +232,7 @@ class MainMenu {
                 <div class="category-actions">
                     ${favoriteButton}
                     ${practiceButton}
+                    ${ownerButtons}
                 </div>
             </div>
         `;
@@ -548,6 +576,301 @@ class MainMenu {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    async deleteCategory(categoryId) {
+        if (!confirm('정말로 이 카테고리를 삭제하시겠습니까? 모든 관련 데이터가 삭제되며 복구할 수 없습니다.')) {
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`http://localhost:3000/api/protected/categories/${categoryId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                this.showSuccess('카테고리가 성공적으로 삭제되었습니다.');
+                await this.loadMyCategories(); // Refresh the list
+            } else {
+                const error = await response.json();
+                this.showError(error.error || '카테고리 삭제에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Error deleting category:', error);
+            this.showError('카테고리 삭제에 실패했습니다.');
+        }
+    }
+
+    async editCategory(categoryId) {
+        const category = this.categories.find(cat => cat.id === categoryId);
+        if (!category) {
+            this.showError('카테고리를 찾을 수 없습니다.');
+            return;
+        }
+
+        // Populate the modal form
+        document.getElementById('edit-category-name').value = category.name;
+        document.getElementById('edit-category-description').value = category.description || '';
+        document.getElementById('edit-category-public').checked = !!category.is_public;
+
+        // Store category ID for submission
+        this.currentEditingCategoryId = categoryId;
+
+        // Show the modal
+        this.showEditModal();
+
+        // Load braille data
+        await this.loadBrailleDataForEdit(categoryId);
+    }
+
+    showEditModal() {
+        const modal = document.getElementById('edit-modal');
+        modal.style.display = 'block';
+
+        // Setup modal event listeners
+        this.setupEditModalListeners();
+    }
+
+    hideEditModal() {
+        const modal = document.getElementById('edit-modal');
+        modal.style.display = 'none';
+        this.currentEditingCategoryId = null;
+        this.currentBrailleData = null;
+
+        // Reset braille data container
+        const container = document.getElementById('braille-data-container');
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">점자 데이터를 불러오는 중...</div>';
+    }
+
+    setupEditModalListeners() {
+        // Close button
+        document.getElementById('edit-modal-close').onclick = () => this.hideEditModal();
+
+        // Cancel button
+        document.getElementById('edit-cancel-btn').onclick = () => this.hideEditModal();
+
+        // Click outside modal to close
+        window.onclick = (event) => {
+            const modal = document.getElementById('edit-modal');
+            if (event.target === modal) {
+                this.hideEditModal();
+            }
+        };
+
+        // Add new braille item button
+        document.getElementById('add-braille-item').onclick = () => this.addBrailleItem();
+
+        // Form submission
+        document.getElementById('edit-category-form').onsubmit = (e) => {
+            e.preventDefault();
+            this.submitCategoryEdit();
+        };
+    }
+
+    async loadBrailleDataForEdit(categoryId) {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`http://localhost:3000/api/protected/categories/${categoryId}/braille-data`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.currentBrailleData = data.brailleData;
+                this.renderBrailleDataEditor();
+            } else {
+                throw new Error('Failed to load braille data');
+            }
+        } catch (error) {
+            console.error('Error loading braille data:', error);
+            this.showError('점자 데이터를 불러오는데 실패했습니다.');
+        }
+    }
+
+    renderBrailleDataEditor() {
+        const container = document.getElementById('braille-data-container');
+
+        if (!this.currentBrailleData || this.currentBrailleData.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">점자 데이터가 없습니다.</div>';
+            return;
+        }
+
+        container.innerHTML = this.currentBrailleData.map((item, index) => this.createBrailleItemHTML(item, index)).join('');
+    }
+
+    createBrailleItemHTML(item, index) {
+        const blocksHTML = item.braille_pattern.map((block, blockIndex) => `
+            <div class="braille-block" data-block-index="${blockIndex}">
+                <div class="braille-block-header">
+                    <span class="braille-block-title">블록 ${blockIndex + 1}</span>
+                    <button type="button" class="braille-block-remove" onclick="mainMenu.removeBrailleBlock(${index}, ${blockIndex})">×</button>
+                </div>
+                <input type="text" class="braille-dots-input" value="${block.join(',')}"
+                       placeholder="점 번호 (예: 1,2,3)"
+                       onchange="mainMenu.updateBrailleBlock(${index}, ${blockIndex}, this.value)">
+            </div>
+        `).join('');
+
+        return `
+            <div class="braille-item" data-item-index="${index}">
+                <div class="braille-item-header">
+                    <span class="braille-item-title">문자: ${this.escapeHtml(item.character)}</span>
+                    <button type="button" class="braille-remove-btn" onclick="mainMenu.removeBrailleItem(${index})">삭제</button>
+                </div>
+                <input type="text" class="braille-character-input" value="${this.escapeHtml(item.character)}"
+                       placeholder="문자 입력"
+                       onchange="mainMenu.updateBrailleCharacter(${index}, this.value)">
+                <div class="braille-pattern-section">
+                    ${blocksHTML}
+                    <button type="button" class="add-braille-block" onclick="mainMenu.addBrailleBlock(${index})">+ 블록 추가</button>
+                </div>
+            </div>
+        `;
+    }
+
+    addBrailleItem() {
+        if (!this.currentBrailleData) {
+            this.currentBrailleData = [];
+        }
+
+        this.currentBrailleData.push({
+            character: '',
+            braille_pattern: [[]]
+        });
+
+        this.renderBrailleDataEditor();
+    }
+
+    removeBrailleItem(index) {
+        if (confirm('이 항목을 삭제하시겠습니까?')) {
+            this.currentBrailleData.splice(index, 1);
+            this.renderBrailleDataEditor();
+        }
+    }
+
+    updateBrailleCharacter(index, value) {
+        if (this.currentBrailleData[index]) {
+            this.currentBrailleData[index].character = value;
+        }
+    }
+
+    addBrailleBlock(itemIndex) {
+        if (this.currentBrailleData[itemIndex]) {
+            this.currentBrailleData[itemIndex].braille_pattern.push([]);
+            this.renderBrailleDataEditor();
+        }
+    }
+
+    removeBrailleBlock(itemIndex, blockIndex) {
+        if (this.currentBrailleData[itemIndex] && this.currentBrailleData[itemIndex].braille_pattern.length > 1) {
+            this.currentBrailleData[itemIndex].braille_pattern.splice(blockIndex, 1);
+            this.renderBrailleDataEditor();
+        } else {
+            this.showError('적어도 하나의 블록이 필요합니다.');
+        }
+    }
+
+    updateBrailleBlock(itemIndex, blockIndex, value) {
+        if (this.currentBrailleData[itemIndex] && this.currentBrailleData[itemIndex].braille_pattern[blockIndex] !== undefined) {
+            const dots = value.split(',').map(d => parseInt(d.trim())).filter(d => !isNaN(d) && d >= 1 && d <= 6);
+            this.currentBrailleData[itemIndex].braille_pattern[blockIndex] = dots;
+        }
+    }
+
+    async submitCategoryEdit() {
+        const name = document.getElementById('edit-category-name').value.trim();
+        const description = document.getElementById('edit-category-description').value.trim();
+        const isPublic = document.getElementById('edit-category-public').checked;
+
+        if (!name) {
+            this.showError('카테고리 이름을 입력해주세요.');
+            return;
+        }
+
+        if (name.length > 100) {
+            this.showError('카테고리 이름은 100자 이하로 입력해주세요.');
+            return;
+        }
+
+        // Validate braille data
+        if (this.currentBrailleData) {
+            for (let i = 0; i < this.currentBrailleData.length; i++) {
+                const item = this.currentBrailleData[i];
+                if (!item.character || !item.character.trim()) {
+                    this.showError(`${i + 1}번째 항목의 문자를 입력해주세요.`);
+                    return;
+                }
+
+                if (!item.braille_pattern || item.braille_pattern.length === 0) {
+                    this.showError(`${i + 1}번째 항목의 점자 패턴을 입력해주세요.`);
+                    return;
+                }
+
+                for (let j = 0; j < item.braille_pattern.length; j++) {
+                    const block = item.braille_pattern[j];
+                    if (!Array.isArray(block)) {
+                        this.showError(`${i + 1}번째 항목의 ${j + 1}번째 블록이 올바르지 않습니다.`);
+                        return;
+                    }
+                }
+            }
+        }
+
+        try {
+            const token = localStorage.getItem('authToken');
+
+            // Update category information
+            const categoryResponse = await fetch(`http://localhost:3000/api/protected/categories/${this.currentEditingCategoryId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name,
+                    description,
+                    isPublic
+                })
+            });
+
+            if (!categoryResponse.ok) {
+                const error = await categoryResponse.json();
+                throw new Error(error.error || '카테고리 수정에 실패했습니다.');
+            }
+
+            // Update braille data if available
+            if (this.currentBrailleData && this.currentBrailleData.length > 0) {
+                const brailleResponse = await fetch(`http://localhost:3000/api/protected/categories/${this.currentEditingCategoryId}/braille-data`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        brailleData: this.currentBrailleData
+                    })
+                });
+
+                if (!brailleResponse.ok) {
+                    const error = await brailleResponse.json();
+                    throw new Error(error.error || '점자 데이터 수정에 실패했습니다.');
+                }
+            }
+
+            this.showSuccess('카테고리와 점자 데이터가 성공적으로 수정되었습니다.');
+            this.hideEditModal();
+            await this.loadMyCategories(); // Refresh the list
+
+        } catch (error) {
+            console.error('Error updating category:', error);
+            this.showError(error.message || '카테고리 수정에 실패했습니다.');
+        }
     }
 
     logout() {

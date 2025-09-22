@@ -26,7 +26,7 @@ const signup = async (req, res) => {
 
     // Check if user already exists
     const existingUser = await new Promise((resolve, reject) => {
-      db.get('SELECT id FROM Users WHERE username = ?', [username], (err, row) => {
+      db.get('SELECT id FROM users WHERE username = ?', [username], (err, row) => {
         if (err) reject(err);
         else resolve(row);
       });
@@ -44,7 +44,7 @@ const signup = async (req, res) => {
     // Create user
     const userId = await new Promise((resolve, reject) => {
       db.run(
-        'INSERT INTO Users (username, password) VALUES (?, ?)',
+        'INSERT INTO users (username, password) VALUES (?, ?)',
         [username, hashedPassword],
         function(err) {
           if (err) reject(err);
@@ -81,7 +81,7 @@ const login = async (req, res) => {
 
     // Find user
     const user = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM Users WHERE username = ?', [username], (err, row) => {
+      db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
         if (err) reject(err);
         else resolve(row);
       });

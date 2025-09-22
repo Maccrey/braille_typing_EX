@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Redirect after delay
                 setTimeout(() => {
                     window.location.href = 'main.html';
-                }, 3000);
+                }, 1000);
             } else {
                 // Handle specific error messages
                 let errorMsg = '업로드에 실패했습니다.';

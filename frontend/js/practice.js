@@ -19,7 +19,7 @@ class BraillePractice {
 
         // Get category ID from URL params or use default
         const urlParams = new URLSearchParams(window.location.search);
-        this.categoryId = urlParams.get('category') || 1;
+        this.categoryId = urlParams.get('category') || 4; // Default to public category 4
     }
 
     bindEvents() {
@@ -32,6 +32,16 @@ class BraillePractice {
 
         // Keyboard events will be handled in Task 7.3
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+
+        // Ensure the page has focus for keyboard events
+        window.addEventListener('load', () => {
+            document.body.focus();
+        });
+
+        // Also set focus when user clicks anywhere on the page
+        document.addEventListener('click', () => {
+            document.body.focus();
+        });
     }
 
     checkAuthentication() {
@@ -61,7 +71,7 @@ class BraillePractice {
             this.resetValidationState();
 
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`/api/protected/braille/${this.categoryId}/random`, {
+            const response = await fetch(`http://localhost:3000/api/protected/braille/${this.categoryId}/random`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -73,8 +83,10 @@ class BraillePractice {
             }
 
             const data = await response.json();
+            console.log('📦 Received data:', data);
             this.currentChar = data.character;
             this.currentBraillePattern = JSON.parse(data.braille_pattern);
+            console.log('🎯 Parsed braille pattern:', this.currentBraillePattern);
             this.currentBlockIndex = 0;
             this.pressedDots.clear();
 
@@ -115,17 +127,21 @@ class BraillePractice {
         block.dataset.blockIndex = blockIndex;
         block.dataset.blockNumber = blockIndex + 1; // For CSS pseudo-element
 
-        // Create 6 dots in standard braille layout
-        for (let i = 1; i <= 6; i++) {
+        // Create 6 dots in braille layout: 14/25/36 arrangement
+        // Order: 1, 4, 2, 5, 3, 6 (left column: 1,2,3, right column: 4,5,6)
+        const dotOrder = [1, 4, 2, 5, 3, 6];
+
+        for (let i = 0; i < 6; i++) {
+            const dotNumber = dotOrder[i];
             const dot = document.createElement('div');
             dot.className = 'dot';
-            dot.dataset.dotNumber = i;
+            dot.dataset.dotNumber = dotNumber;
             dot.dataset.blockIndex = blockIndex;
 
             // Add hint overlay
             const hint = document.createElement('div');
             hint.className = 'hint-overlay';
-            hint.textContent = i;
+            hint.textContent = dotNumber;
             dot.appendChild(hint);
 
             block.appendChild(dot);
@@ -136,6 +152,7 @@ class BraillePractice {
 
     toggleHint() {
         this.showHints = !this.showHints;
+        console.log('💡 Hint toggled:', this.showHints);
         this.updateHintDisplay();
 
         const hintBtn = document.getElementById('hint-btn');
@@ -153,6 +170,13 @@ class BraillePractice {
     }
 
     updateHintHighlighting() {
+        console.log('🔍 updateHintHighlighting called', {
+            showHints: this.showHints,
+            hasPattern: !!this.currentBraillePattern,
+            currentBlockIndex: this.currentBlockIndex,
+            patternLength: this.currentBraillePattern?.length
+        });
+
         // Clear all hint highlighting first
         const allDots = document.querySelectorAll('.dot');
         allDots.forEach(dot => {
@@ -160,6 +184,7 @@ class BraillePractice {
         });
 
         if (!this.showHints || !this.currentBraillePattern || this.currentBlockIndex >= this.currentBraillePattern.length) {
+            console.log('❌ Hint highlighting skipped - conditions not met');
             return;
         }
 
@@ -167,18 +192,26 @@ class BraillePractice {
         const currentPattern = this.currentBraillePattern[this.currentBlockIndex];
         const currentBlock = document.querySelector(`.braille-block[data-block-index="${this.currentBlockIndex}"]`);
 
+        console.log('💡 Highlighting pattern:', currentPattern, 'for block:', this.currentBlockIndex);
+
         if (currentBlock && currentPattern) {
             currentPattern.forEach(dotNumber => {
                 const dot = currentBlock.querySelector(`.dot[data-dot-number="${dotNumber}"]`);
                 if (dot) {
                     dot.classList.add('hint-active');
+                    console.log('✨ Added hint-active to dot:', dotNumber);
+                } else {
+                    console.log('❌ Could not find dot:', dotNumber);
                 }
             });
+        } else {
+            console.log('❌ Current block or pattern not found');
         }
     }
 
     handleKeyDown(event) {
         const key = event.key.toLowerCase();
+        console.log('🎹 Key pressed:', key, 'Current pattern exists:', !!this.currentBraillePattern);
 
         // Task 7.3: Keyboard input handling
         const keyToDot = {
@@ -192,53 +225,76 @@ class BraillePractice {
 
         if (keyToDot[key]) {
             event.preventDefault();
+            console.log('🎯 Toggling dot:', keyToDot[key]);
             this.toggleDot(keyToDot[key]);
         } else if (key === ' ') {
             event.preventDefault();
+            console.log('💡 Toggling hint');
             this.toggleHint();
         } else if (key === 'enter') {
             event.preventDefault();
+            console.log('⏭️ Loading next character');
             this.loadNextCharacter();
         } else if (key === 'escape') {
             event.preventDefault();
+            console.log('🧹 Clearing all dots');
             this.clearAllDots();
         } else if (key === 'backspace') {
             event.preventDefault();
+            console.log('⬅️ Removing last dot');
             this.removeLastDot();
         }
     }
 
     toggleDot(dotNumber) {
+        console.log('🔄 toggleDot called with:', dotNumber);
+        console.log('📊 Current state:', {
+            hasPattern: !!this.currentBraillePattern,
+            patternLength: this.currentBraillePattern?.length,
+            currentBlockIndex: this.currentBlockIndex
+        });
+
         if (!this.currentBraillePattern || this.currentBraillePattern.length === 0) {
+            console.log('❌ No braille pattern available');
             return;
         }
 
         // Find the target dot in the current block
         const currentBlock = document.querySelector(`.braille-block[data-block-index="${this.currentBlockIndex}"]`);
         if (!currentBlock) {
+            console.log('❌ Current block not found:', this.currentBlockIndex);
             return;
         }
 
         const dot = currentBlock.querySelector(`.dot[data-dot-number="${dotNumber}"]`);
         if (!dot) {
+            console.log('❌ Dot not found:', dotNumber);
             return;
         }
 
+        console.log('✅ Found dot element:', dot);
+
         // Toggle dot state
         if (this.pressedDots.has(dotNumber)) {
+            console.log('🔴 Removing dot:', dotNumber);
             this.pressedDots.delete(dotNumber);
             dot.classList.remove('active');
+            console.log('🔍 Dot classes after remove:', dot.className);
             // Remove from input order
             const index = this.dotInputOrder.indexOf(dotNumber);
             if (index > -1) {
                 this.dotInputOrder.splice(index, 1);
             }
         } else {
+            console.log('🟢 Adding dot:', dotNumber);
             this.pressedDots.add(dotNumber);
             dot.classList.add('active');
+            console.log('🔍 Dot classes after add:', dot.className);
             // Add to input order
             this.dotInputOrder.push(dotNumber);
         }
+
+        console.log('📊 Current pressed dots:', Array.from(this.pressedDots).sort());
 
         // Auto-validate when user completes current block pattern
         this.checkCurrentBlock();
@@ -458,10 +514,9 @@ window.startPractice = function(categoryId) {
 document.addEventListener('DOMContentLoaded', () => {
     window.braillePractice = new BraillePractice();
 
-    // Auto-start practice if category is provided
+    // Auto-start practice (either with provided category or default)
     const urlParams = new URLSearchParams(window.location.search);
     const categoryId = urlParams.get('category');
-    if (categoryId) {
-        window.braillePractice.startPractice(categoryId);
-    }
+    // Always start practice, using either URL param or default category
+    window.braillePractice.startPractice(categoryId);
 });

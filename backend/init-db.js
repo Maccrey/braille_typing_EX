@@ -6,7 +6,7 @@ const createTables = () => {
   return new Promise((resolve, reject) => {
     // Users table
     const createUsersTable = `
-      CREATE TABLE IF NOT EXISTS Users (
+      CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
@@ -16,60 +16,60 @@ const createTables = () => {
 
     // Categories table
     const createCategoriesTable = `
-      CREATE TABLE IF NOT EXISTS Categories (
+      CREATE TABLE IF NOT EXISTS categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name VARCHAR(255) NOT NULL,
         description TEXT,
         created_by INTEGER NOT NULL,
         is_public BOOLEAN DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (created_by) REFERENCES Users(id),
+        FOREIGN KEY (created_by) REFERENCES users(id),
         UNIQUE(name, created_by)
       )
     `;
 
     // BrailleData table
     const createBrailleDataTable = `
-      CREATE TABLE IF NOT EXISTS BrailleData (
+      CREATE TABLE IF NOT EXISTS braille_data (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         category_id INTEGER NOT NULL,
         character VARCHAR(255) NOT NULL,
-        braille_representation TEXT NOT NULL,
-        FOREIGN KEY (category_id) REFERENCES Categories(id)
+        braille_pattern TEXT NOT NULL,
+        FOREIGN KEY (category_id) REFERENCES categories(id)
       )
     `;
 
     // PracticeLogs table
     const createPracticeLogsTable = `
-      CREATE TABLE IF NOT EXISTS PracticeLogs (
+      CREATE TABLE IF NOT EXISTS practice_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         duration_seconds INTEGER NOT NULL,
         practiced_at DATE NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES Users(id)
+        FOREIGN KEY (user_id) REFERENCES users(id)
       )
     `;
 
     // Attendance table
     const createAttendanceTable = `
-      CREATE TABLE IF NOT EXISTS Attendance (
+      CREATE TABLE IF NOT EXISTS attendance (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         date DATE NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES Users(id),
+        FOREIGN KEY (user_id) REFERENCES users(id),
         UNIQUE(user_id, date)
       )
     `;
 
     // Favorites table
     const createFavoritesTable = `
-      CREATE TABLE IF NOT EXISTS Favorites (
+      CREATE TABLE IF NOT EXISTS favorites (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         category_id INTEGER NOT NULL,
         favorited_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES Users(id),
-        FOREIGN KEY (category_id) REFERENCES Categories(id),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (category_id) REFERENCES categories(id),
         UNIQUE(user_id, category_id)
       )
     `;

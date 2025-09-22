@@ -165,6 +165,7 @@ input:focus, textarea:focus, select:focus {
     align-items: center;
     gap: 0.5rem;
     margin-left: auto;
+    background-color: initial !important;
 }
 
 .toggle-switch {
@@ -175,10 +176,22 @@ input:focus, textarea:focus, select:focus {
     border-radius: 15px;
     cursor: pointer;
     transition: all 0.3s ease;
+    border: 2px solid transparent;
+    background-color: #ccc !important;
 }
 
 .toggle-switch.active {
-    background: #667eea;
+    background: #667eea !important;
+}
+
+[data-theme="dark"] .toggle-switch {
+    background: #4a5568 !important;
+    border-color: #718096;
+}
+
+[data-theme="dark"] .toggle-switch.active {
+    background: #667eea !important;
+    border-color: #667eea;
 }
 
 .toggle-slider {
@@ -187,10 +200,15 @@ input:focus, textarea:focus, select:focus {
     left: 3px;
     width: 24px;
     height: 24px;
-    background: white;
+    background: white !important;
     border-radius: 50%;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .toggle-slider {
+    background: #f7fafc !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .toggle-switch.active .toggle-slider {
@@ -199,8 +217,14 @@ input:focus, textarea:focus, select:focus {
 
 .toggle-label {
     font-size: 0.9rem;
-    color: var(--text-secondary);
+    color: var(--text-secondary) !important;
     user-select: none;
+    background-color: transparent !important;
+    font-weight: 500;
+}
+
+[data-theme="dark"] .toggle-label {
+    color: #e2e8f0 !important;
 }
 
 /* More comprehensive dark mode styles */
@@ -439,6 +463,18 @@ input:focus, textarea:focus, select:focus {
 [data-theme="dark"] .btn-secondary {
     background-color: var(--hover-bg) !important;
     color: var(--text-primary) !important;
+}
+
+/* Toggle switch exceptions - always visible */
+[data-theme="dark"] .dark-mode-toggle,
+[data-theme="dark"] .toggle-switch,
+[data-theme="dark"] .toggle-slider,
+[data-theme="dark"] .toggle-label {
+    background-color: initial !important;
+}
+
+[data-theme="dark"] .dark-mode-toggle * {
+    background-color: initial !important;
 }
 
 /* Gradient background exceptions */

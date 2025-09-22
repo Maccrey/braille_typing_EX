@@ -3,7 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const { getProfile, getStats } = require('../controllers/protectedController');
 const { upload, uploadFile, downloadExampleFile } = require('../controllers/uploadController');
-const { getMyCategoriesWithCount, searchPublicCategories, addToFavorites, removeFromFavorites, getFavorites, getRandomBrailleData } = require('../controllers/dataController');
+const { getMyCategoriesWithCount, searchPublicCategories, addToFavorites, removeFromFavorites, getFavorites, getRandomBrailleData, deleteCategory, updateCategory, getCategoryBrailleData, updateCategoryBrailleData } = require('../controllers/dataController');
 
 // Apply auth middleware to all routes in this router
 router.use(authMiddleware);
@@ -15,6 +15,10 @@ router.get('/stats', getStats);
 // Category routes
 router.get('/categories/my', getMyCategoriesWithCount);
 router.get('/categories/search', searchPublicCategories);
+router.delete('/categories/:categoryId', deleteCategory);
+router.put('/categories/:categoryId', updateCategory);
+router.get('/categories/:categoryId/braille-data', getCategoryBrailleData);
+router.put('/categories/:categoryId/braille-data', updateCategoryBrailleData);
 
 // Favorites routes
 router.post('/favorites', addToFavorites);
