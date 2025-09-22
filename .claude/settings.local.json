@@ -11,7 +11,8 @@
       "Bash(sqlite3:*)",
       "Read(//Users/maccrey/Development/**)",
       "Bash(git push:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

@@ -81,6 +81,7 @@ class BraillePractice {
             this.displayCharacter();
             this.createBrailleBlocks();
             this.updateProgress(`문자: ${this.currentChar}`);
+            this.updateBlockProgress();
 
         } catch (error) {
             console.error('Error loading character:', error);
@@ -112,6 +113,7 @@ class BraillePractice {
         const block = document.createElement('div');
         block.className = 'braille-block';
         block.dataset.blockIndex = blockIndex;
+        block.dataset.blockNumber = blockIndex + 1; // For CSS pseudo-element
 
         // Create 6 dots in standard braille layout
         for (let i = 1; i <= 6; i++) {
@@ -346,12 +348,17 @@ class BraillePractice {
 
         // Update hint highlighting for next block
         this.updateHintHighlighting();
+        this.updateBlockProgress();
 
         if (this.currentBlockIndex >= this.currentBraillePattern.length) {
-            // Character complete - auto progress after delay
+            // Character complete - show completion message
+            this.updateProgress(`✅ "${this.currentChar}" 완성! 다음 문자로 넘어갑니다...`);
             setTimeout(() => {
                 this.loadNextCharacter();
-            }, 1000);
+            }, 1500);
+        } else {
+            // Move to next block
+            this.updateProgress(`다음 블록을 입력하세요 (${this.currentBlockIndex + 1}/${this.currentBraillePattern.length})`);
         }
     }
 
@@ -380,6 +387,7 @@ class BraillePractice {
         this.pressedDots.clear();
         this.dotInputOrder = [];
         this.updateProgress(`문자: ${this.currentChar}`);
+        this.updateBlockProgress();
     }
 
     // Reset all validation states
@@ -396,6 +404,36 @@ class BraillePractice {
     updateProgress(message) {
         const progressEl = document.getElementById('progress-indicator');
         progressEl.textContent = message;
+    }
+
+    updateBlockProgress() {
+        if (!this.currentBraillePattern || this.currentBraillePattern.length <= 1) {
+            // Single block - no need to show block progress
+            return;
+        }
+
+        // Update block indicators/highlighting
+        const allBlocks = document.querySelectorAll('.braille-block');
+        allBlocks.forEach((block, index) => {
+            block.classList.remove('current-block', 'completed-block', 'pending-block');
+
+            if (index < this.currentBlockIndex) {
+                block.classList.add('completed-block');
+            } else if (index === this.currentBlockIndex) {
+                block.classList.add('current-block');
+            } else {
+                block.classList.add('pending-block');
+            }
+        });
+
+        // Update progress text for multi-block characters
+        if (this.currentBlockIndex < this.currentBraillePattern.length) {
+            const blockText = `블록 ${this.currentBlockIndex + 1}/${this.currentBraillePattern.length}`;
+            const currentProgress = document.getElementById('progress-indicator').textContent;
+            if (!currentProgress.includes('✅') && !currentProgress.includes('틀렸습니다')) {
+                this.updateProgress(`문자: ${this.currentChar} - ${blockText}`);
+            }
+        }
     }
 
     showError(message) {

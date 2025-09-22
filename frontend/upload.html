@@ -78,6 +78,72 @@
             min-height: 80px;
         }
 
+        .example-download-area {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .example-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .example-icon {
+            font-size: 2rem;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .example-text {
+            flex: 1;
+        }
+
+        .example-text strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .example-text p {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .btn-download-example {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn-download-example:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-download-example:active {
+            transform: translateY(0);
+        }
+
+        .btn-download-example:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         .file-upload-area {
             border: 2px dashed #e1e5e9;
             border-radius: 5px;
@@ -235,6 +301,23 @@
             transition: width 0.3s ease;
         }
 
+        @media (max-width: 768px) {
+            .example-info {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .example-text {
+                text-align: center;
+            }
+
+            .btn-download-example {
+                width: 100%;
+                padding: 1rem;
+            }
+        }
+
         @media (max-width: 480px) {
             .upload-container {
                 margin: 1rem;
@@ -243,6 +326,14 @@
 
             .file-upload-area {
                 padding: 1.5rem;
+            }
+
+            .example-download-area {
+                padding: 1rem;
+            }
+
+            .example-icon {
+                font-size: 1.5rem;
             }
         }
     </style>
@@ -281,6 +372,21 @@
 
             <div class="form-group">
                 <label>Excel 파일 업로드 *</label>
+
+                <!-- 예제 파일 다운로드 영역 -->
+                <div class="example-download-area">
+                    <div class="example-info">
+                        <div class="example-icon">📊</div>
+                        <div class="example-text">
+                            <strong>Excel 파일 형식이 궁금하신가요?</strong>
+                            <p>예제 파일을 다운로드하여 올바른 형식을 확인해보세요</p>
+                        </div>
+                        <button type="button" class="btn-download-example" id="download-example-btn">
+                            예제 파일 다운로드
+                        </button>
+                    </div>
+                </div>
+
                 <div class="file-upload-area" id="file-upload-area">
                     <div class="file-upload-icon">📁</div>
                     <div class="file-upload-text">파일을 드래그하여 놓거나 클릭하여 선택하세요</div>

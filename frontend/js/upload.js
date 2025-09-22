@@ -19,8 +19,56 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingIndicator = document.getElementById('loading');
     const progressBar = document.getElementById('progress-bar');
     const progressFill = document.getElementById('progress-fill');
+    const downloadExampleBtn = document.getElementById('download-example-btn');
 
     let selectedFile = null;
+
+    // Download example file functionality
+    downloadExampleBtn.addEventListener('click', async function() {
+        try {
+            // Show loading state
+            downloadExampleBtn.disabled = true;
+            downloadExampleBtn.textContent = '다운로드 중...';
+
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showError('로그인이 필요합니다.');
+                return;
+            }
+
+            const response = await fetch(`${API_BASE_URL}/protected/download-example`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('파일 다운로드에 실패했습니다.');
+            }
+
+            // Create blob and download link
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'braille-example.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            showSuccess('예제 파일이 다운로드되었습니다!');
+
+        } catch (error) {
+            console.error('Download error:', error);
+            showError('파일 다운로드 중 오류가 발생했습니다: ' + error.message);
+        } finally {
+            // Reset button state
+            downloadExampleBtn.disabled = false;
+            downloadExampleBtn.textContent = '예제 파일 다운로드';
+        }
+    });
 
     // File upload area interactions
     fileUploadArea.addEventListener('click', () => {

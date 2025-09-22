@@ -3,6 +3,7 @@ const xlsx = require('xlsx');
 const path = require('path');
 const fs = require('fs');
 const { getDb } = require('../config/database');
+const { createExampleFile } = require('../scripts/create-example-file');
 
 // Configure multer for file upload
 const storage = multer.memoryStorage();
@@ -267,7 +268,53 @@ function insertBrailleData(categoryId, brailleEntries) {
   });
 }
 
+// Download example file function
+const downloadExampleFile = async (req, res) => {
+  try {
+    const uploadsDir = path.join(__dirname, '..', 'uploads');
+    const exampleFilePath = path.join(uploadsDir, 'braille-example.xlsx');
+
+    // Check if example file exists, if not create it
+    if (!fs.existsSync(exampleFilePath)) {
+      console.log('Example file not found, creating new one...');
+      await createExampleFile();
+    }
+
+    // Check file exists after creation
+    if (!fs.existsSync(exampleFilePath)) {
+      return res.status(404).json({ error: 'Example file not found' });
+    }
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="braille-example.xlsx"');
+    res.setHeader('Content-Length', fs.statSync(exampleFilePath).size);
+
+    // Stream the file to the response
+    const fileStream = fs.createReadStream(exampleFilePath);
+    fileStream.pipe(res);
+
+    fileStream.on('error', (error) => {
+      console.error('File stream error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Error downloading file' });
+      }
+    });
+
+    fileStream.on('end', () => {
+      console.log('Example file downloaded successfully');
+    });
+
+  } catch (error) {
+    console.error('Download error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal server error during file download' });
+    }
+  }
+};
+
 module.exports = {
   upload: upload.single('file'),
-  uploadFile
+  uploadFile,
+  downloadExampleFile
 };

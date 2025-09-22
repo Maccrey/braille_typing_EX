@@ -78,6 +78,56 @@
             background: white;
             width: 80px;
             height: 120px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .braille-block.current-block {
+            border-color: #667eea;
+            background: #f0f4ff;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            transform: scale(1.05);
+        }
+
+        .braille-block.completed-block {
+            border-color: #28a745;
+            background: #d4edda;
+            opacity: 0.8;
+        }
+
+        .braille-block.pending-block {
+            border-color: #ccc;
+            background: #f8f9fa;
+            opacity: 0.6;
+        }
+
+        .braille-block::before {
+            content: attr(data-block-number);
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #667eea;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .braille-block.current-block::before,
+        .braille-block.completed-block::before,
+        .braille-block.pending-block::before {
+            display: block;
+        }
+
+        .braille-block.completed-block::before {
+            background: #28a745;
+        }
+
+        .braille-block.pending-block::before {
+            background: #ccc;
         }
 
         .dot {
