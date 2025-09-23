@@ -498,7 +498,7 @@ const getCategoryBrailleData = async (req, res) => {
     // Get braille data
     const brailleData = await new Promise((resolve, reject) => {
       const query = `
-        SELECT id, character, braille_pattern
+        SELECT id, character, braille_pattern, description
         FROM braille_data
         WHERE category_id = ?
         ORDER BY id ASC
@@ -516,7 +516,8 @@ const getCategoryBrailleData = async (req, res) => {
     const parsedData = brailleData.map(item => ({
       id: item.id,
       character: item.character,
-      braille_pattern: JSON.parse(item.braille_pattern)
+      braille_pattern: JSON.parse(item.braille_pattern),
+      description: item.description || ''
     }));
 
     res.status(200).json({

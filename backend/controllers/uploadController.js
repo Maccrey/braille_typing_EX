@@ -50,6 +50,9 @@ const uploadFile = async (req, res) => {
     // Validate required fields
     const { categoryName, description, isPublic } = req.body;
 
+    console.log('Request body:', req.body);
+    console.log('Category description:', description);
+
     if (!categoryName || categoryName.trim() === '') {
       return res.status(400).json({ error: 'Category name is required' });
     }

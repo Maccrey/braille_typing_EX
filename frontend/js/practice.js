@@ -10,6 +10,7 @@ class BraillePractice {
         this.dotInputOrder = []; // Track order of dot inputs for backspace
         this.categoryId = null;
         this.showHints = false;
+        this.ttsEnabled = false;
 
         // Practice session tracking
         this.sessionStartTime = null;
@@ -31,13 +32,14 @@ class BraillePractice {
 
         // Get category ID from URL params or use default
         const urlParams = new URLSearchParams(window.location.search);
-        this.categoryId = urlParams.get('category') || 5; // Default to public category 5
+        this.categoryId = urlParams.get('categoryId') || 5; // Default to public category 5
     }
 
     bindEvents() {
         // Control buttons
         document.getElementById('next-btn').addEventListener('click', () => this.loadNextCharacter());
         document.getElementById('hint-btn').addEventListener('click', () => this.toggleHint());
+        document.getElementById('tts-toggle').addEventListener('change', (e) => this.toggleTTS(e.target.checked));
         document.getElementById('back-btn').addEventListener('click', () => {
             window.location.href = 'main.html';
         });
@@ -48,6 +50,7 @@ class BraillePractice {
         // Ensure the page has focus for keyboard events
         window.addEventListener('load', () => {
             document.body.focus();
+            this.initializeTTS();
         });
 
         // Also set focus when user clicks anywhere on the page
@@ -105,7 +108,7 @@ class BraillePractice {
             this.resetValidationState();
 
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3000/api/protected/braille/${this.categoryId}/random`, {
+            const response = await fetch(`http://localhost:4000/api/protected/braille/${this.categoryId}/random`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -146,7 +149,75 @@ class BraillePractice {
         const descriptionEl = document.getElementById('character-description');
         if (descriptionEl) {
             descriptionEl.textContent = this.currentCharDescription || '';
+
+            // Read description with TTS if enabled
+            if (this.ttsEnabled && this.currentCharDescription) {
+                this.speakText(this.currentCharDescription);
+            }
         }
+    }
+
+    toggleTTS(enabled) {
+        this.ttsEnabled = enabled;
+        console.log('TTS', enabled ? 'enabled' : 'disabled');
+
+        if (enabled) {
+            // Test TTS with current character if available
+            if (this.currentCharDescription) {
+                this.speakText(`음성 읽기가 활성화되었습니다. ${this.currentCharDescription}`);
+            } else {
+                this.speakText('음성 읽기가 활성화되었습니다.');
+            }
+        } else {
+            // Stop any ongoing speech
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        }
+    }
+
+    initializeTTS() {
+        if ('speechSynthesis' in window) {
+            // Load voices
+            const loadVoices = () => {
+                const voices = window.speechSynthesis.getVoices();
+                console.log('Available TTS voices:', voices.map(v => `${v.name} (${v.lang})`));
+            };
+
+            if (window.speechSynthesis.getVoices().length > 0) {
+                loadVoices();
+            } else {
+                window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+            }
+        }
+    }
+
+    speakText(text) {
+        if (!this.ttsEnabled || !('speechSynthesis' in window)) {
+            return;
+        }
+
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+
+        // Set Korean voice if available
+        const voices = window.speechSynthesis.getVoices();
+        const koreanVoice = voices.find(voice =>
+            voice.lang.includes('ko') || voice.name.includes('Korean')
+        );
+
+        if (koreanVoice) {
+            utterance.voice = koreanVoice;
+        }
+
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.8; // Slightly slower for better comprehension
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        window.speechSynthesis.speak(utterance);
     }
 
     createBrailleBlocks() {
@@ -474,6 +545,11 @@ class BraillePractice {
 
             this.updateProgress(`✅ "${this.currentChar}" 완성! 다음 문자로 넘어갑니다...`);
 
+            // TTS notification for completion
+            if (this.ttsEnabled) {
+                this.speakText(`${this.currentChar} 완성되었습니다!`);
+            }
+
             // Record practice session every 5 characters or after significant time
             this.checkAndRecordSession();
 
@@ -561,7 +637,7 @@ class BraillePractice {
                 newSessionStartTime: currentTime
             });
 
-            const response = await fetch('http://localhost:3000/api/protected/practice/log', {
+            const response = await fetch('http://localhost:4000/api/protected/practice/log', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

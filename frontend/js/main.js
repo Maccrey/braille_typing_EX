@@ -73,7 +73,7 @@ class MainMenu {
                 return;
             }
 
-            const response = await fetch('http://localhost:3000/api/protected/categories/my', {
+            const response = await fetch('http://localhost:4000/api/protected/categories/my', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -104,7 +104,7 @@ class MainMenu {
     async loadFavorites() {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch('http://localhost:3000/api/protected/favorites', {
+            const response = await fetch('http://localhost:4000/api/protected/favorites', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -126,7 +126,7 @@ class MainMenu {
     async performSearch(query) {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3000/api/protected/categories/search?q=${encodeURIComponent(query || '')}`, {
+            const response = await fetch(`http://localhost:4000/api/protected/categories/search?q=${encodeURIComponent(query || '')}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -148,7 +148,7 @@ class MainMenu {
     async loadAllPublicCategories() {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3000/api/protected/categories/search?q=`, {
+            const response = await fetch(`http://localhost:4000/api/protected/categories/search?q=`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -179,7 +179,7 @@ class MainMenu {
         try {
             const token = localStorage.getItem('authToken');
             console.log('🔄 Loading user stats from API...');
-            const response = await fetch('http://localhost:3000/api/profile/stats', {
+            const response = await fetch('http://localhost:4000/api/profile/stats', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -328,7 +328,7 @@ class MainMenu {
     async toggleFavorite(categoryId) {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch('http://localhost:3000/api/protected/favorites', {
+            const response = await fetch('http://localhost:4000/api/protected/favorites', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -400,7 +400,7 @@ class MainMenu {
         try {
             const token = localStorage.getItem('authToken');
             console.log('🔄 Loading user stats for attendance...');
-            const response = await fetch('http://localhost:3000/api/profile/stats', {
+            const response = await fetch('http://localhost:4000/api/profile/stats', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -422,7 +422,7 @@ class MainMenu {
     async loadMonthlyAttendance(month) {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3000/api/profile/attendance?month=${month}`, {
+            const response = await fetch(`http://localhost:4000/api/profile/attendance?month=${month}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -724,7 +724,7 @@ class MainMenu {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3000/api/protected/categories/${categoryId}`, {
+            const response = await fetch(`http://localhost:4000/api/protected/categories/${categoryId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -813,7 +813,7 @@ class MainMenu {
     async loadBrailleDataForEdit(categoryId) {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3000/api/protected/categories/${categoryId}/braille-data`, {
+            const response = await fetch(`http://localhost:4000/api/protected/categories/${categoryId}/braille-data`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -974,7 +974,7 @@ class MainMenu {
             const token = localStorage.getItem('authToken');
 
             // Update category information
-            const categoryResponse = await fetch(`http://localhost:3000/api/protected/categories/${this.currentEditingCategoryId}`, {
+            const categoryResponse = await fetch(`http://localhost:4000/api/protected/categories/${this.currentEditingCategoryId}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -994,7 +994,7 @@ class MainMenu {
 
             // Update braille data if available
             if (this.currentBrailleData && this.currentBrailleData.length > 0) {
-                const brailleResponse = await fetch(`http://localhost:3000/api/protected/categories/${this.currentEditingCategoryId}/braille-data`, {
+                const brailleResponse = await fetch(`http://localhost:4000/api/protected/categories/${this.currentEditingCategoryId}/braille-data`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`,
