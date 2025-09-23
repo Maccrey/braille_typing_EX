@@ -108,6 +108,16 @@ const uploadFile = async (req, res) => {
     }
     console.log('Header row validation passed:', headerRow);
 
+    // Find description column index by looking for "설명" in header row
+    let descriptionColumnIndex = -1;
+    for (let i = 0; i < headerRow.length; i++) {
+      if (headerRow[i] && headerRow[i].toString().trim() === '설명') {
+        descriptionColumnIndex = i;
+        break;
+      }
+    }
+    console.log('Description column found at index:', descriptionColumnIndex);
+
     // Parse braille data from Excel
     console.log('=== Starting braille data parsing ===');
     try {
@@ -134,12 +144,20 @@ const uploadFile = async (req, res) => {
 
       console.log(`Processing row ${i + 1}: character="${character}"`);
 
-      // Parse braille patterns from columns 1-2 (블록1, 블록2)
+      // Parse braille patterns from all columns except character column (index 0) and description column
       const brailleBlocks = [];
 
-      // Get description from column 3 (D column, index 3)
-      const description = row[3] ? row[3].toString().trim() : '';
-      for (let j = 1; j <= 2 && j < row.length; j++) {
+      // Get description from the found description column
+      const description = (descriptionColumnIndex >= 0 && row[descriptionColumnIndex])
+        ? row[descriptionColumnIndex].toString().trim()
+        : '';
+
+      // Process all columns that could contain braille patterns (skip column 0 which is character)
+      for (let j = 1; j < row.length; j++) {
+        // Skip description column if it exists
+        if (j === descriptionColumnIndex) {
+          continue;
+        }
         const cellValue = row[j];
         if (cellValue && cellValue.toString().trim() !== '') {
           console.log(`  Processing cell [${i + 1}, ${j + 1}]: "${cellValue}"`);

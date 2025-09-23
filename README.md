@@ -136,6 +136,128 @@ npx http-server -p 4000
 - **프론트엔드**: http://localhost:4000
 - **백엔드 API**: http://localhost:3000
 
+## 🌐 네트워크 서버 관리 (PM2)
+
+### PM2를 이용한 간편한 서버 관리
+
+PM2를 사용하여 서버를 백그라운드에서 실행하고 네트워크 상의 다른 디바이스에서도 접근할 수 있습니다.
+
+#### 사전 준비사항
+```bash
+# PM2 전역 설치
+npm install -g pm2
+```
+
+#### 서버 관리 명령어
+
+**📱 Linux/macOS 사용자**
+```bash
+# 서버 시작 (백엔드 + 프론트엔드)
+./scripts/server.sh start
+
+# 서버 상태 확인
+./scripts/server.sh status
+
+# 서버 중지
+./scripts/server.sh stop
+
+# 서버 재시작
+./scripts/server.sh restart
+
+# 실시간 로그 확인
+./scripts/server.sh logs
+
+# 도움말
+./scripts/server.sh help
+```
+
+**🖥️ Windows 사용자**
+```bash
+# 서버 시작 (백엔드 + 프론트엔드)
+scripts\server.bat start
+
+# 서버 상태 확인
+scripts\server.bat status
+
+# 서버 중지
+scripts\server.bat stop
+
+# 서버 재시작
+scripts\server.bat restart
+
+# 실시간 로그 확인
+scripts\server.bat logs
+```
+
+#### 네트워크 접근 방법
+
+서버 시작 후 다음 URL들로 접근할 수 있습니다:
+
+**로컬 접근 (같은 컴퓨터)**
+- 프론트엔드: http://localhost:8080
+- 백엔드 API: http://localhost:4000
+
+**네트워크 접근 (같은 WiFi/LAN의 다른 디바이스)**
+- 프론트엔드: http://[서버IP]:8080
+- 백엔드 API: http://[서버IP]:4000
+
+**서버 IP 확인 방법:**
+- 서버 시작 시 자동으로 표시됩니다
+- Windows: `ipconfig`
+- macOS/Linux: `ifconfig` 또는 `hostname -I`
+
+#### 방화벽 설정
+
+네트워크 접근을 위해 방화벽에서 다음 포트를 허용해야 합니다:
+- **포트 4000**: 백엔드 API
+- **포트 8080**: 프론트엔드 웹 서버
+
+**Windows 방화벽**
+1. Windows Defender 방화벽 → 고급 설정
+2. 인바운드 규칙 → 새 규칙
+3. 포트 → TCP → 특정 로컬 포트: 4000, 8080
+
+**macOS 방화벽**
+```bash
+# 방화벽이 켜져 있다면 포트 허용
+sudo pfctl -f /etc/pf.conf
+```
+
+#### PM2 직접 명령어 (고급 사용자)
+
+```bash
+# 모든 프로세스 상태 확인
+pm2 list
+
+# 특정 프로세스 재시작
+pm2 restart braille-typing-backend
+pm2 restart braille-typing-frontend
+
+# 프로세스 삭제
+pm2 delete braille-typing-backend
+
+# 모든 PM2 프로세스 중지
+pm2 stop all
+
+# PM2 대시보드 (웹 모니터링)
+pm2 monit
+
+# 로그 실시간 모니터링
+pm2 logs --lines 50
+
+# 시스템 시작 시 자동 실행 설정
+pm2 startup
+pm2 save
+```
+
+#### 장점
+
+✅ **백그라운드 실행**: 터미널을 닫아도 서버가 계속 동작
+✅ **자동 재시작**: 크래시 시 자동으로 서버 재시작
+✅ **네트워크 접근**: 같은 네트워크의 모든 디바이스에서 접근 가능
+✅ **로그 관리**: 체계적인 로그 수집 및 모니터링
+✅ **리소스 모니터링**: CPU, 메모리 사용량 실시간 확인
+
 ## 🚀 배포 가이드
 
 ### 배포 옵션 비교
