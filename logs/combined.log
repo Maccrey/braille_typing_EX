@@ -2166,3 +2166,59 @@
 2025-09-23 15:02:10 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
 2025-09-23 15:02:10 +09:00: Connected to SQLite database
 2025-09-23 15:02:10 +09:00: Connected to SQLite database
+2025-09-23 15:36:44 +09:00: 2025-09-23T06:36:44.975Z - GET /api/protected/categories/my
+2025-09-23 15:36:44 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
+2025-09-23 15:36:44 +09:00: Connected to SQLite database
+2025-09-23 15:36:44 +09:00: Connected to SQLite database
+2025-09-23 15:36:45 +09:00: 2025-09-23T06:36:45.060Z - GET /api/profile/stats
+2025-09-23 15:36:45 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
+2025-09-23 15:36:45 +09:00: Connected to SQLite database
+2025-09-23 15:36:45 +09:00: Connected to SQLite database
+2025-09-23 16:00:01 +09:00: 🚀 Server running on http://0.0.0.0:4000
+2025-09-23 16:00:01 +09:00: 📝 Environment: development
+2025-09-23 16:00:01 +09:00: 🕐 Started at: 2025-09-23T07:00:01.565Z
+2025-09-23 16:00:01 +09:00: 📊 Health check: http://0.0.0.0:4000/api/health
+2025-09-23 16:00:24 +09:00: 2025-09-23T07:00:24.017Z - GET /api/protected/categories/my
+2025-09-23 16:00:24 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
+2025-09-23 16:00:24 +09:00: Connected to SQLite database
+2025-09-23 16:00:24 +09:00: Connected to SQLite database
+2025-09-23 16:00:24 +09:00: 2025-09-23T07:00:24.048Z - GET /api/profile/stats
+2025-09-23 16:00:24 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
+2025-09-23 16:00:24 +09:00: Connected to SQLite database
+2025-09-23 16:00:24 +09:00: Connected to SQLite database
+2025-09-23 16:18:37 +09:00: 2025-09-23T07:18:37.580Z - GET /api/protected/categories/my
+2025-09-23 16:18:37 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
+2025-09-23 16:18:37 +09:00: Connected to SQLite database
+2025-09-23 16:18:37 +09:00: Connected to SQLite database
+2025-09-23 16:18:37 +09:00: 2025-09-23T07:18:37.685Z - GET /api/profile/stats
+2025-09-23 16:18:37 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
+2025-09-23 16:18:37 +09:00: Connected to SQLite database
+2025-09-23 16:18:37 +09:00: Connected to SQLite database
+2025-09-23 16:19:38 +09:00: 2025-09-23T07:19:38.664Z - GET /api/protected/categories/my
+2025-09-23 16:19:38 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
+2025-09-23 16:19:38 +09:00: Connected to SQLite database
+2025-09-23 16:19:38 +09:00: Connected to SQLite database
+2025-09-23 16:19:38 +09:00: 2025-09-23T07:19:38.765Z - GET /api/profile/stats
+2025-09-23 16:19:38 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
+2025-09-23 16:19:38 +09:00: Connected to SQLite database
+2025-09-23 16:19:38 +09:00: Connected to SQLite database
+2025-09-23 16:22:37 +09:00: 2025-09-23T07:22:37.830Z - GET /api/protected/categories/my
+2025-09-23 16:22:37 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
+2025-09-23 16:22:37 +09:00: Connected to SQLite database
+2025-09-23 16:22:37 +09:00: Connected to SQLite database
+2025-09-23 16:22:37 +09:00: 2025-09-23T07:22:37.932Z - GET /api/profile/stats
+2025-09-23 16:22:37 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
+2025-09-23 16:22:37 +09:00: Connected to SQLite database
+2025-09-23 16:22:37 +09:00: Connected to SQLite database
+2025-09-23 16:36:53 +09:00: 2025-09-23T07:36:53.409Z - GET /api/protected/categories/my
+2025-09-23 16:36:53 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
+2025-09-23 16:36:53 +09:00: Connected to SQLite database
+2025-09-23 16:36:53 +09:00: Connected to SQLite database
+2025-09-23 16:36:53 +09:00: 2025-09-23T07:36:53.517Z - GET /api/profile/stats
+2025-09-23 16:36:53 +09:00:   Authorization: Bearer eyJhbGciOiJIU...
+2025-09-23 16:36:53 +09:00: Connected to SQLite database
+2025-09-23 16:36:53 +09:00: Connected to SQLite database
+2025-09-24 09:12:44 +09:00: 🚀 Server running on http://0.0.0.0:4000
+2025-09-24 09:12:44 +09:00: 📝 Environment: development
+2025-09-24 09:12:44 +09:00: 🕐 Started at: 2025-09-24T00:12:44.536Z
+2025-09-24 09:12:44 +09:00: 📊 Health check: http://0.0.0.0:4000/api/health

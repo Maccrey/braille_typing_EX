@@ -108,7 +108,7 @@ class BraillePractice {
             this.resetValidationState();
 
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:4000/api/protected/braille/${this.categoryId}/random`, {
+            const response = await fetch(`http://localhost:3001/api/protected/braille/${this.categoryId}/random`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -637,7 +637,7 @@ class BraillePractice {
                 newSessionStartTime: currentTime
             });
 
-            const response = await fetch('http://localhost:4000/api/protected/practice/log', {
+            const response = await fetch('http://localhost:3001/api/protected/practice/log', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

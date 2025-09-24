@@ -75,13 +75,44 @@ const createTables = () => {
       )
     `;
 
+    // Posts table
+    const createPostsTable = `
+      CREATE TABLE IF NOT EXISTS posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        author_id INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (author_id) REFERENCES users(id)
+      )
+    `;
+
+    // Comments table
+    const createCommentsTable = `
+      CREATE TABLE IF NOT EXISTS comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_id INTEGER NOT NULL,
+        parent_comment_id INTEGER,
+        content TEXT NOT NULL,
+        author_id INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+        FOREIGN KEY (parent_comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+        FOREIGN KEY (author_id) REFERENCES users(id)
+      )
+    `;
+
     const tables = [
       { name: 'Users', sql: createUsersTable },
       { name: 'Categories', sql: createCategoriesTable },
       { name: 'BrailleData', sql: createBrailleDataTable },
       { name: 'PracticeLogs', sql: createPracticeLogsTable },
       { name: 'Attendance', sql: createAttendanceTable },
-      { name: 'Favorites', sql: createFavoritesTable }
+      { name: 'Favorites', sql: createFavoritesTable },
+      { name: 'Posts', sql: createPostsTable },
+      { name: 'Comments', sql: createCommentsTable }
     ];
 
     let completed = 0;

@@ -53,9 +53,20 @@ const signup = async (req, res) => {
       );
     });
 
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: userId, username: username },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
     res.status(201).json({
       message: 'User created successfully',
-      userId: userId
+      token: token,
+      user: {
+        id: userId,
+        username: username
+      }
     });
 
   } catch (error) {

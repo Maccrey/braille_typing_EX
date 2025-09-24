@@ -20,7 +20,11 @@
       "Bash(npm start)",
       "Bash(pkill:*)",
       "Bash(npx http-server:*)",
-      "Bash(PORT=4000 node server.js)"
+      "Bash(PORT=4000 node server.js)",
+      "Bash(PORT=4000 node backend/app.js)",
+      "Bash(PORT=4000 node app.js)",
+      "Bash(PORT=3001 node server.js)",
+      "Bash(PORT=3001 node app.js)"
     ],
     "deny": [],
     "ask": []

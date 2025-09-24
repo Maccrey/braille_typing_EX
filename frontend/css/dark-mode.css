@@ -581,6 +581,115 @@ button {
   background: var(--bg-gradient) !important;
 }
 
+/* Community tab specific dark mode styles */
+[data-theme="dark"] .community-header {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .community-title h2 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .community-title p {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .post-form {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .post-item {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .post-item:hover {
+  background: var(--hover-bg) !important;
+}
+
+[data-theme="dark"] .post-header {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .post-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .post-content {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .post-meta {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .post-actions {
+  background: transparent !important;
+}
+
+[data-theme="dark"] .comment-item {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .comment-header {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .comment-content {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .comment-item.editing {
+  background: var(--hover-bg) !important;
+  border-color: var(--border-hover) !important;
+}
+
+[data-theme="dark"] .comment-edit-input {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .comment-edit-input:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
+[data-theme="dark"] .reply-form {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .replies {
+  background: transparent !important;
+  border-left-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .no-posts,
+[data-theme="dark"] .no-comments {
+  background: var(--bg-secondary) !important;
+  color: var(--text-muted) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .post-form-title,
+[data-theme="dark"] .post-form-content {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .post-form-title:focus,
+[data-theme="dark"] .post-form-content:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
 /* Animation for theme transition */
 * {
   transition: background-color 0.3s ease, border-color 0.3s ease,
