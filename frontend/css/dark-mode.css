@@ -660,6 +660,22 @@ button {
   box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
 }
 
+[data-theme="dark"] .comment-form {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .comment-input {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .comment-input:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
 [data-theme="dark"] .reply-form {
   background: var(--bg-secondary) !important;
   border-color: var(--border-color) !important;
@@ -686,6 +702,77 @@ button {
 
 [data-theme="dark"] .post-form-title:focus,
 [data-theme="dark"] .post-form-content:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
+/* Modal dark mode styles */
+[data-theme="dark"] .modal {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+[data-theme="dark"] .modal-content {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="dark"] .modal-header {
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .modal-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .close {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .close:hover {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .modal-actions {
+  background: var(--bg-primary) !important;
+  border-top-color: var(--border-color) !important;
+}
+
+/* Modal body content */
+[data-theme="dark"] .modal-body {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .modal-body .post-detail-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .modal-body .post-detail-content {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .modal-body .post-detail-meta {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .modal-body .comments-section {
+  background: transparent !important;
+}
+
+[data-theme="dark"] .modal-body .comment-form {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .modal-body .comment-input {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .modal-body .comment-input:focus {
   border-color: #667eea !important;
   box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
 }
