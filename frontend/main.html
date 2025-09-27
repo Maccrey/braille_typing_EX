@@ -1530,8 +1530,30 @@
             }
 
             .calendar-header {
-                flex-direction: column;
-                gap: 15px;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+                padding: 10px 0;
+            }
+
+            #current-month {
+                font-size: 1.1rem;
+                min-width: 0;
+                flex: 1;
+                text-align: left;
+            }
+
+            .month-nav {
+                flex-shrink: 0;
+                gap: 8px;
+            }
+
+            .month-nav button {
+                width: 35px;
+                height: 35px;
+                font-size: 1.1rem;
             }
 
             .date-cell {
@@ -1561,6 +1583,55 @@
             .modal-actions {
                 flex-direction: column;
                 gap: 10px;
+            }
+
+            /* Attendance controls mobile styles */
+            #attendance-controls {
+                padding: 20px;
+                margin: 15px 0;
+            }
+
+            .attendance-status {
+                flex-direction: column;
+                gap: 20px;
+                align-items: stretch;
+            }
+
+            #today-status h3 {
+                font-size: 1.1em;
+                margin-bottom: 8px;
+            }
+
+            .work-time-info {
+                margin-bottom: 12px;
+                padding: 8px 12px;
+            }
+
+            .work-time-info small {
+                font-size: 0.8em;
+            }
+
+            #attendance-info {
+                gap: 6px;
+            }
+
+            .status-item {
+                min-width: auto;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+
+            .attendance-buttons {
+                flex-direction: row;
+                gap: 10px;
+                justify-content: center;
+            }
+
+            .checkin-btn, .checkout-btn {
+                padding: 10px 16px;
+                font-size: 0.9em;
+                min-width: 100px;
+                flex: 1;
             }
         }
     </style>
