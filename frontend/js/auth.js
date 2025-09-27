@@ -1,13 +1,15 @@
 // Authentication JavaScript for login functionality
 
-// API base URL - adjust based on your backend setup
-const API_BASE_URL = 'http://localhost:4000/api';
+// API base URL - use relative paths for production
+const API_BASE_URL = '/api';
 
 // DOM elements
 const loginForm = document.getElementById('login-form');
 const errorMessage = document.getElementById('error-message');
 const loadingIndicator = document.getElementById('loading');
 const loginButton = document.getElementById('login-button');
+const passwordInput = document.getElementById('password');
+const passwordToggle = document.getElementById('password-toggle');
 
 // Utility functions
 function showError(message) {
@@ -91,6 +93,18 @@ async function handleLogin(username, password) {
     }
 }
 
+// Password toggle functionality
+function togglePassword() {
+    if (passwordInput && passwordToggle) {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+
+        // Update icon
+        passwordToggle.textContent = type === 'password' ? '👁️' : '🙈';
+        passwordToggle.title = type === 'password' ? '비밀번호 보기' : '비밀번호 숨기기';
+    }
+}
+
 // Form submission handler
 function handleFormSubmit(event) {
     event.preventDefault();
@@ -122,6 +136,11 @@ function initializePage() {
     // Add form submission handler
     if (loginForm) {
         loginForm.addEventListener('submit', handleFormSubmit);
+    }
+
+    // Set up password toggle event listener
+    if (passwordToggle) {
+        passwordToggle.addEventListener('click', togglePassword);
     }
 
     // Focus on username input

@@ -71,6 +71,35 @@
             border-color: #667eea;
         }
 
+        .password-input-container {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: #333;
+        }
+
+        .password-input-container input {
+            padding-right: 45px;
+        }
+
         .submit-button {
             width: 100%;
             padding: 0.8rem;
@@ -159,12 +188,17 @@
 
             <div class="form-group">
                 <label for="password">비밀번호</label>
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="비밀번호를 입력하세요"
-                >
+                <div class="password-input-container">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="비밀번호를 입력하세요"
+                    >
+                    <button type="button" class="password-toggle" id="password-toggle" title="비밀번호 보기/숨기기">
+                        👁️
+                    </button>
+                </div>
             </div>
 
             <button type="submit" class="submit-button" id="login-button">

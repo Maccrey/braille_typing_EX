@@ -28,7 +28,8 @@
       "Bash(PORT=3001 node /Users/maccrey/Development/braille_typing_EX/backend/server.js)",
       "Bash(PORT=3001 node backend/server.js)",
       "Bash(grep:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
