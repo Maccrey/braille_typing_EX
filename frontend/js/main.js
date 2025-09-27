@@ -458,6 +458,15 @@ class MainMenu {
         const noRankingMessage = document.getElementById('no-ranking-message');
         const rankingTitle = document.getElementById('ranking-title');
 
+        // Always update title with date if available
+        if (this.dailyRanking && this.dailyRanking.date) {
+            const dateStr = new Date(this.dailyRanking.date).toLocaleDateString('ko-KR', {
+                month: 'long',
+                day: 'numeric'
+            });
+            rankingTitle.textContent = `${dateStr} 사용자 랭킹`;
+        }
+
         if (!this.dailyRanking || this.dailyRanking.ranking.length === 0) {
             rankingList.style.display = 'none';
             noRankingMessage.style.display = 'block';
@@ -466,13 +475,6 @@ class MainMenu {
 
         noRankingMessage.style.display = 'none';
         rankingList.style.display = 'block';
-
-        // Update title with date
-        const dateStr = new Date(this.dailyRanking.date).toLocaleDateString('ko-KR', {
-            month: 'long',
-            day: 'numeric'
-        });
-        rankingTitle.textContent = `${dateStr} 사용자 랭킹`;
 
         // Generate ranking HTML
         rankingList.innerHTML = this.dailyRanking.ranking.map(user => {

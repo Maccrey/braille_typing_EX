@@ -764,10 +764,11 @@
         /* Daily Ranking Styles */
         #daily-ranking-section {
             margin-top: 40px;
-            background: white;
+            background: var(--card-bg);
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px var(--shadow);
+            border: 1px solid var(--border-color);
         }
 
         #ranking-title {
@@ -788,20 +789,23 @@
             align-items: center;
             padding: 15px;
             margin-bottom: 10px;
-            background: #f8f9fa;
+            background: var(--bg-secondary);
             border-radius: 10px;
             transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
         }
 
         .ranking-item:hover {
-            background: #e9ecef;
+            background: var(--hover-bg);
             transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow-hover);
         }
 
         .ranking-item.top-3 {
             background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
             color: #333;
             font-weight: 600;
+            border-color: #ffd700;
         }
 
         .ranking-item.rank-1 {
@@ -814,6 +818,19 @@
 
         .ranking-item.rank-3 {
             background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%);
+        }
+
+        /* Dark mode medal backgrounds */
+        [data-theme="dark"] .ranking-item.rank-1 {
+            background: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
+        }
+
+        [data-theme="dark"] .ranking-item.rank-2 {
+            background: linear-gradient(135deg, #708090 0%, #9ca3af 100%);
+        }
+
+        [data-theme="dark"] .ranking-item.rank-3 {
+            background: linear-gradient(135deg, #8b4513 0%, #cd853f 100%);
         }
 
         .rank-number {
@@ -856,13 +873,15 @@
         .ranking-username {
             font-size: 1.1rem;
             font-weight: 600;
+            color: var(--text-primary);
         }
 
         .ranking-score {
             font-size: 1rem;
-            color: #666;
+            color: var(--text-secondary);
         }
 
+        .top-3 .ranking-username,
         .top-3 .ranking-score {
             color: #333;
             font-weight: 600;
@@ -871,16 +890,17 @@
         #ranking-loading {
             text-align: center;
             padding: 30px;
-            color: #666;
+            color: var(--text-secondary);
         }
 
         #no-ranking-message {
             text-align: center;
-            color: #999;
+            color: var(--text-muted);
             font-size: 1.1rem;
             padding: 40px;
-            background: #f8f9fa;
+            background: var(--bg-secondary);
             border-radius: 10px;
+            border: 1px solid var(--border-color);
         }
 
         /* Attendance Controls Styles */
