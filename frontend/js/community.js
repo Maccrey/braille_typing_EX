@@ -437,7 +437,7 @@ class CommunityManager {
                 </div>
             </div>
 
-            <div class="post-detail-body">${this.escapeHtml(post.content)}</div>
+            <div class="post-detail-body">${this.escapeHtmlWithLineBreaks(post.content)}</div>
 
             <div class="comments-section">
                 <div class="comments-header">
@@ -488,7 +488,7 @@ class CommunityManager {
                         <span class="comment-author">${this.escapeHtml(comment.author_name)}</span>
                         <span class="comment-date">${createdDate} ${createdTime}</span>
                     </div>
-                    <div class="comment-content">${this.escapeHtml(comment.content)}</div>
+                    <div class="comment-content">${this.escapeHtmlWithLineBreaks(comment.content)}</div>
                     <div class="comment-actions-bar">
                         <button class="comment-action-btn" onclick="communityManager.showReplyForm(${comment.id})">답글</button>
                         ${ownerButtons}
@@ -556,7 +556,7 @@ class CommunityManager {
                     <span class="comment-author">${this.escapeHtml(comment.author_name)}</span>
                     <span class="comment-date">${createdDate} ${createdTime}</span>
                 </div>
-                <div class="comment-content">${this.escapeHtml(comment.content)}</div>
+                <div class="comment-content">${this.escapeHtmlWithLineBreaks(comment.content)}</div>
                 <div class="comment-actions-bar">
                     <button class="comment-action-btn" onclick="communityManager.showReplyForm(${comment.id})">답글</button>
                     ${ownerButtons}
@@ -843,7 +843,7 @@ class CommunityManager {
             const contentElement = commentElement.querySelector('.comment-content');
             const actionsBar = commentElement.querySelector('.comment-actions-bar');
 
-            contentElement.textContent = newContent;
+            contentElement.innerHTML = this.escapeHtmlWithLineBreaks(newContent);
 
             // 수정 모드 클래스 제거
             commentElement.classList.remove('editing');
@@ -897,6 +897,12 @@ class CommunityManager {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    escapeHtmlWithLineBreaks(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML.replace(/\n/g, '<br>');
     }
 
     showError(message) {
