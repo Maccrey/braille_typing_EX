@@ -155,7 +155,7 @@ class CommunityManager {
                             </div>
                         ` : ''}
                     </div>
-                    <div class="post-content">${this.escapeHtml(post.content).substring(0, 200)}${post.content.length > 200 ? '...' : ''}</div>
+                    <div class="post-content collapsed" data-full-content="${this.escapeHtml(post.content)}">${this.escapeHtmlWithLineBreaks(post.content)}</div>
                     <div class="post-actions">
                         <div class="post-stats">
                             <div class="post-stat">
@@ -169,9 +169,18 @@ class CommunityManager {
 
         // Add click event listeners to post items
         postsList.querySelectorAll('.post-item').forEach(item => {
+            // Add expand/collapse functionality for post content
+            const postContent = item.querySelector('.post-content');
+            if (postContent) {
+                postContent.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.togglePostContent(postContent);
+                });
+            }
+
             item.addEventListener('click', (e) => {
-                // Don't trigger if clicking on action buttons
-                if (e.target.closest('.owner-post-actions')) return;
+                // Don't trigger if clicking on action buttons or post content
+                if (e.target.closest('.owner-post-actions') || e.target.closest('.post-content')) return;
 
                 const postId = item.dataset.postId;
                 this.showPostDetail(postId);
@@ -633,10 +642,16 @@ class CommunityManager {
             }
 
             if (contentElement) {
-                const truncatedContent = updatedPost.content.length > 200
-                    ? updatedPost.content.substring(0, 200) + '...'
-                    : updatedPost.content;
-                contentElement.textContent = truncatedContent;
+                // 전체 내용으로 업데이트하고 collapsed 상태로 설정
+                contentElement.innerHTML = this.escapeHtmlWithLineBreaks(updatedPost.content);
+                contentElement.setAttribute('data-full-content', this.escapeHtml(updatedPost.content));
+                contentElement.className = 'post-content collapsed';
+
+                // 클릭 이벤트 리스너 재설정
+                contentElement.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.togglePostContent(contentElement);
+                });
             }
         }
     }
@@ -903,6 +918,20 @@ class CommunityManager {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML.replace(/\n/g, '<br>');
+    }
+
+    togglePostContent(postContent) {
+        const isCollapsed = postContent.classList.contains('collapsed');
+
+        if (isCollapsed) {
+            // Expand
+            postContent.classList.remove('collapsed');
+            postContent.classList.add('expanded');
+        } else {
+            // Collapse
+            postContent.classList.remove('expanded');
+            postContent.classList.add('collapsed');
+        }
     }
 
     showError(message) {

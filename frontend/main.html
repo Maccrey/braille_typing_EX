@@ -1211,10 +1211,39 @@
             color: #444;
             line-height: 1.6;
             margin-bottom: 15px;
-            max-height: 100px;
-            overflow: hidden;
             white-space: pre-wrap;
-            text-overflow: ellipsis;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .post-content.collapsed {
+            max-height: calc(1.6em * 3);
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .post-content.collapsed::after {
+            content: '... 더보기';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+            padding-left: 20px;
+            background: linear-gradient(to right, transparent, white 20%);
+        }
+
+        .post-content.expanded {
+            max-height: none;
+        }
+
+        .post-content:hover {
+            background-color: rgba(102, 126, 234, 0.02);
         }
 
         .post-actions {
