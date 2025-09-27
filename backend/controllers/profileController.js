@@ -507,6 +507,64 @@ const updateWorkItem = async (req, res) => {
   }
 };
 
+const getDailyRanking = async (req, res) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const { date } = req.query; // Optional date parameter, defaults to today
+    const targetDate = date || today;
+
+    const db = getDb();
+
+    // Get users with practice time for the specified date
+    const dailyRanking = await new Promise((resolve, reject) => {
+      db.all(`
+        SELECT
+          u.username,
+          COALESCE(SUM(pl.duration_seconds), 0) as daily_practice_time,
+          COUNT(pl.id) as practice_sessions
+        FROM users u
+        LEFT JOIN practice_logs pl ON u.id = pl.user_id
+          AND DATE(pl.practiced_at) = ?
+        GROUP BY u.id, u.username
+        HAVING daily_practice_time > 0
+        ORDER BY daily_practice_time DESC, practice_sessions DESC
+        LIMIT 20
+      `, [targetDate], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+
+    // Format the response with ranking information
+    const formattedRanking = dailyRanking.map((user, index) => {
+      const rank = index + 1;
+      const hours = Math.floor(user.daily_practice_time / 3600);
+      const minutes = Math.floor((user.daily_practice_time % 3600) / 60);
+      const practiceTimeText = hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
+
+      return {
+        rank,
+        username: user.username,
+        practice_time: user.daily_practice_time,
+        practice_time_text: practiceTimeText,
+        practice_sessions: user.practice_sessions
+      };
+    });
+
+    res.status(200).json({
+      date: targetDate,
+      ranking: formattedRanking,
+      total_users: formattedRanking.length
+    });
+
+  } catch (error) {
+    console.error('Get daily ranking error:', error);
+    res.status(500).json({
+      error: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   getUserStats,
   getattendanceData,
@@ -514,5 +572,6 @@ module.exports = {
   checkOut,
   getTodayAttendance,
   addWorkItem,
-  updateWorkItem
+  updateWorkItem,
+  getDailyRanking
 };

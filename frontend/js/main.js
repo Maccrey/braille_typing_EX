@@ -377,8 +377,11 @@ class MainMenu {
             // Set up month navigation event listeners when attendance tab is opened
             this.setupAttendanceEventListeners();
 
-            // Load only monthly attendance data for calendar display
-            await this.loadMonthlyAttendance(this.currentMonth);
+            // Load monthly attendance data and daily ranking
+            await Promise.all([
+                this.loadMonthlyAttendance(this.currentMonth),
+                this.loadDailyRanking()
+            ]);
 
             this.renderAttendanceCalendar();
             this.showAttendanceLoading(false);
@@ -428,7 +431,81 @@ class MainMenu {
 
     // Removed updateStatsDisplay() function - no longer needed for calendar display only
 
-    // Removed calculateStreakInfo() function - no longer needed for calendar display only
+    async loadDailyRanking(date = null) {
+        try {
+            const token = localStorage.getItem('authToken');
+            const queryParam = date ? `?date=${date}` : '';
+            const response = await fetch(`http://localhost:4000/api/profile/ranking/daily${queryParam}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch daily ranking');
+            }
+
+            this.dailyRanking = await response.json();
+            this.renderDailyRanking();
+        } catch (error) {
+            console.error('Error loading daily ranking:', error);
+            this.showRankingError();
+        }
+    }
+
+    renderDailyRanking() {
+        const rankingList = document.getElementById('ranking-list');
+        const noRankingMessage = document.getElementById('no-ranking-message');
+        const rankingTitle = document.getElementById('ranking-title');
+
+        if (!this.dailyRanking || this.dailyRanking.ranking.length === 0) {
+            rankingList.style.display = 'none';
+            noRankingMessage.style.display = 'block';
+            return;
+        }
+
+        noRankingMessage.style.display = 'none';
+        rankingList.style.display = 'block';
+
+        // Update title with date
+        const dateStr = new Date(this.dailyRanking.date).toLocaleDateString('ko-KR', {
+            month: 'long',
+            day: 'numeric'
+        });
+        rankingTitle.textContent = `${dateStr} 사용자 랭킹`;
+
+        // Generate ranking HTML
+        rankingList.innerHTML = this.dailyRanking.ranking.map(user => {
+            const rankClass = user.rank <= 3 ? `top-3 rank-${user.rank}` : '';
+            return `
+                <div class="ranking-item ${rankClass}">
+                    <div class="rank-number">${user.rank}</div>
+                    <div class="ranking-user-info">
+                        <div class="ranking-username">${user.username}</div>
+                        <div class="ranking-score">${user.practice_time_text} (${user.practice_sessions}회)</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    showRankingLoading(show) {
+        const loadingEl = document.getElementById('ranking-loading');
+        if (loadingEl) {
+            loadingEl.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    showRankingError() {
+        const rankingList = document.getElementById('ranking-list');
+        const noRankingMessage = document.getElementById('no-ranking-message');
+
+        if (rankingList && noRankingMessage) {
+            rankingList.style.display = 'none';
+            noRankingMessage.style.display = 'block';
+            noRankingMessage.textContent = '랭킹 데이터를 불러오는데 실패했습니다.';
+        }
+    }
 
     renderAttendanceCalendar() {
         const currentMonthDate = new Date(this.currentMonth + '-01');
@@ -484,6 +561,14 @@ class MainMenu {
             if (cellDateStr === todayStr) {
                 dateCell.classList.add('current-date');
             }
+
+            // Add click event to show ranking for that date
+            dateCell.addEventListener('click', () => {
+                this.showRankingLoading(true);
+                this.loadDailyRanking(cellDateStr).finally(() => {
+                    this.showRankingLoading(false);
+                });
+            });
 
             calendarGrid.appendChild(dateCell);
         }

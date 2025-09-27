@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getUserStats, getattendanceData, checkIn, checkOut, getTodayAttendance, addWorkItem, updateWorkItem } = require('../controllers/profileController');
+const { getUserStats, getattendanceData, checkIn, checkOut, getTodayAttendance, addWorkItem, updateWorkItem, getDailyRanking } = require('../controllers/profileController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Profile routes (all require authentication)
@@ -11,5 +11,6 @@ router.post('/attendance/checkin', authMiddleware, checkIn);
 router.post('/attendance/checkout', authMiddleware, checkOut);
 router.post('/attendance/work', authMiddleware, addWorkItem);
 router.put('/attendance/work/:itemId', authMiddleware, updateWorkItem);
+router.get('/ranking/daily', authMiddleware, getDailyRanking);
 
 module.exports = router;

@@ -761,6 +761,128 @@
             border-radius: 15px;
         }
 
+        /* Daily Ranking Styles */
+        #daily-ranking-section {
+            margin-top: 40px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #ranking-title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 25px;
+        }
+
+        .ranking-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .ranking-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .ranking-item.top-3 {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #333;
+            font-weight: 600;
+        }
+
+        .ranking-item.rank-1 {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        }
+
+        .ranking-item.rank-2 {
+            background: linear-gradient(135deg, #c0c0c0 0%, #e5e5e5 100%);
+        }
+
+        .ranking-item.rank-3 {
+            background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%);
+        }
+
+        .rank-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-right: 15px;
+        }
+
+        .top-3 .rank-number {
+            background: #333;
+        }
+
+        .rank-1 .rank-number {
+            background: #b8860b;
+        }
+
+        .rank-2 .rank-number {
+            background: #708090;
+        }
+
+        .rank-3 .rank-number {
+            background: #8b4513;
+        }
+
+        .ranking-user-info {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ranking-username {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .ranking-score {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .top-3 .ranking-score {
+            color: #333;
+            font-weight: 600;
+        }
+
+        #ranking-loading {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        #no-ranking-message {
+            text-align: center;
+            color: #999;
+            font-size: 1.1rem;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
         /* Attendance Controls Styles */
         #attendance-controls {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -1630,6 +1752,21 @@
                         <div id="no-attendance-message" style="display: none;">
                             아직 출석 기록이 없습니다.<br>
                             점자 연습을 시작해보세요!
+                        </div>
+
+                        <!-- Daily Ranking Section -->
+                        <div id="daily-ranking-section">
+                            <h3 id="ranking-title">오늘의 사용자 랭킹</h3>
+                            <div id="ranking-loading" style="display: none;">
+                                <div class="loading-spinner"></div>
+                                <p>랭킹을 불러오는 중...</p>
+                            </div>
+                            <div id="ranking-list" class="ranking-list">
+                                <!-- Ranking items will be loaded here -->
+                            </div>
+                            <div id="no-ranking-message" style="display: none;">
+                                오늘 활동한 사용자가 없습니다.
+                            </div>
                         </div>
                     </div>
                 </div>
