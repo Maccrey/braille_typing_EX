@@ -4,12 +4,12 @@
   "description": "점자 타이핑 연습 웹 애플리케이션",
   "main": "backend/server.js",
   "scripts": {
-    "start": "cd backend && node server.js",
-    "dev": "cd backend && npm run dev",
-    "test": "cd backend && npm test",
-    "frontend:test": "cd frontend && npm test",
-    "build": "echo 'No build step required for this app'",
-    "postinstall": "cd backend && npm install && cd ../frontend && npm install"
+    "start": "npm start --prefix backend",
+    "dev": "npm run dev --prefix backend",
+    "test": "npm test --prefix backend",
+    "frontend:test": "npm test --prefix frontend",
+    "build": "npm ci --prefix backend && npm run db:init --prefix backend",
+    "postinstall": "npm install --prefix backend && npm install --prefix frontend"
   },
   "keywords": ["braille", "typing", "practice", "accessibility"],
   "author": "maccrey",

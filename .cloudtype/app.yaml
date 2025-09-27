@@ -15,7 +15,6 @@ app:
     - name: JWT_SECRET
       value: your-jwt-secret-here
   buildCommands:
-    - cd backend
-    - npm ci
-    - npm run db:init
-  startCommand: cd backend && PORT=8080 node server.js
+    - npm ci --prefix backend
+    - npm run db:init --prefix backend
+  startCommand: npm start --prefix backend
