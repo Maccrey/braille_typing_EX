@@ -15,6 +15,6 @@ app:
     - name: JWT_SECRET
       value: your-jwt-secret-here
   buildCommands:
-    - npm ci --prefix backend
-    - npm run db:init --prefix backend
-  startCommand: npm start --prefix backend
+    - npm install
+    - npm run db:init
+  startCommand: npm start
