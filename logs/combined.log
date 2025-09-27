@@ -2228,3 +2228,21 @@ SIGTERM received. Starting graceful shutdown...
 2025-09-27 10:57:34 +09:00: 📝 Environment: development
 2025-09-27 10:57:34 +09:00: 🕐 Started at: 2025-09-27T01:57:34.686Z
 2025-09-27 10:57:34 +09:00: 📊 Health check: http://0.0.0.0:4000/api/health
+2025-09-27 11:22:47 +09:00: 🚀 Server running on http://0.0.0.0:4000
+2025-09-27 11:22:47 +09:00: 📝 Environment: development
+2025-09-27 11:22:47 +09:00: 🕐 Started at: 2025-09-27T02:22:47.715Z
+2025-09-27 11:22:47 +09:00: 📊 Health check: http://0.0.0.0:4000/api/health
+2025-09-27 11:26:06 +09:00: 
+SIGTERM received. Starting graceful shutdown...
+2025-09-27 11:26:06 +09:00: 🚀 Server running on http://0.0.0.0:4000
+2025-09-27 11:26:06 +09:00: 📝 Environment: development
+2025-09-27 11:26:06 +09:00: 🕐 Started at: 2025-09-27T02:26:06.503Z
+2025-09-27 11:26:06 +09:00: 📊 Health check: http://0.0.0.0:4000/api/health
+2025-09-27 11:28:59 +09:00: 🚀 Server running on http://0.0.0.0:4000
+2025-09-27 11:28:59 +09:00: 📝 Environment: development
+2025-09-27 11:28:59 +09:00: 🕐 Started at: 2025-09-27T02:28:59.841Z
+2025-09-27 11:28:59 +09:00: 📊 Health check: http://0.0.0.0:4000/api/health
+2025-09-27 11:47:44 +09:00: 🚀 Server running on http://0.0.0.0:4000
+2025-09-27 11:47:44 +09:00: 📝 Environment: development
+2025-09-27 11:47:44 +09:00: 🕐 Started at: 2025-09-27T02:47:44.306Z
+2025-09-27 11:47:44 +09:00: 📊 Health check: http://0.0.0.0:4000/api/health

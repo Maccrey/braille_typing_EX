@@ -298,11 +298,17 @@ class BraillePractice {
             patternLength: this.currentBraillePattern?.length
         });
 
-        // Clear all hint highlighting first
-        const allDots = document.querySelectorAll('.dot');
-        allDots.forEach(dot => {
-            dot.classList.remove('hint-active');
-        });
+        // Clear all hint highlighting first, but only for the current block
+        const currentBlock = document.querySelector(`.braille-block[data-block-index="${this.currentBlockIndex}"]`);
+        if (currentBlock) {
+            const currentBlockDots = currentBlock.querySelectorAll('.dot');
+            currentBlockDots.forEach(dot => {
+                // Only remove hint if the dot is not active (not currently pressed)
+                if (!dot.classList.contains('active')) {
+                    dot.classList.remove('hint-active');
+                }
+            });
+        }
 
         if (!this.showHints || !this.currentBraillePattern || this.currentBlockIndex >= this.currentBraillePattern.length) {
             console.log('❌ Hint highlighting skipped - conditions not met');
@@ -311,7 +317,6 @@ class BraillePractice {
 
         // Highlight correct dots for current block
         const currentPattern = this.currentBraillePattern[this.currentBlockIndex];
-        const currentBlock = document.querySelector(`.braille-block[data-block-index="${this.currentBlockIndex}"]`);
 
         console.log('💡 Highlighting pattern:', currentPattern, 'for block:', this.currentBlockIndex);
 
@@ -319,6 +324,7 @@ class BraillePractice {
             currentPattern.forEach(dotNumber => {
                 const dot = currentBlock.querySelector(`.dot[data-dot-number="${dotNumber}"]`);
                 if (dot) {
+                    // Always add hint-active for correct dots when hints are enabled
                     dot.classList.add('hint-active');
                     console.log('✨ Added hint-active to dot:', dotNumber);
                 } else {
@@ -399,7 +405,19 @@ class BraillePractice {
         if (this.pressedDots.has(dotNumber)) {
             console.log('🔴 Removing dot:', dotNumber);
             this.pressedDots.delete(dotNumber);
+
+            // Remove all state classes
             dot.classList.remove('active', 'correct', 'wrong');
+
+            // Check if this dot should have hint based on current pattern
+            if (this.showHints && this.currentBraillePattern && this.currentBlockIndex < this.currentBraillePattern.length) {
+                const currentPattern = this.currentBraillePattern[this.currentBlockIndex];
+                if (currentPattern && currentPattern.includes(dotNumber)) {
+                    dot.classList.add('hint-active');
+                    console.log('💡 Restored hint for dot:', dotNumber);
+                }
+            }
+
             console.log('🔍 Dot classes after remove:', dot.className);
             // Remove from input order
             const index = this.dotInputOrder.indexOf(dotNumber);
@@ -409,8 +427,16 @@ class BraillePractice {
         } else {
             console.log('🟢 Adding dot:', dotNumber);
             this.pressedDots.add(dotNumber);
-            // Remove any existing state classes first
-            dot.classList.remove('hint-active', 'correct', 'wrong');
+
+            // Check if this dot should have hint (is it part of correct pattern?)
+            const currentPattern = this.currentBraillePattern[this.currentBlockIndex];
+            const shouldKeepHint = this.showHints && currentPattern && currentPattern.includes(dotNumber);
+
+            // Remove state classes but preserve hint if it should be kept
+            dot.classList.remove('correct', 'wrong');
+            if (!shouldKeepHint) {
+                dot.classList.remove('hint-active');
+            }
             dot.classList.add('active');
             console.log('🔍 Dot classes after add:', dot.className);
             console.log('🔍 Dot element style:', {
@@ -582,12 +608,26 @@ class BraillePractice {
         const wrongDots = currentBlock.querySelectorAll('.dot.wrong');
         wrongDots.forEach(dot => {
             dot.classList.remove('wrong');
+
+            // Restore hint if this dot should be hinted and hints are enabled
+            if (this.showHints && this.currentBraillePattern && this.currentBlockIndex < this.currentBraillePattern.length) {
+                const currentPattern = this.currentBraillePattern[this.currentBlockIndex];
+                const dotNumber = parseInt(dot.dataset.dotNumber);
+                if (currentPattern && currentPattern.includes(dotNumber)) {
+                    dot.classList.add('hint-active');
+                }
+            }
         });
 
         this.pressedDots.clear();
         this.dotInputOrder = [];
         this.updateProgress(`문자: ${this.currentChar}`);
         this.updateBlockProgress();
+
+        // Re-apply hints if they were enabled (backup method)
+        if (this.showHints) {
+            this.updateHintHighlighting();
+        }
     }
 
     // Reset all validation states

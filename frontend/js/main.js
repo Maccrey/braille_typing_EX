@@ -49,6 +49,17 @@ class MainMenu {
         if (nextMonthBtn) {
             nextMonthBtn.addEventListener('click', () => this.navigateMonth('next'));
         }
+
+        // Check-in/Check-out buttons
+        const checkinBtn = document.getElementById('checkin-btn');
+        const checkoutBtn = document.getElementById('checkout-btn');
+
+        if (checkinBtn) {
+            checkinBtn.addEventListener('click', () => this.handleCheckIn());
+        }
+        if (checkoutBtn) {
+            checkoutBtn.addEventListener('click', () => this.handleCheckOut());
+        }
     }
 
     async loadInitialData() {
@@ -465,6 +476,7 @@ class MainMenu {
 
         const totalPracticeTimeEl = document.getElementById('total-practice-time');
         const totalAttendanceDaysEl = document.getElementById('total-attendance-days');
+        const normalWorkDaysEl = document.getElementById('normal-work-days');
         const avgDailyPracticeEl = document.getElementById('average-daily-practice');
 
         if (totalPracticeTimeEl) {
@@ -477,6 +489,12 @@ class MainMenu {
             totalAttendanceDaysEl.textContent = `${stats.total_attendance_days}일`;
         } else {
             console.error('❌ Could not find total-attendance-days element');
+        }
+
+        if (normalWorkDaysEl) {
+            normalWorkDaysEl.textContent = `${stats.normal_work_days || 0}일`;
+        } else {
+            console.error('❌ Could not find normal-work-days element');
         }
 
         if (avgDailyPracticeEl) {
@@ -1019,6 +1037,11 @@ class MainMenu {
             console.error('Error updating category:', error);
             this.showError(error.message || '카테고리 수정에 실패했습니다.');
         }
+    }
+
+    showSuccess(message) {
+        console.log('Success:', message);
+        alert(message); // You can replace this with a better notification system
     }
 
     logout() {

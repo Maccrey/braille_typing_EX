@@ -57,6 +57,10 @@ const createTables = () => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         date DATE NOT NULL,
+        check_in_time TIME,
+        check_out_time TIME,
+        is_work_day BOOLEAN DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id),
         UNIQUE(user_id, date)
       )
