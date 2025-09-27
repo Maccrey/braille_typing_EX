@@ -1,0 +1,20 @@
+{
+  "name": "braille-typing-practice",
+  "version": "1.0.0",
+  "description": "점자 타이핑 연습 웹 애플리케이션",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "cd backend && node server.js",
+    "dev": "cd backend && npm run dev",
+    "test": "cd backend && npm test",
+    "frontend:test": "cd frontend && npm test",
+    "build": "echo 'No build step required for this app'",
+    "postinstall": "cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": ["braille", "typing", "practice", "accessibility"],
+  "author": "maccrey",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
