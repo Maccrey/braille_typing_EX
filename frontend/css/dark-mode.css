@@ -777,6 +777,56 @@ button {
   box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
 }
 
+/* TTS (Voice Reading) Switch dark mode styles */
+[data-theme="dark"] .tts-control {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .stat-label {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .tts-slider {
+  background-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .tts-slider:before {
+  background-color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] input:checked + .tts-slider {
+  background-color: #667eea !important;
+}
+
+[data-theme="dark"] .tts-slider:hover {
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* Practice stats section dark mode */
+[data-theme="dark"] #practice-stats {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .stats-section {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .stat-item {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .stat-value,
+[data-theme="dark"] #completed-chars,
+[data-theme="dark"] #practice-time,
+[data-theme="dark"] #current-session-time {
+  color: var(--text-primary) !important;
+}
+
 /* Animation for theme transition */
 * {
   transition: background-color 0.3s ease, border-color 0.3s ease,
