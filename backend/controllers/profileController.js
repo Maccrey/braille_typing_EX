@@ -262,26 +262,15 @@ const checkOut = async (req, res) => {
       });
     }
 
-<<<<<<< HEAD
     // Check if this constitutes a valid work day (9:05 이하 출근 ~ 17:45 이상 퇴근)
-=======
-    // Check if this constitutes a valid work day (before 9:05 ~ after 17:45)
->>>>>>> 68f36f3 (서버 포트 4000포트로 변경출퇴근 시간 기준을 모두)
     const checkInTime = new Date(`${today}T${existingRecord.check_in_time}`);
     const checkOutTime = new Date(`${today}T${currentTime}`);
 
     const workDayStart = new Date(`${today}T09:05:00`);
-<<<<<<< HEAD
-    const workDayEnd = new Date(`${today}T17:40:00`);
-
-    // 정상 근무: 9:05 이하에 출근 AND 17:40 이상에 퇴근
-    const isWorkDay = checkInTime <= workDayStart && checkOutTime >= workDayEnd;
-=======
     const workDayEnd = new Date(`${today}T17:45:00`);
 
-    // 정상 근무: 9:05 이전에 출근 AND 17:45 이후에 퇴근
-    const isWorkDay = checkInTime < workDayStart && checkOutTime > workDayEnd;
->>>>>>> 68f36f3 (서버 포트 4000포트로 변경출퇴근 시간 기준을 모두)
+    // 정상 근무: 9:05 이하에 출근 AND 17:45 이상에 퇴근
+    const isWorkDay = checkInTime <= workDayStart && checkOutTime >= workDayEnd;
 
     // Update attendance record
     await new Promise((resolve, reject) => {
@@ -329,7 +318,6 @@ const getTodayAttendance = async (req, res) => {
       );
     });
 
-<<<<<<< HEAD
     // Parse work_details if it exists
     if (todayRecord && todayRecord.work_details) {
       try {
@@ -338,9 +326,6 @@ const getTodayAttendance = async (req, res) => {
         todayRecord.work_details = [];
       }
     }
-
-=======
->>>>>>> 68f36f3 (서버 포트 4000포트로 변경출퇴근 시간 기준을 모두)
     res.status(200).json({
       date: today,
       attendance: todayRecord || null
@@ -354,7 +339,6 @@ const getTodayAttendance = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
 const addWorkItem = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -523,18 +507,12 @@ const updateWorkItem = async (req, res) => {
   }
 };
 
-=======
->>>>>>> 68f36f3 (서버 포트 4000포트로 변경출퇴근 시간 기준을 모두)
 module.exports = {
   getUserStats,
   getattendanceData,
   checkIn,
   checkOut,
-<<<<<<< HEAD
   getTodayAttendance,
   addWorkItem,
   updateWorkItem
-=======
-  getTodayAttendance
->>>>>>> 68f36f3 (서버 포트 4000포트로 변경출퇴근 시간 기준을 모두)
 };

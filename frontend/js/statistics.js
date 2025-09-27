@@ -32,7 +32,7 @@ class StatisticsManager {
             this.showLoading();
 
             const token = localStorage.getItem('authToken');
-            const response = await fetch('http://localhost:3001/api/protected/stats', {
+            const response = await fetch('http://localhost:4000/api/protected/stats', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -107,7 +107,7 @@ class StatisticsManager {
     async loadRecentSessions() {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch('http://localhost:3001/api/protected/practice-logs?limit=10', {
+            const response = await fetch('http://localhost:4000/api/protected/practice-logs?limit=10', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

@@ -25,24 +25,15 @@ const updateWorkDayStatus = () => {
         }
 
         rows.forEach((record, index) => {
-<<<<<<< HEAD
           // Check if this constitutes a valid work day (9:05 이하 출근 ~ 17:45 이상 퇴근)
-=======
-          // Check if this constitutes a valid work day (before 9:05 ~ after 17:45)
->>>>>>> 68f36f3 (서버 포트 4000포트로 변경출퇴근 시간 기준을 모두)
           const checkInTime = new Date(`${record.date}T${record.check_in_time}`);
           const checkOutTime = new Date(`${record.date}T${record.check_out_time}`);
 
           const workDayStart = new Date(`${record.date}T09:05:00`);
           const workDayEnd = new Date(`${record.date}T17:45:00`);
 
-<<<<<<< HEAD
           // 정상 근무: 9:05 이하에 출근 AND 17:45 이상에 퇴근
           const isWorkDay = checkInTime <= workDayStart && checkOutTime >= workDayEnd;
-=======
-          // 정상 근무: 9:05 이전에 출근 AND 17:45 이후에 퇴근
-          const isWorkDay = checkInTime < workDayStart && checkOutTime > workDayEnd;
->>>>>>> 68f36f3 (서버 포트 4000포트로 변경출퇴근 시간 기준을 모두)
 
           if (isWorkDay) {
             normalWorkDays++;

@@ -1,7 +1,7 @@
 // Authentication JavaScript for login functionality
 
 // API base URL - adjust based on your backend setup
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://localhost:4000/api';
 
 // DOM elements
 const loginForm = document.getElementById('login-form');

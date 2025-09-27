@@ -2246,3 +2246,303 @@ SIGTERM received. Starting graceful shutdown...
 2025-09-27 11:47:44 +09:00: 📝 Environment: development
 2025-09-27 11:47:44 +09:00: 🕐 Started at: 2025-09-27T02:47:44.306Z
 2025-09-27 11:47:44 +09:00: 📊 Health check: http://0.0.0.0:4000/api/health
+/Users/maccrey/Development/braille_typing_EX/backend/routes/profileRoutes.js:3
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/routes/profileRoutes.js:3
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/routes/profileRoutes.js:3
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/routes/profileRoutes.js:3
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/routes/profileRoutes.js:3
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/routes/profileRoutes.js:3
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/routes/profileRoutes.js:3
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/routes/profileRoutes.js:3
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/routes/profileRoutes.js:3
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/routes/profileRoutes.js:3
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/controllers/profileController.js:321
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/controllers/profileController.js:321
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/controllers/profileController.js:321
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/controllers/profileController.js:321
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/controllers/profileController.js:321
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/controllers/profileController.js:321
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/controllers/profileController.js:321
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/controllers/profileController.js:321
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/controllers/profileController.js:321
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)
+/Users/maccrey/Development/braille_typing_EX/backend/controllers/profileController.js:321
+<<<<<<< HEAD
+^^
+
+SyntaxError: Unexpected token '<<'
+    at wrapSafe (node:internal/modules/cjs/loader:1670:18)
+    at Module._compile (node:internal/modules/cjs/loader:1713:20)
+    at Object..js (node:internal/modules/cjs/loader:1904:10)
+    at Module.load (node:internal/modules/cjs/loader:1473:32)
+    at Function._load (node:internal/modules/cjs/loader:1285:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1495:12)
+    at Hook._require.Module.require (/Users/maccrey/.npm-global/lib/node_modules/pm2/node_modules/require-in-the-middle/index.js:101:39)
+    at require (node:internal/modules/helpers:135:16)

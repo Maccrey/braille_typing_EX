@@ -89,7 +89,7 @@ class CommunityManager {
             if (pagination) pagination.style.display = 'none';
 
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3001/api/posts?page=${page}&limit=10`, {
+            const response = await fetch(`http://localhost:4000/api/posts?page=${page}&limit=10`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -255,7 +255,7 @@ class CommunityManager {
         try {
             const token = localStorage.getItem('authToken');
             const isEdit = this.editingPost !== null;
-            const url = isEdit ? `http://localhost:3001/api/posts/${this.editingPost.id}` : 'http://localhost:3001/api/posts';
+            const url = isEdit ? `http://localhost:4000/api/posts/${this.editingPost.id}` : 'http://localhost:4000/api/posts';
             const method = isEdit ? 'PUT' : 'POST';
 
             const response = await fetch(url, {
@@ -296,7 +296,7 @@ class CommunityManager {
     async editPost(postId) {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3001/api/posts/${postId}`, {
+            const response = await fetch(`http://localhost:4000/api/posts/${postId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -336,7 +336,7 @@ class CommunityManager {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3001/api/posts/${postId}`, {
+            const response = await fetch(`http://localhost:4000/api/posts/${postId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -369,7 +369,7 @@ class CommunityManager {
             const token = localStorage.getItem('authToken');
 
             // Load post details
-            const postResponse = await fetch(`http://localhost:3001/api/posts/${postId}`, {
+            const postResponse = await fetch(`http://localhost:4000/api/posts/${postId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -383,7 +383,7 @@ class CommunityManager {
             this.currentPost = post;
 
             // Load comments
-            const commentsResponse = await fetch(`http://localhost:3001/api/comments/posts/${postId}`, {
+            const commentsResponse = await fetch(`http://localhost:4000/api/comments/posts/${postId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -652,7 +652,7 @@ class CommunityManager {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3001/api/comments/posts/${this.currentPost.id}`, {
+            const response = await fetch(`http://localhost:4000/api/comments/posts/${this.currentPost.id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -711,7 +711,7 @@ class CommunityManager {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3001/api/comments/posts/${this.currentPost.id}`, {
+            const response = await fetch(`http://localhost:4000/api/comments/posts/${this.currentPost.id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -823,7 +823,7 @@ class CommunityManager {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3001/api/comments/${commentId}`, {
+            const response = await fetch(`http://localhost:4000/api/comments/${commentId}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -869,7 +869,7 @@ class CommunityManager {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3001/api/comments/${commentId}`, {
+            const response = await fetch(`http://localhost:4000/api/comments/${commentId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`

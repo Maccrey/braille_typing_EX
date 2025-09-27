@@ -84,7 +84,7 @@ class MainMenu {
                 return;
             }
 
-            const response = await fetch('http://localhost:3001/api/protected/categories/my', {
+            const response = await fetch('http://localhost:4000/api/protected/categories/my', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -115,7 +115,7 @@ class MainMenu {
     async loadFavorites() {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch('http://localhost:3001/api/protected/favorites', {
+            const response = await fetch('http://localhost:4000/api/protected/favorites', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -137,7 +137,7 @@ class MainMenu {
     async performSearch(query) {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3001/api/protected/categories/search?q=${encodeURIComponent(query || '')}`, {
+            const response = await fetch(`http://localhost:4000/api/protected/categories/search?q=${encodeURIComponent(query || '')}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -159,7 +159,7 @@ class MainMenu {
     async loadAllPublicCategories() {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3001/api/protected/categories/search?q=`, {
+            const response = await fetch(`http://localhost:4000/api/protected/categories/search?q=`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -190,7 +190,7 @@ class MainMenu {
         try {
             const token = localStorage.getItem('authToken');
             console.log('🔄 Loading user stats from API...');
-            const response = await fetch('http://localhost:3001/api/profile/stats', {
+            const response = await fetch('http://localhost:4000/api/profile/stats', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -339,7 +339,7 @@ class MainMenu {
     async toggleFavorite(categoryId) {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch('http://localhost:3001/api/protected/favorites', {
+            const response = await fetch('http://localhost:4000/api/protected/favorites', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -377,11 +377,8 @@ class MainMenu {
             // Set up month navigation event listeners when attendance tab is opened
             this.setupAttendanceEventListeners();
 
-            // Load user stats and attendance data in parallel
-            await Promise.all([
-                this.loadUserStatsForAttendance(),
-                this.loadMonthlyAttendance(this.currentMonth)
-            ]);
+            // Load only monthly attendance data for calendar display
+            await this.loadMonthlyAttendance(this.currentMonth);
 
             this.renderAttendanceCalendar();
             this.showAttendanceLoading(false);
@@ -407,33 +404,12 @@ class MainMenu {
         }
     }
 
-    async loadUserStatsForAttendance() {
-        try {
-            const token = localStorage.getItem('authToken');
-            console.log('🔄 Loading user stats for attendance...');
-            const response = await fetch('http://localhost:3001/api/profile/stats', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch user stats');
-            }
-
-            this.userStats = await response.json();
-            console.log('📊 Received attendance stats:', this.userStats);
-            this.updateStatsDisplay();
-        } catch (error) {
-            console.error('❌ Error loading user stats for attendance:', error);
-            throw error;
-        }
-    }
+    // Removed loadUserStatsForAttendance() - not needed for calendar display only
 
     async loadMonthlyAttendance(month) {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3001/api/profile/attendance?month=${month}`, {
+            const response = await fetch(`http://localhost:4000/api/profile/attendance?month=${month}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -450,129 +426,9 @@ class MainMenu {
         }
     }
 
-    updateStatsDisplay() {
-        const stats = this.userStats;
-        console.log('📊 Updating attendance stats display with:', stats);
+    // Removed updateStatsDisplay() function - no longer needed for calendar display only
 
-        // Format total practice time
-        const totalHours = Math.floor(stats.total_practice_time / 3600);
-        const totalMinutes = Math.floor((stats.total_practice_time % 3600) / 60);
-        const practiceTimeText = totalHours > 0 ? `${totalHours}시간 ${totalMinutes}분` : `${totalMinutes}분`;
-
-        // Format average daily practice
-        const avgMinutes = Math.floor(stats.average_daily_practice / 60);
-        const avgTimeText = `${avgMinutes}분`;
-
-        // Format longest session
-        const longestMinutes = Math.floor(stats.longest_session / 60);
-        const longestTimeText = `${longestMinutes}분`;
-
-        console.log('📝 Setting attendance stats:', {
-            practiceTimeText,
-            avgTimeText,
-            longestTimeText,
-            attendanceDays: stats.total_attendance_days
-        });
-
-        const totalPracticeTimeEl = document.getElementById('total-practice-time');
-        const totalAttendanceDaysEl = document.getElementById('total-attendance-days');
-        const normalWorkDaysEl = document.getElementById('normal-work-days');
-        const avgDailyPracticeEl = document.getElementById('average-daily-practice');
-
-        if (totalPracticeTimeEl) {
-            totalPracticeTimeEl.textContent = practiceTimeText;
-        } else {
-            console.error('❌ Could not find total-practice-time element');
-        }
-
-        if (totalAttendanceDaysEl) {
-            totalAttendanceDaysEl.textContent = `${stats.total_attendance_days}일`;
-        } else {
-            console.error('❌ Could not find total-attendance-days element');
-        }
-
-        if (normalWorkDaysEl) {
-            normalWorkDaysEl.textContent = `${stats.normal_work_days || 0}일`;
-        } else {
-            console.error('❌ Could not find normal-work-days element');
-        }
-
-        if (avgDailyPracticeEl) {
-            avgDailyPracticeEl.textContent = avgTimeText;
-        } else {
-            console.error('❌ Could not find average-daily-practice element');
-        }
-
-        // Additional stats elements that might not exist in all views
-        const longestSessionEl = document.getElementById('longest-session');
-        const statsPeriodEl = document.getElementById('stats-period');
-
-        if (longestSessionEl) {
-            longestSessionEl.textContent = longestTimeText;
-        }
-
-        if (statsPeriodEl && stats.stats_period) {
-            statsPeriodEl.textContent = stats.stats_period;
-        }
-
-        // Calculate and display streak information
-        this.calculateStreakInfo();
-    }
-
-    calculateStreakInfo() {
-        const attendanceDates = this.attendanceData.attendance_dates || [];
-        if (attendanceDates.length === 0) {
-            document.getElementById('current-streak').textContent = '0일';
-            document.getElementById('longest-streak').textContent = '0일';
-            return;
-        }
-
-        // Calculate current streak
-        let currentStreak = 0;
-        let longestStreak = 0;
-        let tempStreak = 0;
-
-        const today = new Date();
-        const sortedDates = attendanceDates.sort().reverse();
-
-        // Check if practiced today or yesterday for current streak
-        const todayStr = today.toISOString().slice(0, 10);
-        const yesterdayStr = new Date(today.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-
-        if (sortedDates.includes(todayStr) || sortedDates.includes(yesterdayStr)) {
-            let streakDate = sortedDates.includes(todayStr) ? new Date(todayStr) : new Date(yesterdayStr);
-
-            for (const dateStr of sortedDates) {
-                const date = new Date(dateStr);
-                const expectedDate = new Date(streakDate.getTime() - currentStreak * 24 * 60 * 60 * 1000);
-
-                if (date.toISOString().slice(0, 10) === expectedDate.toISOString().slice(0, 10)) {
-                    currentStreak++;
-                } else {
-                    break;
-                }
-            }
-        }
-
-        // Calculate longest streak
-        tempStreak = 1;
-        for (let i = 1; i < sortedDates.length; i++) {
-            const currentDate = new Date(sortedDates[i]);
-            const prevDate = new Date(sortedDates[i - 1]);
-            const dayDiff = (prevDate - currentDate) / (24 * 60 * 60 * 1000);
-
-            if (dayDiff === 1) {
-                tempStreak++;
-            } else {
-                longestStreak = Math.max(longestStreak, tempStreak);
-                tempStreak = 1;
-            }
-        }
-        longestStreak = Math.max(longestStreak, tempStreak);
-
-        document.getElementById('current-streak').textContent = `${currentStreak}일`;
-        document.getElementById('longest-streak').textContent = `${longestStreak}일`;
-    }
+    // Removed calculateStreakInfo() function - no longer needed for calendar display only
 
     renderAttendanceCalendar() {
         const currentMonthDate = new Date(this.currentMonth + '-01');
@@ -742,7 +598,7 @@ class MainMenu {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3001/api/protected/categories/${categoryId}`, {
+            const response = await fetch(`http://localhost:4000/api/protected/categories/${categoryId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -831,7 +687,7 @@ class MainMenu {
     async loadBrailleDataForEdit(categoryId) {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:3001/api/protected/categories/${categoryId}/braille-data`, {
+            const response = await fetch(`http://localhost:4000/api/protected/categories/${categoryId}/braille-data`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -992,7 +848,7 @@ class MainMenu {
             const token = localStorage.getItem('authToken');
 
             // Update category information
-            const categoryResponse = await fetch(`http://localhost:3001/api/protected/categories/${this.currentEditingCategoryId}`, {
+            const categoryResponse = await fetch(`http://localhost:4000/api/protected/categories/${this.currentEditingCategoryId}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -1012,7 +868,7 @@ class MainMenu {
 
             // Update braille data if available
             if (this.currentBrailleData && this.currentBrailleData.length > 0) {
-                const brailleResponse = await fetch(`http://localhost:3001/api/protected/categories/${this.currentEditingCategoryId}/braille-data`, {
+                const brailleResponse = await fetch(`http://localhost:4000/api/protected/categories/${this.currentEditingCategoryId}/braille-data`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`,
