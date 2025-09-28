@@ -61,12 +61,7 @@ const authMiddleware = async (req, res, next) => {
 
     // Get user from database to verify user still exists
     const db = getDb();
-    const user = await new Promise((resolve, reject) => {
-      db.get('SELECT id, username FROM users WHERE id = ?', [decoded.userId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
+    const user = await db.selectOne('users', { id: decoded.userId });
 
     if (!user) {
       return res.status(401).json({

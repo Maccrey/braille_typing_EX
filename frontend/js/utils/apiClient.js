@@ -20,15 +20,18 @@ class ApiClient {
 
     // Make authenticated API request
     async request(url, options = {}) {
+        const token = localStorage.getItem('authToken');
         const requestOptions = {
             credentials: 'include', // Include cookies for session
             headers: {
                 'Content-Type': 'application/json',
+                ...(token && { 'Authorization': `Bearer ${token}` }),
                 ...options.headers
             },
             ...options
         };
 
+        console.log('🔗 Making request to:', this.baseUrl + url, 'with token:', token ? 'Present' : 'None');
         const response = await fetch(this.baseUrl + url, requestOptions);
 
         if (response.status === 401) {
@@ -56,6 +59,13 @@ class ApiClient {
         if (response.ok) {
             const data = await response.json();
             this.currentUser = data.user;
+
+            // Store JWT token if provided
+            if (data.token) {
+                localStorage.setItem('authToken', data.token);
+                console.log('✅ JWT token stored');
+            }
+
             return data;
         } else {
             const error = await response.json();
@@ -88,7 +98,9 @@ class ApiClient {
             console.warn('Logout request failed:', error.message);
         } finally {
             this.currentUser = null;
-            window.location.href = 'login.html';
+            localStorage.removeItem('authToken');
+            console.log('🔐 Token removed');
+            window.location.href = '/login.html';
         }
     }
 
