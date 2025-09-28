@@ -32,7 +32,8 @@
       "Bash(find:*)",
       "Bash(npx jest:*)",
       "Bash(PORT=3001 node backend/app.js)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(PORT=8080 node backend/server.js)"
     ],
     "deny": [],
     "ask": []
