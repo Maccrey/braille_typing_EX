@@ -12,14 +12,10 @@ class ApiClient {
             href: window.location.href
         });
 
-        if (hostname === 'localhost' || hostname === '127.0.0.1' || port === '8080' || port === '8081') {
-            this.baseUrl = 'http://localhost:3001';
-        } else {
-            // For deployed environments, use Cloudflare domain
-            this.baseUrl = 'https://typing.maccrey.com';
-        }
+        this.baseUrl = ''; // API calls will be relative to the current origin
+
         this.currentUser = null;
-        console.log('🔗 ApiClient baseUrl:', this.baseUrl);
+        console.log('🔗 ApiClient baseUrl:', this.baseUrl || window.location.origin);
     }
 
     // Make authenticated API request
