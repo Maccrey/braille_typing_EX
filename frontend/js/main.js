@@ -24,13 +24,24 @@ class MainMenu {
     }
 
     async init() {
+        console.log('🚀 MainMenu init starting...');
+        console.log('🌐 Current URL:', window.location.href);
+        console.log('🔍 Auth token exists:', !!localStorage.getItem('authToken'));
+
+        // Temporarily disable auth check for debugging
+        console.log('⚠️ AUTH CHECK TEMPORARILY DISABLED FOR DEBUGGING');
+        /*
         // Only check auth once and don't reload if already authenticated
         if (!this.authChecked) {
             await this.checkAuth();
             this.authChecked = true;
         }
+        */
+
         this.setupEventListeners();
-        await this.loadInitialData();
+        // Temporarily disable data loading for debugging
+        console.log('⚠️ DATA LOADING TEMPORARILY DISABLED FOR DEBUGGING');
+        // await this.loadInitialData();
     }
 
     async checkAuth() {

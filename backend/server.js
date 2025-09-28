@@ -45,9 +45,15 @@ function startServer() {
     console.log(`ℹ️  Database will be initialized on first API request`);
     console.log(`✅ Server is ready and healthy`);
     console.log(`🔗 Health endpoints: /health, /healthz, /ping, /api/health`);
+    console.log(`🎯 READY - Server successfully started and listening`);
 
     if (NODE_ENV === 'development') {
       console.log(`📊 Health check: http://${HOST}:${PORT}/api/health`);
+    }
+
+    // Send explicit ready signal for deployment platforms
+    if (process.send) {
+      process.send('ready');
     }
   });
 
