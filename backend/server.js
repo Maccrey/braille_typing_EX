@@ -43,6 +43,8 @@ function startServer() {
     console.log(`📝 Environment: ${NODE_ENV}`);
     console.log(`🕐 Started at: ${new Date().toISOString()}`);
     console.log(`ℹ️  Database will be initialized on first API request`);
+    console.log(`✅ Server is ready and healthy`);
+    console.log(`🔗 Health endpoints: /health, /healthz, /ping, /api/health`);
 
     if (NODE_ENV === 'development') {
       console.log(`📊 Health check: http://${HOST}:${PORT}/api/health`);

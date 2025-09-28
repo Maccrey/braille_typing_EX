@@ -42,16 +42,40 @@ app.use((req, res, next) => {
 
 // Health check routes (before lazyDbInit)
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.status(200).json({
+    status: 'UP',
+    health: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+app.get('/healthz', (req, res) => {
+  res.status(200).send('OK');
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.status(200).json({
+    status: 'UP',
+    health: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
 });
 
 // Basic health check route
 app.get('/', (req, res) => {
-  res.json({ message: 'Braille Typing Practice API is running', status: 'ok', timestamp: new Date().toISOString() });
+  res.status(200).json({
+    message: 'Braille Typing Practice API is running',
+    status: 'UP',
+    health: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
 
 // Import routes
