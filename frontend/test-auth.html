@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    <button id="testLogin">Test Login</button>
+    <button id="testUser">Test Get User</button>
+    <button id="testLogout">Test Logout</button>
+    <div id="result"></div>
+
+    <script src="js/utils/apiClient.js"></script>
+    <script>
+        const result = document.getElementById('result');
+
+        document.getElementById('testLogin').addEventListener('click', async () => {
+            try {
+                const data = await apiClient.login('testuser', 'testpass');
+                result.innerHTML = `<h3>Login Success:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<h3>Login Error:</h3><p>${error.message}</p>`;
+            }
+        });
+
+        document.getElementById('testUser').addEventListener('click', async () => {
+            try {
+                const user = await apiClient.getCurrentUser();
+                result.innerHTML = `<h3>Current User:</h3><pre>${JSON.stringify(user, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<h3>Get User Error:</h3><p>${error.message}</p>`;
+            }
+        });
+
+        document.getElementById('testLogout').addEventListener('click', async () => {
+            try {
+                await apiClient.logout();
+                result.innerHTML = `<h3>Logout Success</h3>`;
+            } catch (error) {
+                result.innerHTML = `<h3>Logout Error:</h3><p>${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

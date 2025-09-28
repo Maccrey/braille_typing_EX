@@ -12,18 +12,23 @@ class MainMenu {
     }
 
     async init() {
-        await this.checkAuth();
+        // Only check auth once and don't reload if already authenticated
+        if (!this.authChecked) {
+            await this.checkAuth();
+            this.authChecked = true;
+        }
         this.setupEventListeners();
         await this.loadInitialData();
     }
 
     async checkAuth() {
         try {
-            const isAuth = await apiClient.isAuthenticated();
-            if (!isAuth) {
+            const user = await apiClient.getCurrentUser();
+            if (!user) {
                 window.location.href = 'login.html';
                 return;
             }
+            console.log('✅ User authenticated:', user.username);
         } catch (error) {
             console.error('Auth check failed:', error);
             window.location.href = 'login.html';

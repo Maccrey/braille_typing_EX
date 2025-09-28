@@ -1,8 +1,15 @@
 // API client utility for session-based authentication
 class ApiClient {
     constructor() {
-        this.baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+        // Determine base URL based on environment
+        if (window.location.hostname === 'localhost') {
+            this.baseUrl = 'http://localhost:3001';
+        } else {
+            // For deployed environments, use current origin
+            this.baseUrl = window.location.origin;
+        }
         this.currentUser = null;
+        console.log('🔗 ApiClient baseUrl:', this.baseUrl);
     }
 
     // Make authenticated API request
@@ -95,10 +102,24 @@ class ApiClient {
         return null;
     }
 
-    // Check if user is authenticated
+    // Check if user is authenticated (simple version to avoid loops)
     async isAuthenticated() {
-        const user = await this.getCurrentUser();
-        return user !== null;
+        if (this.currentUser) {
+            return true;
+        }
+
+        try {
+            const response = await this.request('/api/auth/user');
+            if (response.ok) {
+                const data = await response.json();
+                this.currentUser = data.user;
+                return true;
+            }
+        } catch (error) {
+            console.warn('Authentication check failed:', error.message);
+        }
+
+        return false;
     }
 
     // API wrapper methods
