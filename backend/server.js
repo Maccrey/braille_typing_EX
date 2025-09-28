@@ -5,7 +5,7 @@ const { createTables } = require('./init-db');
 // Load environment variables
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const HOST = process.env.HOST || '0.0.0.0';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 

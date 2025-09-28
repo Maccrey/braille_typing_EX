@@ -81,6 +81,20 @@ app.use('/api/posts', postsRoutes);
 // Comments routes
 app.use('/api/comments', commentsRoutes);
 
+// Serve frontend for root and any non-API routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
+});
+
+// Catch-all handler for frontend routes (SPA fallback)
+app.get('*', (req, res, next) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
+});
+
 // Import error handler
 const errorHandler = require('./middleware/errorHandler');
 
