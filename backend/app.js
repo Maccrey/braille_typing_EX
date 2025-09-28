@@ -40,9 +40,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check routes (before lazyDbInit)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Basic health check route
 app.get('/', (req, res) => {
-  res.json({ message: 'Braille Typing Practice API is running' });
+  res.json({ message: 'Braille Typing Practice API is running', status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Import routes
@@ -56,11 +65,6 @@ const commentsRoutes = require('./routes/comments');
 // Lazy database initialization middleware
 const lazyDbInit = require('./middleware/lazyDbInit');
 app.use(lazyDbInit);
-
-// API routes
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 
 // Auth routes
 app.use('/api/auth', authRoutes);
