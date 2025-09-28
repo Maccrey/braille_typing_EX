@@ -34,8 +34,11 @@ class ApiClient {
         if (response.status === 401) {
             // Clear current user and redirect to login
             this.currentUser = null;
-            if (window.location.pathname !== '/login.html') {
-                window.location.href = 'login.html';
+            const currentPath = window.location.pathname;
+            console.log('🔐 401 Unauthorized - current path:', currentPath);
+            if (currentPath !== '/login.html' && !currentPath.endsWith('/login.html')) {
+                console.log('🔄 Redirecting to login...');
+                window.location.href = '/login.html';
             }
             throw new Error('Authentication required');
         }

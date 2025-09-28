@@ -35,15 +35,21 @@ class MainMenu {
 
     async checkAuth() {
         try {
+            console.log('🔍 Checking authentication...');
             const user = await apiClient.getCurrentUser();
             if (!user) {
-                window.location.href = 'login.html';
+                console.log('❌ No user found, redirecting to login');
+                window.location.href = '/login.html';
                 return;
             }
             console.log('✅ User authenticated:', user.username);
         } catch (error) {
             console.error('Auth check failed:', error);
-            window.location.href = 'login.html';
+            // Don't redirect if already on login page or if it's a network error
+            if (!window.location.pathname.endsWith('/login.html')) {
+                console.log('🔄 Redirecting to login due to auth failure');
+                window.location.href = '/login.html';
+            }
             return;
         }
     }
