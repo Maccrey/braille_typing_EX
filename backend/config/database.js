@@ -1,32 +1,7 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-
-function getDb() {
-  const dbPath = process.env.TEST_DB_PATH || path.join(__dirname, '..', 'database.db');
-  return new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-      console.error('Error opening database:', err.message);
-    } else {
-      console.log('Connected to SQLite database');
-    }
-  });
-}
-
-function closeDb(db) {
-  return new Promise((resolve, reject) => {
-    db.close((err) => {
-      if (err) {
-        console.error('Error closing database:', err.message);
-        reject(err);
-      } else {
-        console.log('Database connection closed');
-        resolve();
-      }
-    });
-  });
-}
+const { getDb, closeDb, initDatabase } = require('./jsonDatabase');
 
 module.exports = {
   getDb,
-  closeDb
+  closeDb,
+  initDatabase
 };

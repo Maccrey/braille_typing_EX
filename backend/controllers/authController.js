@@ -25,12 +25,7 @@ const signup = async (req, res) => {
     const db = getDb();
 
     // Check if user already exists
-    const existingUser = await new Promise((resolve, reject) => {
-      db.get('SELECT id FROM users WHERE username = ?', [username], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
+    const existingUser = await db.selectOne('users', { username });
 
     if (existingUser) {
       return res.status(400).json({
@@ -42,16 +37,11 @@ const signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     // Create user
-    const userId = await new Promise((resolve, reject) => {
-      db.run(
-        'INSERT INTO users (username, password) VALUES (?, ?)',
-        [username, hashedPassword],
-        function(err) {
-          if (err) reject(err);
-          else resolve(this.lastID);
-        }
-      );
+    const result = await db.insert('users', {
+      username,
+      password: hashedPassword
     });
+    const userId = result.lastID;
 
     // Store user data in session
     req.session.user = {
@@ -97,12 +87,7 @@ const login = async (req, res) => {
     const db = getDb();
 
     // Find user
-    const user = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
+    const user = await db.selectOne('users', { username });
 
     if (!user) {
       return res.status(401).json({
