@@ -679,7 +679,8 @@ class BraillePractice {
                 date: today
             });
 
-            const response = await fetch('/api/protected/practice/log', {
+            const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://typing.maccrey.com';
+            const response = await fetch(baseUrl + '/api/protected/practice/log', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

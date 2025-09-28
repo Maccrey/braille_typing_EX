@@ -15,8 +15,8 @@ class ApiClient {
         if (hostname === 'localhost' || hostname === '127.0.0.1' || port === '8080' || port === '8081') {
             this.baseUrl = 'http://localhost:3001';
         } else {
-            // For deployed environments, use current origin
-            this.baseUrl = window.location.origin;
+            // For deployed environments, use Cloudflare domain
+            this.baseUrl = 'https://typing.maccrey.com';
         }
         this.currentUser = null;
         console.log('🔗 ApiClient baseUrl:', this.baseUrl);

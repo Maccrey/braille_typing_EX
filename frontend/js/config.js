@@ -2,7 +2,7 @@
 const API_CONFIG = {
     // Development mode - use explicit backend URL
     // Production mode - use relative path (same domain)
-    BASE_URL: window.location.hostname === 'localhost' ? 'http://localhost:3001' : '',
+    BASE_URL: window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://typing.maccrey.com',
 
     // API 엔드포인트
     ENDPOINTS: {
