@@ -41,6 +41,32 @@ class MainMenu {
     async checkAuth() {
         try {
             console.log('🔍 Checking authentication...');
+
+            // First check if we have a token
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                console.log('❌ No token found, redirecting to login');
+                this.redirectToLogin();
+                return;
+            }
+
+            // Validate token format and expiration before making API call
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const currentTime = Math.floor(Date.now() / 1000);
+
+                if (payload.exp && payload.exp <= currentTime) {
+                    console.log('❌ Token expired, redirecting to login');
+                    this.redirectToLogin();
+                    return;
+                }
+            } catch (tokenError) {
+                console.log('❌ Invalid token format, redirecting to login');
+                this.redirectToLogin();
+                return;
+            }
+
+            // Token seems valid, try to get user info
             const user = await apiClient.getCurrentUser();
             if (!user) {
                 console.log('❌ No user found, redirecting to login');
@@ -50,13 +76,17 @@ class MainMenu {
             console.log('✅ User authenticated:', user.username);
         } catch (error) {
             console.error('Auth check failed:', error);
-            // Don't redirect if already on login page or if it's a network error
-            const currentPath = window.location.pathname;
-            if (!currentPath.endsWith('/login.html') && !currentPath.includes('login')) {
-                console.log('🔄 Redirecting to login due to auth failure');
+
+            // If it's a 401 error, the token is invalid
+            if (error.message.includes('401') || error.message.includes('Authentication required')) {
+                console.log('🔄 Authentication failed, redirecting to login');
                 this.redirectToLogin();
+                return;
             }
-            return;
+
+            // For network errors, don't redirect immediately - might be temporary
+            console.log('⚠️ Network error during auth check, staying on current page');
+            // Optionally show a warning to the user
         }
     }
 
