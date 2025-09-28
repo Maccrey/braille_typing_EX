@@ -1,6 +1,5 @@
 const app = require('./app');
 const path = require('path');
-const { createTables } = require('./init-db');
 
 // Load environment variables
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
@@ -35,31 +34,23 @@ const gracefulShutdown = (signal) => {
   }
 };
 
-// Initialize database and start server
-async function startServer() {
-  try {
-    console.log('🔧 Initializing database...');
-    await createTables();
-    console.log('✅ Database initialized successfully');
+// Start server
+function startServer() {
+  console.log('🚀 Starting server...');
 
-    // Start server
-    server = app.listen(PORT, HOST, () => {
-      console.log(`🚀 Server running on http://${HOST}:${PORT}`);
-      console.log(`📝 Environment: ${NODE_ENV}`);
-      console.log(`🕐 Started at: ${new Date().toISOString()}`);
+  server = app.listen(PORT, HOST, () => {
+    console.log(`🚀 Server running on http://${HOST}:${PORT}`);
+    console.log(`📝 Environment: ${NODE_ENV}`);
+    console.log(`🕐 Started at: ${new Date().toISOString()}`);
+    console.log(`ℹ️  Database will be initialized on first API request`);
 
-      if (NODE_ENV === 'development') {
-        console.log(`📊 Health check: http://${HOST}:${PORT}/api/health`);
-      }
-    });
+    if (NODE_ENV === 'development') {
+      console.log(`📊 Health check: http://${HOST}:${PORT}/api/health`);
+    }
+  });
 
-    // Handle server errors
-    server.on('error', handleServerError);
-
-  } catch (error) {
-    console.error('❌ Failed to initialize database:', error);
-    process.exit(1);
-  }
+  // Handle server errors
+  server.on('error', handleServerError);
 }
 
 function handleServerError(error) {

@@ -58,6 +58,10 @@ const profileRoutes = require('./routes/profileRoutes');
 const postsRoutes = require('./routes/posts');
 const commentsRoutes = require('./routes/comments');
 
+// Lazy database initialization middleware
+const lazyDbInit = require('./middleware/lazyDbInit');
+app.use(lazyDbInit);
+
 // API routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
