@@ -74,8 +74,8 @@ class BraillePractice {
         // Add page visibility change handler for better session tracking
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden' && this.sessionStartTime) {
-                // Record current session when page becomes hidden
-                this.checkAndRecordSession();
+                // Note: Practice session will be recorded only when explicitly ended
+                console.log('Page hidden, but session recording deferred to session end');
             }
         });
 
@@ -592,8 +592,7 @@ class BraillePractice {
                 this.speakText(`${description} 완성되었습니다!`);
             }
 
-            // Record practice session every 5 characters or after significant time
-            this.checkAndRecordSession();
+            // Note: Practice session recording is now done only at the end of the session
 
             setTimeout(() => {
                 this.loadNextCharacter();
@@ -657,50 +656,27 @@ class BraillePractice {
         this.currentBlockIndex = 0;
     }
 
-    // Check if we should record the current practice session
-    checkAndRecordSession() {
-        const currentTime = Date.now();
-        const totalSessionDuration = Math.floor((currentTime - this.sessionStartTime) / 1000); // in seconds
-        const incrementalDuration = Math.floor((currentTime - this.lastRecordedTime) / 1000); // in seconds
+    // DEPRECATED: No longer used - practice sessions are now recorded only at the end
+    // checkAndRecordSession() {
+    //     // This function is no longer used. Practice sessions are recorded once at the end.
+    // }
 
-        // Record session if:
-        // 1. Every 5 characters completed AND at least 30 seconds have passed since last recording, OR
-        // 2. Incremental duration exceeds 2 minutes (120 seconds)
-        // Only record the incremental time, not the total session time
-        const shouldRecordCharCount = this.practiceSessionData.charactersCompleted % 5 === 0 && incrementalDuration >= 30;
-        const shouldRecordTimeLimit = incrementalDuration >= 120;
-
-        if (shouldRecordCharCount || shouldRecordTimeLimit) {
-            console.log('🎯 Recording session:', {
-                reason: shouldRecordCharCount ? 'character milestone' : 'time limit',
-                characters: this.practiceSessionData.charactersCompleted,
-                incrementalDuration
-            });
-            this.recordPracticeSession(incrementalDuration);
-        }
-    }
-
-    // Record current practice session to backend
-    async recordPracticeSession(duration = null) {
+    // Record practice session to backend
+    async recordPracticeSession(duration) {
         try {
-            const currentTime = Date.now();
-            const incrementalDuration = duration || Math.floor((currentTime - this.lastRecordedTime) / 1000);
-
             // Only record if there's meaningful practice time (at least 10 seconds)
-            if (incrementalDuration < 10) {
-                console.log('⏱️ Incremental session too short to record:', incrementalDuration, 'seconds');
+            if (duration < 10) {
+                console.log('⏱️ Session too short to record:', duration, 'seconds');
                 return;
             }
 
             const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
             const token = localStorage.getItem('authToken');
 
-            console.log('📝 Recording incremental practice session:', {
-                incrementalDuration: incrementalDuration,
+            console.log('📝 Recording practice session:', {
+                totalDuration: duration,
                 characters: this.practiceSessionData.charactersCompleted,
-                date: today,
-                lastRecordedTime: this.lastRecordedTime,
-                currentTime: currentTime
+                date: today
             });
 
             const response = await fetch('/api/protected/practice/log', {
@@ -710,19 +686,15 @@ class BraillePractice {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    duration_seconds: incrementalDuration,
+                    duration_seconds: duration,
                     practiced_at: today
                 })
             });
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('✅ Incremental practice session recorded successfully:', result);
-
-                // Update last recorded time to current time to prevent duplicate recording
-                this.lastRecordedTime = currentTime;
-                this.practiceSessionData.totalTime += incrementalDuration;
-                console.log('📊 Updated last recorded time and total time:', this.practiceSessionData.totalTime);
+                console.log('✅ Practice session recorded successfully:', result);
+                this.practiceSessionData.totalTime = duration;
             } else {
                 const error = await response.json();
                 console.error('❌ Failed to record practice session:', error);
@@ -733,20 +705,23 @@ class BraillePractice {
         }
     }
 
-    // End practice session and record final time
+    // End practice session and record total session time
     async endPracticeSession() {
-        if (this.sessionStartTime && this.lastRecordedTime) {
+        if (this.sessionStartTime) {
             const currentTime = Date.now();
-            const finalIncrementalDuration = Math.floor((currentTime - this.lastRecordedTime) / 1000);
+            const totalSessionDuration = Math.floor((currentTime - this.sessionStartTime) / 1000);
 
-            console.log('🏁 Ending practice session. Final incremental duration:', finalIncrementalDuration, 'seconds');
+            console.log('🏁 Ending practice session. Total duration:', totalSessionDuration, 'seconds');
+            console.log('📊 Characters completed:', this.practiceSessionData.charactersCompleted);
 
             // Stop UI updates
             this.stopUIUpdates();
 
-            // Record final incremental session only if there's meaningful time left
-            if (finalIncrementalDuration >= 10) {
-                await this.recordPracticeSession(finalIncrementalDuration);
+            // Record total session time only if there's meaningful practice time (at least 10 seconds)
+            if (totalSessionDuration >= 10) {
+                await this.recordPracticeSession(totalSessionDuration);
+            } else {
+                console.log('⏱️ Session too short to record:', totalSessionDuration, 'seconds');
             }
 
             // Reset session data
