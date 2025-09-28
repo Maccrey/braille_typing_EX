@@ -93,8 +93,8 @@ class StatisticsManager {
     updateProgressCharts(stats) {
         // Weekly practice time goal (300 minutes = 5 hours)
         const weeklyGoal = 300;
-        // Use average daily practice * 7 as approximation for weekly time
-        const weeklyTime = Math.round(((stats.average_daily_practice || 0) * 7) / 60);
+        // Use actual weekly practice time from last 7 days
+        const weeklyTime = Math.round((stats.weekly_practice_time || 0) / 60);
         const weeklyProgress = Math.min((weeklyTime / weeklyGoal) * 100, 100);
 
         document.getElementById('weekly-progress-text').textContent = `${weeklyTime}/${weeklyGoal}분`;
@@ -102,8 +102,8 @@ class StatisticsManager {
 
         // Weekly practice days goal (5 days)
         const dailyGoal = 5;
-        // Use actual practice days as a better estimate
-        const weeklyDays = Math.min(stats.total_practice_days || 0, 7);
+        // Use actual weekly practice days from last 7 days
+        const weeklyDays = stats.weekly_practice_days || 0;
         const dailyProgress = Math.min((weeklyDays / dailyGoal) * 100, 100);
 
         document.getElementById('daily-progress-text').textContent = `${weeklyDays}/${dailyGoal}일`;

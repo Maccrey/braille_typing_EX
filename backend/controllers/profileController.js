@@ -57,6 +57,18 @@ const getUserStats = async (req, res) => {
       ? Math.round(practiceStats.total_practice_time / practiceDays)
       : 0;
 
+    // Get weekly practice statistics (last 7 days)
+    const weeklyStats = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT COALESCE(SUM(duration_seconds), 0) as weekly_practice_time, COUNT(DISTINCT DATE(practiced_at)) as weekly_practice_days FROM practice_logs WHERE user_id = ? AND practiced_at >= date("now", "-7 days")',
+        [userId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
     // Get first practice date
     const firstPracticeDate = await new Promise((resolve, reject) => {
       db.get(
@@ -101,6 +113,8 @@ const getUserStats = async (req, res) => {
       total_attendance_days: totalattendanceDays,
       normal_work_days: normalWorkDays,
       average_daily_practice: averageDailyPractice,
+      weekly_practice_time: weeklyStats.weekly_practice_time,
+      weekly_practice_days: weeklyStats.weekly_practice_days,
       longest_session: longestSession,
       stats_period: `${firstPracticeDate || 'N/A'} ~ ${lastPracticeDate || 'N/A'}`
     };

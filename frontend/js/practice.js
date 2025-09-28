@@ -664,10 +664,18 @@ class BraillePractice {
         const incrementalDuration = Math.floor((currentTime - this.lastRecordedTime) / 1000); // in seconds
 
         // Record session if:
-        // 1. Every 5 characters completed, OR
+        // 1. Every 5 characters completed AND at least 30 seconds have passed since last recording, OR
         // 2. Incremental duration exceeds 2 minutes (120 seconds)
         // Only record the incremental time, not the total session time
-        if (this.practiceSessionData.charactersCompleted % 5 === 0 || incrementalDuration >= 120) {
+        const shouldRecordCharCount = this.practiceSessionData.charactersCompleted % 5 === 0 && incrementalDuration >= 30;
+        const shouldRecordTimeLimit = incrementalDuration >= 120;
+
+        if (shouldRecordCharCount || shouldRecordTimeLimit) {
+            console.log('🎯 Recording session:', {
+                reason: shouldRecordCharCount ? 'character milestone' : 'time limit',
+                characters: this.practiceSessionData.charactersCompleted,
+                incrementalDuration
+            });
             this.recordPracticeSession(incrementalDuration);
         }
     }

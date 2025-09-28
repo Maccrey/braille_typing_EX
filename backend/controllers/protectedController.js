@@ -96,10 +96,14 @@ const getPracticeLogs = async (req, res) => {
 
     const logs = await new Promise((resolve, reject) => {
       const query = `
-        SELECT practiced_at as date, duration_seconds as duration
+        SELECT
+          DATE(practiced_at) as date,
+          SUM(duration_seconds) as duration,
+          COUNT(*) as session_count
         FROM practice_logs
         WHERE user_id = ?
-        ORDER BY practiced_at DESC
+        GROUP BY DATE(practiced_at)
+        ORDER BY DATE(practiced_at) DESC
         LIMIT ?
       `;
 
