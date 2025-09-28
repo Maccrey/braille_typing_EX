@@ -159,14 +159,15 @@ const logout = async (req, res) => {
 
 const getUser = async (req, res) => {
   try {
-    if (!req.session.user) {
+    // Check for user data from auth middleware (JWT or session)
+    if (!req.user) {
       return res.status(401).json({
         error: 'Not authenticated'
       });
     }
 
     res.json({
-      user: req.session.user
+      user: req.user
     });
 
   } catch (error) {

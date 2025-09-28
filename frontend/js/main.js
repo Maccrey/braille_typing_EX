@@ -65,9 +65,8 @@ class MainMenu {
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
 
-        // Use relative path for production compatibility
-        const loginPath = window.location.pathname.includes('/') ? 'login.html' : '/login.html';
-        window.location.href = loginPath;
+        // Always use relative path for better compatibility
+        window.location.href = 'login.html';
     }
 
     setupEventListeners() {

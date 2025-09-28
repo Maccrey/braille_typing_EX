@@ -193,11 +193,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (response.ok) {
-                showSuccess('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
+                // Store the JWT token
+                if (data.token) {
+                    localStorage.setItem('authToken', data.token);
+                    console.log('✅ JWT token stored after signup');
+                }
 
-                // Redirect to login page after a short delay
+                showSuccess('회원가입이 완료되었습니다. 메인 페이지로 이동합니다.');
+
+                // Redirect to main page after a short delay
                 setTimeout(() => {
-                    window.location.href = 'login.html';
+                    window.location.href = 'main.html';
                 }, 2000);
             } else {
                 // Handle specific error messages

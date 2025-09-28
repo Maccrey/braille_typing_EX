@@ -41,8 +41,7 @@ class ApiClient {
             console.log('🔐 401 Unauthorized - current path:', currentPath);
             if (!currentPath.includes('login')) {
                 console.log('🔄 Redirecting to login...');
-                const loginPath = currentPath === '/' ? 'login.html' : '/login.html';
-                window.location.href = loginPath;
+                window.location.href = 'login.html';
             }
             throw new Error('Authentication required');
         }
@@ -101,8 +100,7 @@ class ApiClient {
             this.currentUser = null;
             localStorage.removeItem('authToken');
             console.log('🔐 Token removed');
-            const loginPath = window.location.pathname === '/' ? 'login.html' : '/login.html';
-            window.location.href = loginPath;
+            window.location.href = 'login.html';
         }
     }
 
