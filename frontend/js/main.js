@@ -223,7 +223,7 @@ class MainMenu {
 
             console.log('🔄 Loading user stats from API...');
             // Construct API URL dynamically based on environment
-            const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://typing.maccrey.com';
+            const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : window.location.origin;
             const apiUrl = baseUrl + '/api/profile/stats';
             console.log('🔗 Using API URL:', apiUrl);
 
