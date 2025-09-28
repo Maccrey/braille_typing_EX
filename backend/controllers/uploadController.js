@@ -3,7 +3,39 @@ const xlsx = require('xlsx');
 const path = require('path');
 const fs = require('fs');
 const { getDb } = require('../config/database');
-const { createExampleFile } = require('../scripts/create-example-file');
+// Simple example file creation function
+const createExampleFile = async () => {
+  const uploadsDir = path.join(__dirname, '..', 'uploads');
+  const exampleFilePath = path.join(uploadsDir, 'braille-example.xlsx');
+
+  // Ensure uploads directory exists
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  // Create a simple example workbook
+  const workbook = xlsx.utils.book_new();
+  const worksheetData = [
+    ['문자', '블록1', '블록2', '블록3'],
+    ['A', '1', '', ''],
+    ['B', '1,2', '', ''],
+    ['C', '1,4', '', ''],
+    ['D', '1,4,5', '', ''],
+    ['E', '1,5', '', ''],
+    ['안', '1,2,3,4', '1,3,5', ''],
+    ['녕', '1,4', '2,3,5,6', ''],
+    ['하', '2,3,4', '1,2', ''],
+    ['세', '1,2,3', '3,4,5', ''],
+    ['요', '3,4,5', '2,4,6', '']
+  ];
+
+  const worksheet = xlsx.utils.aoa_to_sheet(worksheetData);
+  xlsx.utils.book_append_sheet(workbook, worksheet, 'BrailleData');
+
+  // Write file
+  xlsx.writeFile(workbook, exampleFilePath);
+  console.log('Example file created at:', exampleFilePath);
+};
 
 // Configure multer for file upload
 const storage = multer.memoryStorage();
