@@ -114,8 +114,10 @@ async function checkAuthentication() {
 
 // Initialize the page
 function initializePage() {
-    // Check if user is already logged in
-    checkAuthentication();
+    // Check if user is already logged in, ONLY on the login page
+    if (window.location.pathname.includes('login.html')) {
+        checkAuthentication();
+    }
 
     // Add form submission handler
     if (loginForm) {
