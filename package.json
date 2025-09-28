@@ -8,7 +8,7 @@
     "dev": "nodemon backend/server.js",
     "test": "cd backend && npm test",
     "build": "npm install",
-    "db:init": "node backend/init-db.js",
+    "db:init": "echo 'Database initialization skipped - will be done at runtime'",
     "postinstall": "echo 'Installation complete'"
   },
   "keywords": ["braille", "typing", "practice", "accessibility"],
