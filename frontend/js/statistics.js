@@ -32,9 +32,18 @@ class StatisticsManager {
             this.showLoading();
 
             const token = localStorage.getItem('authToken');
+            if (!token) {
+                throw new Error('로그인이 필요합니다.');
+            }
 
+            console.log('🔄 Loading statistics from API...');
             // Use the same API as main.js for consistency
-            const response = await fetch('/api/profile/stats', {
+            // Construct API URL dynamically based on environment
+            const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+            const apiUrl = baseUrl + '/api/profile/stats';
+            console.log('🔗 Using API URL:', apiUrl);
+
+            const response = await fetch(apiUrl, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -42,11 +51,18 @@ class StatisticsManager {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to load statistics');
+                const errorText = await response.text();
+                throw new Error(`API 요청 실패: ${response.status} - ${errorText}`);
             }
 
             const stats = await response.json();
             console.log('📊 Statistics API response:', stats);
+
+            // Validate response format
+            if (typeof stats !== 'object' || stats === null) {
+                throw new Error('잘못된 통계 응답 형식입니다.');
+            }
+
             this.displayStatistics(stats);
 
         } catch (error) {
@@ -138,7 +154,11 @@ class StatisticsManager {
     async loadRecentSessions() {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch('/api/protected/practice-logs?limit=10', {
+            // Construct API URL dynamically based on environment
+            const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+            const apiUrl = baseUrl + '/api/protected/practice-logs?limit=10';
+
+            const response = await fetch(apiUrl, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

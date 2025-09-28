@@ -3,6 +3,7 @@ const { getDb } = require('../config/database');
 const getUserStats = async (req, res) => {
   try {
     const userId = req.user.id;
+    console.log('🔍 Getting stats for user ID:', userId);
     const db = getDb();
 
     // Get total practice time and session count from practice_logs
@@ -12,7 +13,10 @@ const getUserStats = async (req, res) => {
         [userId],
         (err, row) => {
           if (err) reject(err);
-          else resolve(row);
+          else {
+            console.log('📊 Practice stats for user', userId, ':', row);
+            resolve(row);
+          }
         }
       );
     });

@@ -1,7 +1,8 @@
 // API 설정
 const API_CONFIG = {
-    // 상대 경로 사용 - 같은 도메인의 API 호출
-    BASE_URL: '',
+    // Development mode - use explicit backend URL
+    // Production mode - use relative path (same domain)
+    BASE_URL: window.location.hostname === 'localhost' ? 'http://localhost:3001' : '',
 
     // API 엔드포인트
     ENDPOINTS: {

@@ -84,7 +84,11 @@ class MainMenu {
                 return;
             }
 
-            const response = await fetch('/api/protected/categories/my', {
+            // Construct API URL dynamically based on environment
+            const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+            const apiUrl = baseUrl + '/api/protected/categories/my';
+
+            const response = await fetch(apiUrl, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -189,8 +193,19 @@ class MainMenu {
     async loadUserStats() {
         try {
             const token = localStorage.getItem('authToken');
+            if (!token) {
+                console.warn('⚠️ No auth token found, using default stats');
+                document.getElementById('practice-time').textContent = '0분';
+                return;
+            }
+
             console.log('🔄 Loading user stats from API...');
-            const response = await fetch('/api/profile/stats', {
+            // Construct API URL dynamically based on environment
+            const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+            const apiUrl = baseUrl + '/api/profile/stats';
+            console.log('🔗 Using API URL:', apiUrl);
+
+            const response = await fetch(apiUrl, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -198,11 +213,17 @@ class MainMenu {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to load user stats');
+                const errorText = await response.text();
+                throw new Error(`API request failed: ${response.status} - ${errorText}`);
             }
 
             const stats = await response.json();
             console.log('📊 Received stats:', stats);
+
+            // Validate stats object has required fields
+            if (typeof stats !== 'object' || stats === null) {
+                throw new Error('Invalid stats response format');
+            }
 
             // Use the correct field name from API response
             const practiceTimeSeconds = stats.total_practice_time || 0;
