@@ -53,7 +53,13 @@ const signup = async (req, res) => {
       );
     });
 
-    // Generate JWT token
+    // Store user data in session
+    req.session.user = {
+      id: userId,
+      username: username
+    };
+
+    // Generate JWT token for backward compatibility
     const token = jwt.sign(
       { userId: userId, username: username },
       JWT_SECRET,
@@ -112,7 +118,13 @@ const login = async (req, res) => {
       });
     }
 
-    // Generate JWT token
+    // Store user data in session
+    req.session.user = {
+      id: user.id,
+      username: user.username
+    };
+
+    // Generate JWT token for backward compatibility
     const token = jwt.sign(
       { userId: user.id, username: user.username },
       JWT_SECRET,
@@ -136,7 +148,53 @@ const login = async (req, res) => {
   }
 };
 
+const logout = async (req, res) => {
+  try {
+    // Destroy session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destroy error:', err);
+        return res.status(500).json({
+          error: 'Failed to logout'
+        });
+      }
+
+      res.json({
+        message: 'Logout successful'
+      });
+    });
+
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      error: 'Internal server error'
+    });
+  }
+};
+
+const getUser = async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).json({
+        error: 'Not authenticated'
+      });
+    }
+
+    res.json({
+      user: req.session.user
+    });
+
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({
+      error: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   signup,
-  login
+  login,
+  logout,
+  getUser
 };

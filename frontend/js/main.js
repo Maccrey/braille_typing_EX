@@ -12,14 +12,20 @@ class MainMenu {
     }
 
     async init() {
-        this.checkAuth();
+        await this.checkAuth();
         this.setupEventListeners();
         await this.loadInitialData();
     }
 
-    checkAuth() {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
+    async checkAuth() {
+        try {
+            const isAuth = await apiClient.isAuthenticated();
+            if (!isAuth) {
+                window.location.href = 'login.html';
+                return;
+            }
+        } catch (error) {
+            console.error('Auth check failed:', error);
             window.location.href = 'login.html';
             return;
         }

@@ -5,12 +5,21 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 
 const authMiddleware = async (req, res, next) => {
   try {
-    // Get token from Authorization header
+    // First check for session-based authentication
+    if (req.session && req.session.user) {
+      req.user = {
+        id: req.session.user.id,
+        username: req.session.user.username
+      };
+      return next();
+    }
+
+    // Fallback to JWT token authentication for backward compatibility
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
       return res.status(401).json({
-        error: 'Access token required'
+        error: 'Authentication required'
       });
     }
 

@@ -57,37 +57,18 @@ async function handleLogin(username, password) {
         showLoading();
         hideError();
 
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                username: username,
-                password: password
-            })
-        });
+        const data = await apiClient.login(username, password);
 
-        const data = await response.json();
+        // Redirect to main page
+        window.location.href = 'main.html';
 
-        if (response.ok) {
-            // Store authentication data
-            localStorage.setItem('authToken', data.token);
-            localStorage.setItem('userData', JSON.stringify(data.user));
-
-            // Redirect to main page
-            window.location.href = 'main.html';
-        } else {
-            // Handle API errors
-            if (response.status === 401) {
-                showError('잘못된 사용자명 또는 비밀번호입니다.');
-            } else {
-                showError(data.error || '로그인 중 오류가 발생했습니다.');
-            }
-        }
     } catch (error) {
         console.error('Login error:', error);
-        showError('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+        if (error.message.includes('Invalid credentials')) {
+            showError('잘못된 사용자명 또는 비밀번호입니다.');
+        } else {
+            showError(error.message || '네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+        }
     } finally {
         hideLoading();
     }
@@ -119,12 +100,15 @@ function handleFormSubmit(event) {
 }
 
 // Check if user is already logged in
-function checkAuthentication() {
-    const token = localStorage.getItem('authToken');
-
-    if (token) {
-        // User is already logged in, redirect to main page
-        window.location.href = 'main.html';
+async function checkAuthentication() {
+    try {
+        const isAuth = await apiClient.isAuthenticated();
+        if (isAuth) {
+            // User is already logged in, redirect to main page
+            window.location.href = 'main.html';
+        }
+    } catch (error) {
+        console.log('Not authenticated, staying on login page');
     }
 }
 
