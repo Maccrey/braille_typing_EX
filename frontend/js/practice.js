@@ -14,6 +14,7 @@ class BraillePractice {
 
         // Practice session tracking
         this.sessionStartTime = null;
+        this.lastRecordedTime = null; // Track last recorded time to prevent duplicate recording
         this.practiceSessionData = {
             startTime: null,
             charactersCompleted: 0,
@@ -91,6 +92,7 @@ class BraillePractice {
 
         // Start practice session tracking
         this.sessionStartTime = Date.now();
+        this.lastRecordedTime = this.sessionStartTime; // Initialize last recorded time
         this.practiceSessionData.startTime = this.sessionStartTime;
         console.log('📊 Practice session started at:', new Date(this.sessionStartTime));
 
@@ -644,13 +646,15 @@ class BraillePractice {
     // Check if we should record the current practice session
     checkAndRecordSession() {
         const currentTime = Date.now();
-        const sessionDuration = Math.floor((currentTime - this.sessionStartTime) / 1000); // in seconds
+        const totalSessionDuration = Math.floor((currentTime - this.sessionStartTime) / 1000); // in seconds
+        const incrementalDuration = Math.floor((currentTime - this.lastRecordedTime) / 1000); // in seconds
 
         // Record session if:
         // 1. Every 5 characters completed, OR
-        // 2. Session duration exceeds 2 minutes (120 seconds)
-        if (this.practiceSessionData.charactersCompleted % 5 === 0 || sessionDuration >= 120) {
-            this.recordPracticeSession(sessionDuration);
+        // 2. Incremental duration exceeds 2 minutes (120 seconds)
+        // Only record the incremental time, not the total session time
+        if (this.practiceSessionData.charactersCompleted % 5 === 0 || incrementalDuration >= 120) {
+            this.recordPracticeSession(incrementalDuration);
         }
     }
 
@@ -658,23 +662,23 @@ class BraillePractice {
     async recordPracticeSession(duration = null) {
         try {
             const currentTime = Date.now();
-            const sessionDuration = duration || Math.floor((currentTime - this.sessionStartTime) / 1000);
+            const incrementalDuration = duration || Math.floor((currentTime - this.lastRecordedTime) / 1000);
 
             // Only record if there's meaningful practice time (at least 10 seconds)
-            if (sessionDuration < 10) {
-                console.log('⏱️ Session too short to record:', sessionDuration, 'seconds');
+            if (incrementalDuration < 10) {
+                console.log('⏱️ Incremental session too short to record:', incrementalDuration, 'seconds');
                 return;
             }
 
             const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
             const token = localStorage.getItem('authToken');
 
-            console.log('📝 Recording practice session:', {
-                duration: sessionDuration,
+            console.log('📝 Recording incremental practice session:', {
+                incrementalDuration: incrementalDuration,
                 characters: this.practiceSessionData.charactersCompleted,
                 date: today,
-                oldSessionStartTime: this.sessionStartTime,
-                newSessionStartTime: currentTime
+                lastRecordedTime: this.lastRecordedTime,
+                currentTime: currentTime
             });
 
             const response = await fetch('/api/protected/practice/log', {
@@ -684,20 +688,19 @@ class BraillePractice {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    duration_seconds: sessionDuration,
+                    duration_seconds: incrementalDuration,
                     practiced_at: today
                 })
             });
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('✅ Practice session recorded successfully:', result);
+                console.log('✅ Incremental practice session recorded successfully:', result);
 
-                // BUGFIX: Don't reset sessionStartTime - this was causing the "reset" issue
-                // Instead, just accumulate the total time
-                console.log('🔧 NOT resetting sessionStartTime to prevent session reset appearance');
-                this.practiceSessionData.totalTime += sessionDuration;
-                console.log('📊 Updated total time:', this.practiceSessionData.totalTime);
+                // Update last recorded time to current time to prevent duplicate recording
+                this.lastRecordedTime = currentTime;
+                this.practiceSessionData.totalTime += incrementalDuration;
+                console.log('📊 Updated last recorded time and total time:', this.practiceSessionData.totalTime);
             } else {
                 const error = await response.json();
                 console.error('❌ Failed to record practice session:', error);
@@ -710,20 +713,23 @@ class BraillePractice {
 
     // End practice session and record final time
     async endPracticeSession() {
-        if (this.sessionStartTime) {
+        if (this.sessionStartTime && this.lastRecordedTime) {
             const currentTime = Date.now();
-            const finalDuration = Math.floor((currentTime - this.sessionStartTime) / 1000);
+            const finalIncrementalDuration = Math.floor((currentTime - this.lastRecordedTime) / 1000);
 
-            console.log('🏁 Ending practice session. Final duration:', finalDuration, 'seconds');
+            console.log('🏁 Ending practice session. Final incremental duration:', finalIncrementalDuration, 'seconds');
 
             // Stop UI updates
             this.stopUIUpdates();
 
-            // Record final session
-            await this.recordPracticeSession(finalDuration);
+            // Record final incremental session only if there's meaningful time left
+            if (finalIncrementalDuration >= 10) {
+                await this.recordPracticeSession(finalIncrementalDuration);
+            }
 
             // Reset session data
             this.sessionStartTime = null;
+            this.lastRecordedTime = null;
             this.practiceSessionData = {
                 startTime: null,
                 charactersCompleted: 0,
