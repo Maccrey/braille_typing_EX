@@ -2,7 +2,17 @@
 class ApiClient {
     constructor() {
         // Determine base URL based on environment
-        if (window.location.hostname === 'localhost') {
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+
+        console.log('🌐 Current location:', {
+            hostname: hostname,
+            port: port,
+            origin: window.location.origin,
+            href: window.location.href
+        });
+
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || port === '8080' || port === '8081') {
             this.baseUrl = 'http://localhost:3001';
         } else {
             // For deployed environments, use current origin
