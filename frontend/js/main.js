@@ -2,7 +2,13 @@
 
 // Helper function to get the correct API base URL
 function getApiBaseUrl() {
-    return window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://typing.maccrey.com';
+    // For development (localhost)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:3001';
+    }
+
+    // For production - use the same domain with no port
+    return window.location.origin;
 }
 
 class MainMenu {

@@ -1,6 +1,6 @@
 // Helper function to get the correct API base URL
 function getApiBaseUrl() {
-    return window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://typing.maccrey.com';
+    return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3001' : window.location.origin;
 }
 
 class CommunityManager {

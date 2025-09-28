@@ -679,7 +679,7 @@ class BraillePractice {
                 date: today
             });
 
-            const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://typing.maccrey.com';
+            const baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3001' : window.location.origin;
             const response = await fetch(baseUrl + '/api/protected/practice/log', {
                 method: 'POST',
                 headers: {

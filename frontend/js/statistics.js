@@ -80,7 +80,7 @@ class StatisticsManager {
             console.log('🔄 Loading statistics from API...');
             // Use the same API as main.js for consistency
             // Construct API URL dynamically based on environment
-            const apiUrl = (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://typing.maccrey.com') + '/api/profile/stats';
+            const apiUrl = ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3001' : window.location.origin) + '/api/profile/stats';
             console.log('🔗 Using API URL:', apiUrl);
 
             const response = await fetch(apiUrl, {
@@ -195,7 +195,7 @@ class StatisticsManager {
         try {
             const token = localStorage.getItem('authToken');
             // Construct API URL dynamically based on environment
-            const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://typing.maccrey.com';
+            const baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3001' : window.location.origin;
             const apiUrl = baseUrl + '/api/protected/practice-logs?limit=10';
 
             const response = await fetch(apiUrl, {
