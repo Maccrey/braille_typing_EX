@@ -7,7 +7,7 @@
     "start": "PORT=8080 node backend/server.js",
     "dev": "nodemon backend/server.js",
     "test": "cd backend && npm test",
-    "build": "npm install --production",
+    "build": "npm install",
     "db:init": "node backend/init-db.js",
     "postinstall": "echo 'Installation complete'"
   },
