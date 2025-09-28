@@ -32,21 +32,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve frontend static files
 const frontendPath = path.join(__dirname, '..', 'frontend');
-
-// Smart root route for health checks and serving the landing page
-app.get('/', (req, res, next) => {
-  const acceptHeader = req.get('Accept') || '';
-  if (acceptHeader.includes('text/html')) {
-    // Browser request, serve the landing page
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  } else {
-    // Health checker or API client, respond with JSON
-    res.status(200).json({ message: 'Braille Typing Practice API is running' });
-  }
-});
-
-// Serve frontend static files (for CSS, JS, other HTML files, etc.)
 app.use(express.static(frontendPath));
 
 // Request logging middleware
@@ -56,6 +43,11 @@ app.use((req, res, next) => {
     console.log(`  Authorization: ${req.headers.authorization.substring(0, 20)}...`);
   }
   next();
+});
+
+// Basic health check route
+app.get('/', (req, res) => {
+  res.json({ message: 'Braille Typing Practice API is running' });
 });
 
 // Import routes
