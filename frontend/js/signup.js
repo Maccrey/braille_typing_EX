@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const successMessage = document.getElementById('success-message');
     const loadingIndicator = document.getElementById('loading');
     const passwordStrength = document.getElementById('password-strength');
+    const passwordToggle = document.getElementById('password-toggle');
+    const confirmPasswordToggle = document.getElementById('confirm-password-toggle');
 
     // Form submission handler
     signupForm.addEventListener('submit', async function(e) {
@@ -55,6 +57,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Real-time username validation
     usernameInput.addEventListener('input', function() {
         validateUsernameField();
+    });
+
+    // Password visibility toggle handlers
+    passwordToggle.addEventListener('click', function() {
+        togglePasswordVisibility(passwordInput, passwordToggle);
+    });
+
+    confirmPasswordToggle.addEventListener('click', function() {
+        togglePasswordVisibility(confirmPasswordInput, confirmPasswordToggle);
     });
 
     function validateForm(username, password, confirmPassword) {
@@ -222,6 +233,18 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             submitButton.disabled = false;
             loadingIndicator.style.display = 'none';
+        }
+    }
+
+    function togglePasswordVisibility(inputElement, toggleButton) {
+        if (inputElement.type === 'password') {
+            inputElement.type = 'text';
+            toggleButton.textContent = '🙈';
+            toggleButton.title = '비밀번호 숨기기';
+        } else {
+            inputElement.type = 'password';
+            toggleButton.textContent = '👁️';
+            toggleButton.title = '비밀번호 보기';
         }
     }
 });

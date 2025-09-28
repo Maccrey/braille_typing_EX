@@ -24,6 +24,10 @@ class BraillePractice {
         // UI update timer
         this.uiUpdateInterval = null;
 
+        // Inactivity timer for auto-logout
+        this.inactivityTimer = null;
+        this.inactivityTimeout = 30000; // 30 seconds
+
         this.init();
     }
 
@@ -57,10 +61,13 @@ class BraillePractice {
         // Also set focus when user clicks anywhere on the page
         document.addEventListener('click', () => {
             document.body.focus();
+            // Reset inactivity timer on any click
+            this.resetInactivityTimer();
         });
 
         // Add page unload handler to save practice session
         window.addEventListener('beforeunload', () => {
+            this.clearInactivityTimer();
             this.endPracticeSession();
         });
 
@@ -71,6 +78,9 @@ class BraillePractice {
                 this.checkAndRecordSession();
             }
         });
+
+        // Start inactivity timer
+        this.startInactivityTimer();
     }
 
     checkAuthentication() {
@@ -341,6 +351,9 @@ class BraillePractice {
     handleKeyDown(event) {
         const key = event.key.toLowerCase();
         console.log('🎹 Key pressed:', key, 'Current pattern exists:', !!this.currentBraillePattern);
+
+        // Reset inactivity timer on any key press
+        this.resetInactivityTimer();
 
         // Task 7.3: Keyboard input handling
         const keyToDot = {
@@ -843,6 +856,44 @@ class BraillePractice {
         setTimeout(() => {
             errorEl.style.display = 'none';
         }, 5000);
+    }
+
+    // Inactivity timer management
+    startInactivityTimer() {
+        console.log('🕐 Starting inactivity timer (30 seconds)');
+        this.clearInactivityTimer();
+        this.inactivityTimer = setTimeout(() => {
+            this.handleInactivityTimeout();
+        }, this.inactivityTimeout);
+    }
+
+    resetInactivityTimer() {
+        console.log('🔄 Resetting inactivity timer');
+        this.startInactivityTimer();
+    }
+
+    clearInactivityTimer() {
+        if (this.inactivityTimer) {
+            clearTimeout(this.inactivityTimer);
+            this.inactivityTimer = null;
+        }
+    }
+
+    handleInactivityTimeout() {
+        console.log('⏰ Inactivity timeout reached - returning to main page');
+
+        // Clear the timer
+        this.clearInactivityTimer();
+
+        // End practice session
+        this.endPracticeSession();
+
+        // Show a message and redirect to main page
+        this.updateProgress('30초 동안 입력이 없어 메인 페이지로 이동합니다...');
+
+        setTimeout(() => {
+            window.location.href = 'main.html';
+        }, 1500);
     }
 }
 
