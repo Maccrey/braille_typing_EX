@@ -29,7 +29,9 @@
       "Bash(PORT=3001 node backend/server.js)",
       "Bash(grep:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npx jest:*)",
+      "Bash(PORT=3001 node backend/app.js)"
     ],
     "deny": [],
     "ask": []

@@ -5,14 +5,14 @@ const getUserStats = async (req, res) => {
     const userId = req.user.id;
     const db = getDb();
 
-    // Get total practice time
-    const totalPracticeTime = await new Promise((resolve, reject) => {
+    // Get total practice time and session count from practice_logs
+    const practiceStats = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT COALESCE(SUM(duration_seconds), 0) as total FROM practice_logs WHERE user_id = ?',
+        'SELECT COALESCE(SUM(duration_seconds), 0) as total_practice_time, COUNT(*) as total_sessions FROM practice_logs WHERE user_id = ?',
         [userId],
         (err, row) => {
           if (err) reject(err);
-          else resolve(row.total);
+          else resolve(row);
         }
       );
     });
@@ -41,9 +41,20 @@ const getUserStats = async (req, res) => {
       );
     });
 
-    // Calculate average daily practice
-    const averageDailyPractice = totalattendanceDays > 0
-      ? Math.round(totalPracticeTime / totalattendanceDays)
+    // Calculate average daily practice based on actual practice days (not attendance)
+    const practiceDays = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT COUNT(DISTINCT DATE(practiced_at)) as count FROM practice_logs WHERE user_id = ?',
+        [userId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row.count);
+        }
+      );
+    });
+
+    const averageDailyPractice = practiceDays > 0
+      ? Math.round(practiceStats.total_practice_time / practiceDays)
       : 0;
 
     // Get first practice date
@@ -84,7 +95,9 @@ const getUserStats = async (req, res) => {
 
     // Build response
     const stats = {
-      total_practice_time: totalPracticeTime,
+      total_practice_time: practiceStats.total_practice_time,
+      total_practice_sessions: practiceStats.total_sessions,
+      total_practice_days: practiceDays,
       total_attendance_days: totalattendanceDays,
       normal_work_days: normalWorkDays,
       average_daily_practice: averageDailyPractice,
