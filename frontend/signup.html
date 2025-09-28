@@ -98,10 +98,19 @@
             align-items: center;
             justify-content: center;
             transition: color 0.3s ease;
+            z-index: 10;
+            width: 24px;
+            height: 24px;
         }
 
         .password-toggle:hover {
             color: #333;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 3px;
+        }
+
+        .password-toggle:active {
+            transform: translateY(-50%) scale(0.95);
         }
 
         .password-input-container input {

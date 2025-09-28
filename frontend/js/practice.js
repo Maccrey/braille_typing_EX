@@ -588,7 +588,8 @@ class BraillePractice {
 
             // TTS notification for completion
             if (this.ttsEnabled) {
-                this.speakText(`${this.currentChar} 완성되었습니다!`);
+                const description = this.currentCharDescription || this.currentChar;
+                this.speakText(`${description} 완성되었습니다!`);
             }
 
             // Record practice session every 5 characters or after significant time

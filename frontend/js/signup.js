@@ -60,13 +60,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Password visibility toggle handlers
-    passwordToggle.addEventListener('click', function() {
-        togglePasswordVisibility(passwordInput, passwordToggle);
-    });
+    if (passwordToggle && passwordInput) {
+        passwordToggle.addEventListener('click', function() {
+            console.log('Password toggle clicked');
+            togglePasswordVisibility(passwordInput, passwordToggle);
+        });
+    } else {
+        console.error('Password toggle elements not found:', { passwordToggle, passwordInput });
+    }
 
-    confirmPasswordToggle.addEventListener('click', function() {
-        togglePasswordVisibility(confirmPasswordInput, confirmPasswordToggle);
-    });
+    if (confirmPasswordToggle && confirmPasswordInput) {
+        confirmPasswordToggle.addEventListener('click', function() {
+            console.log('Confirm password toggle clicked');
+            togglePasswordVisibility(confirmPasswordInput, confirmPasswordToggle);
+        });
+    } else {
+        console.error('Confirm password toggle elements not found:', { confirmPasswordToggle, confirmPasswordInput });
+    }
 
     function validateForm(username, password, confirmPassword) {
         if (!username && !password && !confirmPassword) {
@@ -237,14 +247,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function togglePasswordVisibility(inputElement, toggleButton) {
+        console.log('togglePasswordVisibility called:', {
+            inputType: inputElement.type,
+            inputValue: inputElement.value,
+            hasInput: !!inputElement,
+            hasButton: !!toggleButton
+        });
+
         if (inputElement.type === 'password') {
             inputElement.type = 'text';
             toggleButton.textContent = '🙈';
             toggleButton.title = '비밀번호 숨기기';
+            console.log('Changed to text type');
         } else {
             inputElement.type = 'password';
             toggleButton.textContent = '👁️';
             toggleButton.title = '비밀번호 보기';
+            console.log('Changed to password type');
         }
     }
 });
