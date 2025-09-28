@@ -105,6 +105,7 @@ async function checkAuthentication() {
         const isAuth = await apiClient.isAuthenticated();
         if (isAuth) {
             // User is already logged in, redirect to main page
+            console.log('✅ User already authenticated, redirecting to main');
             window.location.href = 'main.html';
         }
     } catch (error) {
@@ -115,7 +116,8 @@ async function checkAuthentication() {
 // Initialize the page
 function initializePage() {
     // Check if user is already logged in, ONLY on the login page
-    if (window.location.pathname.includes('login.html')) {
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('login.html') || currentPath === '/' || currentPath === '/index.html') {
         checkAuthentication();
     }
 

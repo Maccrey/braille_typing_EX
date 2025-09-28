@@ -28,20 +28,14 @@ class MainMenu {
         console.log('🌐 Current URL:', window.location.href);
         console.log('🔍 Auth token exists:', !!localStorage.getItem('authToken'));
 
-        // Temporarily disable auth check for debugging
-        console.log('⚠️ AUTH CHECK TEMPORARILY DISABLED FOR DEBUGGING');
-        /*
-        // Only check auth once and don't reload if already authenticated
+        // Check authentication before proceeding
         if (!this.authChecked) {
             await this.checkAuth();
             this.authChecked = true;
         }
-        */
 
         this.setupEventListeners();
-        // Temporarily disable data loading for debugging
-        console.log('⚠️ DATA LOADING TEMPORARILY DISABLED FOR DEBUGGING');
-        // await this.loadInitialData();
+        await this.loadInitialData();
     }
 
     async checkAuth() {
@@ -50,19 +44,30 @@ class MainMenu {
             const user = await apiClient.getCurrentUser();
             if (!user) {
                 console.log('❌ No user found, redirecting to login');
-                window.location.href = '/login.html';
+                this.redirectToLogin();
                 return;
             }
             console.log('✅ User authenticated:', user.username);
         } catch (error) {
             console.error('Auth check failed:', error);
             // Don't redirect if already on login page or if it's a network error
-            if (!window.location.pathname.endsWith('/login.html')) {
+            const currentPath = window.location.pathname;
+            if (!currentPath.endsWith('/login.html') && !currentPath.includes('login')) {
                 console.log('🔄 Redirecting to login due to auth failure');
-                window.location.href = '/login.html';
+                this.redirectToLogin();
             }
             return;
         }
+    }
+
+    redirectToLogin() {
+        // Clear any stored auth data
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+
+        // Use relative path for production compatibility
+        const loginPath = window.location.pathname.includes('/') ? 'login.html' : '/login.html';
+        window.location.href = loginPath;
     }
 
     setupEventListeners() {
@@ -120,7 +125,7 @@ class MainMenu {
 
             if (!token) {
                 console.log('No auth token found, redirecting to login');
-                window.location.href = 'login.html';
+                this.redirectToLogin();
                 return;
             }
 
@@ -135,9 +140,7 @@ class MainMenu {
 
             if (response.status === 401) {
                 console.log('Unauthorized, removing invalid token and redirecting to login');
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('userData');
-                window.location.href = 'login.html';
+                this.redirectToLogin();
                 return;
             }
 
@@ -1049,9 +1052,7 @@ class MainMenu {
     }
 
     logout() {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userData');
-        window.location.href = 'login.html';
+        this.redirectToLogin();
     }
 }
 
