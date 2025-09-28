@@ -2,16 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const session = require('express-session');
-const SQLiteStore = require('connect-sqlite3')(session);
 
 const app = express();
 
 // Session configuration
 app.use(session({
-  store: new SQLiteStore({
-    db: 'sessions.db',
-    dir: __dirname
-  }),
   secret: process.env.SESSION_SECRET || 'braille-typing-session-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
