@@ -5,9 +5,38 @@ class StatisticsManager {
     }
 
     init() {
-        this.checkAuthentication();
         this.bindEvents();
+        this.checkAuthenticationAndLoad();
+    }
+
+    checkAuthenticationAndLoad() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.warn('⚠️ No auth token found, showing default state');
+            this.showDefaultState();
+            // Don't redirect immediately - give a chance for token to be set
+            setTimeout(() => {
+                const tokenNow = localStorage.getItem('authToken');
+                if (!tokenNow) {
+                    console.warn('⚠️ Still no token after delay, redirecting to login');
+                    window.location.href = 'login.html';
+                } else {
+                    console.log('🔄 Token found after delay, loading statistics');
+                    this.loadStatistics();
+                }
+            }, 1000);
+            return false;
+        }
         this.loadStatistics();
+        return true;
+    }
+
+    showDefaultState() {
+        // Hide loading, show content with default values
+        this.hideLoading();
+        this.hideError();
+        document.getElementById('statistics-content').style.display = 'block';
+        console.log('📊 Showing default statistics state');
     }
 
     checkAuthentication() {
@@ -25,6 +54,18 @@ class StatisticsManager {
             localStorage.removeItem('authToken');
             window.location.href = 'login.html';
         });
+    }
+
+    // Method to reload statistics (can be called after token is set)
+    reloadStatistics() {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            console.log('🔄 Reloading statistics with token');
+            this.loadStatistics();
+        } else {
+            console.warn('⚠️ Cannot reload statistics: no auth token');
+            this.showDefaultState();
+        }
     }
 
     async loadStatistics() {
@@ -241,5 +282,8 @@ class StatisticsManager {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new StatisticsManager();
+    window.statisticsManager = new StatisticsManager();
 });
+
+// Also expose StatisticsManager for debugging/testing
+window.StatisticsManager = StatisticsManager;
