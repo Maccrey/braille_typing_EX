@@ -67,8 +67,8 @@ app.get('/ping', (req, res) => {
   res.status(200).send('pong');
 });
 
-// Basic health check route
-app.get('/', (req, res) => {
+// API health check route
+app.get('/api/status', (req, res) => {
   res.status(200).json({
     message: 'Braille Typing Practice API is running',
     status: 'UP',
@@ -108,17 +108,14 @@ app.use('/api/posts', postsRoutes);
 // Comments routes
 app.use('/api/comments', commentsRoutes);
 
-// Serve frontend for root and any non-API routes
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
-});
-
 // Catch-all handler for frontend routes (SPA fallback)
 app.get('*', (req, res, next) => {
   // Skip API routes
   if (req.path.startsWith('/api/')) {
     return next();
   }
+
+  // Serve index.html for all frontend routes
   res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 

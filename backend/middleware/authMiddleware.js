@@ -5,8 +5,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 
 const authMiddleware = async (req, res, next) => {
   try {
+    console.log('🔐 AuthMiddleware called for:', req.path);
+    console.log('🍪 Session:', req.session?.user);
+    console.log('🔑 Auth header:', req.headers.authorization?.substring(0, 20) + '...');
+
     // First check for session-based authentication
     if (req.session && req.session.user) {
+      console.log('✅ Session auth successful');
       req.user = {
         id: req.session.user.id,
         username: req.session.user.username
@@ -42,8 +47,11 @@ const authMiddleware = async (req, res, next) => {
     // Verify token
     let decoded;
     try {
+      console.log('🔍 Verifying JWT token...');
       decoded = jwt.verify(token, JWT_SECRET);
+      console.log('✅ JWT decoded:', { userId: decoded.userId, username: decoded.username });
     } catch (error) {
+      console.log('❌ JWT verification failed:', error.message);
       if (error.name === 'TokenExpiredError') {
         return res.status(401).json({
           error: 'Token expired'
@@ -60,14 +68,18 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // Get user from database to verify user still exists
+    console.log('🔍 Looking up user in database...');
     const db = getDb();
     const user = await db.selectOne('users', { id: decoded.userId });
 
     if (!user) {
+      console.log('❌ User not found in database:', decoded.userId);
       return res.status(401).json({
         error: 'User not found'
       });
     }
+
+    console.log('✅ User found:', { id: user.id, username: user.username });
 
     // Add user information to request object
     req.user = {
@@ -75,6 +87,7 @@ const authMiddleware = async (req, res, next) => {
       username: user.username
     };
 
+    console.log('✅ req.user set, calling next()');
     // Continue to next middleware/route handler
     next();
 

@@ -159,13 +159,20 @@ const logout = async (req, res) => {
 
 const getUser = async (req, res) => {
   try {
+    console.log('🔍 getUser called');
+    console.log('📊 Session user:', req.session?.user);
+    console.log('🔑 JWT user:', req.user);
+    console.log('📋 Headers:', req.headers.authorization);
+
     // Check for user data from auth middleware (JWT or session)
     if (!req.user) {
+      console.log('❌ No req.user found');
       return res.status(401).json({
         error: 'Not authenticated'
       });
     }
 
+    console.log('✅ Returning user:', req.user);
     res.json({
       user: req.user
     });
