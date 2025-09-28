@@ -64,7 +64,10 @@ const getUserStats = async (req, res) => {
         [userId],
         (err, row) => {
           if (err) reject(err);
-          else resolve(row);
+          else {
+            console.log('📈 Weekly stats calculated:', row);
+            resolve(row);
+          }
         }
       );
     });
@@ -127,6 +130,7 @@ const getUserStats = async (req, res) => {
       stats.last_practice_date = lastPracticeDate;
     }
 
+    console.log('📊 Sending stats response:', stats);
     res.status(200).json(stats);
 
   } catch (error) {
@@ -568,6 +572,13 @@ const getDailyRanking = async (req, res) => {
       const hours = Math.floor(user.daily_practice_time / 3600);
       const minutes = Math.floor((user.daily_practice_time % 3600) / 60);
       const practiceTimeText = hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
+
+      console.log(`🏆 Daily ranking for ${user.username}:`, {
+        daily_practice_time: user.daily_practice_time,
+        hours,
+        minutes,
+        practiceTimeText
+      });
 
       return {
         rank,

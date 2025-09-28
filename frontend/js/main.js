@@ -446,6 +446,7 @@ class MainMenu {
             }
 
             this.dailyRanking = await response.json();
+            console.log('🏆 Daily ranking response:', this.dailyRanking);
             this.renderDailyRanking();
         } catch (error) {
             console.error('Error loading daily ranking:', error);

@@ -46,6 +46,7 @@ class StatisticsManager {
             }
 
             const stats = await response.json();
+            console.log('📊 Statistics API response:', stats);
             this.displayStatistics(stats);
 
         } catch (error) {
@@ -72,30 +73,48 @@ class StatisticsManager {
     }
 
     updateMainStats(stats) {
+        console.log('🔄 Updating main stats with:', stats);
+
         // Total practice time - use the same field name as profile API
         const totalMinutes = Math.round((stats.total_practice_time || 0) / 60);
         document.getElementById('total-practice-time').textContent =
             totalMinutes >= 60 ? `${Math.floor(totalMinutes / 60)}시간 ${totalMinutes % 60}분` : `${totalMinutes}분`;
 
         // Total sessions - use actual practice sessions
-        document.getElementById('total-sessions').textContent = `${stats.total_practice_sessions || 0}회`;
+        const totalSessions = stats.total_practice_sessions || 0;
+        console.log('📊 Setting total sessions to:', totalSessions);
+        document.getElementById('total-sessions').textContent = `${totalSessions}회`;
 
         // Average session time - calculate average per session
         const avgSessionMinutes = stats.total_practice_sessions > 0
             ? Math.round((stats.total_practice_time || 0) / stats.total_practice_sessions / 60)
             : 0;
+        console.log('📊 Setting average session time to:', avgSessionMinutes);
         document.getElementById('average-session-time').textContent = `${avgSessionMinutes}분`;
 
         // Practice days - use actual practice days
-        document.getElementById('practice-days').textContent = `${stats.total_practice_days || 0}일`;
+        const practiceDays = stats.total_practice_days || 0;
+        console.log('📊 Setting practice days to:', practiceDays);
+        document.getElementById('practice-days').textContent = `${practiceDays}일`;
     }
 
     updateProgressCharts(stats) {
+        console.log('📈 Updating progress charts with:', {
+            weekly_practice_time: stats.weekly_practice_time,
+            weekly_practice_days: stats.weekly_practice_days
+        });
+
         // Weekly practice time goal (300 minutes = 5 hours)
         const weeklyGoal = 300;
         // Use actual weekly practice time from last 7 days
         const weeklyTime = Math.round((stats.weekly_practice_time || 0) / 60);
         const weeklyProgress = Math.min((weeklyTime / weeklyGoal) * 100, 100);
+
+        console.log('🎯 Weekly time progress:', {
+            weeklyTime,
+            weeklyGoal,
+            weeklyProgress: `${weeklyProgress}%`
+        });
 
         document.getElementById('weekly-progress-text').textContent = `${weeklyTime}/${weeklyGoal}분`;
         document.getElementById('weekly-progress-bar').style.width = `${weeklyProgress}%`;
@@ -105,6 +124,12 @@ class StatisticsManager {
         // Use actual weekly practice days from last 7 days
         const weeklyDays = stats.weekly_practice_days || 0;
         const dailyProgress = Math.min((weeklyDays / dailyGoal) * 100, 100);
+
+        console.log('🎯 Weekly days progress:', {
+            weeklyDays,
+            dailyGoal,
+            dailyProgress: `${dailyProgress}%`
+        });
 
         document.getElementById('daily-progress-text').textContent = `${weeklyDays}/${dailyGoal}일`;
         document.getElementById('daily-progress-bar').style.width = `${dailyProgress}%`;
