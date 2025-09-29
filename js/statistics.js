@@ -1,0 +1,288 @@
+// Statistics page JavaScript
+class StatisticsManager {
+    constructor() {
+        this.init();
+    }
+
+    init() {
+        this.bindEvents();
+        this.checkAuthenticationAndLoad();
+    }
+
+    checkAuthenticationAndLoad() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.warn('⚠️ No auth token found, showing default state');
+            this.showDefaultState();
+            // Don't redirect immediately - give a chance for token to be set
+            setTimeout(() => {
+                const tokenNow = localStorage.getItem('authToken');
+                if (!tokenNow) {
+                    console.warn('⚠️ Still no token after delay, redirecting to login');
+                    window.location.href = 'login.html';
+                } else {
+                    console.log('🔄 Token found after delay, loading statistics');
+                    this.loadStatistics();
+                }
+            }, 1000);
+            return false;
+        }
+        this.loadStatistics();
+        return true;
+    }
+
+    showDefaultState() {
+        // Hide loading, show content with default values
+        this.hideLoading();
+        this.hideError();
+        document.getElementById('statistics-content').style.display = 'block';
+        console.log('📊 Showing default statistics state');
+    }
+
+    checkAuthentication() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            window.location.href = 'login.html';
+            return false;
+        }
+        return true;
+    }
+
+    bindEvents() {
+        // Logout button
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('authToken');
+            window.location.href = 'login.html';
+        });
+    }
+
+    // Method to reload statistics (can be called after token is set)
+    reloadStatistics() {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            console.log('🔄 Reloading statistics with token');
+            this.loadStatistics();
+        } else {
+            console.warn('⚠️ Cannot reload statistics: no auth token');
+            this.showDefaultState();
+        }
+    }
+
+    async loadStatistics() {
+        try {
+            this.showLoading();
+
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                throw new Error('로그인이 필요합니다.');
+            }
+
+            console.log('🔄 Loading statistics from API...');
+            // Use the same API as main.js for consistency
+            // Construct API URL dynamically based on environment
+            const apiUrl = ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3001' : window.location.origin) + '/api/profile/stats';
+            console.log('🔗 Using API URL:', apiUrl);
+
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API 요청 실패: ${response.status} - ${errorText}`);
+            }
+
+            const stats = await response.json();
+            console.log('📊 Statistics API response:', stats);
+
+            // Validate response format
+            if (typeof stats !== 'object' || stats === null) {
+                throw new Error('잘못된 통계 응답 형식입니다.');
+            }
+
+            this.displayStatistics(stats);
+
+        } catch (error) {
+            console.error('Error loading statistics:', error);
+            this.showError('통계를 불러오는 중 오류가 발생했습니다: ' + error.message);
+        }
+    }
+
+    displayStatistics(stats) {
+        this.hideLoading();
+        this.hideError();
+
+        // Show statistics content
+        document.getElementById('statistics-content').style.display = 'block';
+
+        // Update main statistics cards
+        this.updateMainStats(stats);
+
+        // Update progress charts
+        this.updateProgressCharts(stats);
+
+        // Load recent practice sessions
+        this.loadRecentSessions();
+    }
+
+    updateMainStats(stats) {
+        console.log('🔄 Updating main stats with:', stats);
+
+        // Total practice time - use the same field name as profile API
+        const totalMinutes = Math.round((stats.total_practice_time || 0) / 60);
+        document.getElementById('total-practice-time').textContent =
+            totalMinutes >= 60 ? `${Math.floor(totalMinutes / 60)}시간 ${totalMinutes % 60}분` : `${totalMinutes}분`;
+
+        // Total sessions - use actual practice sessions
+        const totalSessions = stats.total_practice_sessions || 0;
+        console.log('📊 Setting total sessions to:', totalSessions);
+        document.getElementById('total-sessions').textContent = `${totalSessions}회`;
+
+        // Average session time - calculate average per session
+        const avgSessionMinutes = stats.total_practice_sessions > 0
+            ? Math.round((stats.total_practice_time || 0) / stats.total_practice_sessions / 60)
+            : 0;
+        console.log('📊 Setting average session time to:', avgSessionMinutes);
+        document.getElementById('average-session-time').textContent = `${avgSessionMinutes}분`;
+
+        // Practice days - use actual practice days
+        const practiceDays = stats.total_practice_days || 0;
+        console.log('📊 Setting practice days to:', practiceDays);
+        document.getElementById('practice-days').textContent = `${practiceDays}일`;
+    }
+
+    updateProgressCharts(stats) {
+        console.log('📈 Updating progress charts with:', {
+            weekly_practice_time: stats.weekly_practice_time,
+            weekly_practice_days: stats.weekly_practice_days
+        });
+
+        // Weekly practice time goal (300 minutes = 5 hours)
+        const weeklyGoal = 300;
+        // Use actual weekly practice time from last 7 days
+        const weeklyTime = Math.round((stats.weekly_practice_time || 0) / 60);
+        const weeklyProgress = Math.min((weeklyTime / weeklyGoal) * 100, 100);
+
+        console.log('🎯 Weekly time progress:', {
+            weeklyTime,
+            weeklyGoal,
+            weeklyProgress: `${weeklyProgress}%`
+        });
+
+        document.getElementById('weekly-progress-text').textContent = `${weeklyTime}/${weeklyGoal}분`;
+        document.getElementById('weekly-progress-bar').style.width = `${weeklyProgress}%`;
+
+        // Weekly practice days goal (5 days)
+        const dailyGoal = 5;
+        // Use actual weekly practice days from last 7 days
+        const weeklyDays = stats.weekly_practice_days || 0;
+        const dailyProgress = Math.min((weeklyDays / dailyGoal) * 100, 100);
+
+        console.log('🎯 Weekly days progress:', {
+            weeklyDays,
+            dailyGoal,
+            dailyProgress: `${dailyProgress}%`
+        });
+
+        document.getElementById('daily-progress-text').textContent = `${weeklyDays}/${dailyGoal}일`;
+        document.getElementById('daily-progress-bar').style.width = `${dailyProgress}%`;
+    }
+
+    async loadRecentSessions() {
+        try {
+            const token = localStorage.getItem('authToken');
+            // Construct API URL dynamically based on environment
+            const baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3001' : window.location.origin;
+            const apiUrl = baseUrl + '/api/protected/practice-logs?limit=10';
+
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load recent sessions');
+            }
+
+            const sessions = await response.json();
+            this.displayRecentSessions(sessions);
+
+        } catch (error) {
+            console.error('Error loading recent sessions:', error);
+            // Show empty state if no sessions
+            document.getElementById('sessions-empty').style.display = 'block';
+        }
+    }
+
+    displayRecentSessions(sessions) {
+        const sessionsList = document.getElementById('sessions-list');
+        const emptyState = document.getElementById('sessions-empty');
+
+        if (!sessions || sessions.length === 0) {
+            emptyState.style.display = 'block';
+            sessionsList.innerHTML = '';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+
+        sessionsList.innerHTML = sessions.map(session => {
+            const date = new Date(session.date);
+            const formattedDate = date.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'short'
+            });
+
+            const duration = Math.round(session.duration / 60);
+            const formattedDuration = duration >= 60 ?
+                `${Math.floor(duration / 60)}시간 ${duration % 60}분` :
+                `${duration}분`;
+
+            return `
+                <div class="session-item">
+                    <div>
+                        <div class="session-date">${formattedDate}</div>
+                        <div class="session-details">점자 연습</div>
+                    </div>
+                    <div class="session-duration">${formattedDuration}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    showLoading() {
+        document.getElementById('loading-indicator').style.display = 'block';
+        document.getElementById('statistics-content').style.display = 'none';
+        this.hideError();
+    }
+
+    hideLoading() {
+        document.getElementById('loading-indicator').style.display = 'none';
+    }
+
+    showError(message) {
+        const errorEl = document.getElementById('error-message');
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+        this.hideLoading();
+    }
+
+    hideError() {
+        document.getElementById('error-message').style.display = 'none';
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.statisticsManager = new StatisticsManager();
+});
+
+// Also expose StatisticsManager for debugging/testing
+window.StatisticsManager = StatisticsManager;
