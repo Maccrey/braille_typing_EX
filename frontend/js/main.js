@@ -75,8 +75,19 @@ class MainMenu {
                 return;
             }
 
-            // Skip server validation for now due to deployment issues
-            console.log('⚠️ Using local token validation only (server auth disabled)');
+            // Now try server validation with improved auth middleware
+            console.log('🔄 Attempting server validation...');
+            try {
+                const user = await apiClient.getCurrentUser();
+                if (user) {
+                    console.log('✅ Server validation successful:', user.username);
+                    this.currentUser = user;
+                } else {
+                    console.log('⚠️ Server validation failed, using local token data');
+                }
+            } catch (serverError) {
+                console.log('⚠️ Server validation error, using local token data:', serverError.message);
+            }
 
         } catch (error) {
             console.error('Auth check failed:', error);

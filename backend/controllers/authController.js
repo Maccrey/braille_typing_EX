@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { getDb } = require('../config/database');
 
 const SALT_ROUNDS = 10;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'braille-typing-practice-jwt-secret-2025';
 
 const signup = async (req, res) => {
   try {
