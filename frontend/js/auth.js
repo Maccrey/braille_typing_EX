@@ -99,17 +99,51 @@ function handleFormSubmit(event) {
     }
 }
 
-// Check if user is already logged in
+// Check if user is already logged in with improved validation
 async function checkAuthentication() {
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+        console.log('No token found, staying on login page');
+        return;
+    }
+
     try {
-        const isAuth = await apiClient.isAuthenticated();
-        if (isAuth) {
-            // User is already logged in, redirect to main page
+        // First check token structure and expiration
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const currentTime = Math.floor(Date.now() / 1000);
+
+        if (payload.exp && payload.exp <= currentTime) {
+            console.log('Token expired, removing and staying on login page');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            return;
+        }
+
+        // Then verify with server
+        const authResponse = await fetch('/api/auth/user', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+
+        if (authResponse.ok) {
+            // User is already authenticated, redirect to main page
             console.log('✅ User already authenticated, redirecting to main');
             window.location.href = 'main.html';
+        } else {
+            // Server auth failed, remove token
+            console.log('Server authentication failed, removing token');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
         }
     } catch (error) {
-        console.log('Not authenticated, staying on login page');
+        console.log('Authentication check failed:', error.message);
+        // Remove invalid token
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
     }
 }
 

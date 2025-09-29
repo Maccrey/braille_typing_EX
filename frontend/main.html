@@ -2005,11 +2005,11 @@
     <script src="js/utils/apiClient.js"></script>
     <script src="js/config.js"></script>
     <script>
-        // Emergency auth check bypass for deployment issues
-        document.addEventListener('DOMContentLoaded', () => {
+        // Enhanced auth check to prevent infinite loops
+        document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('authToken');
 
-            // Simple token validation like index.html
+            // No token - redirect to login
             if (!token) {
                 console.log('No token found, redirecting to login');
                 window.location.href = 'login.html';
@@ -2020,27 +2020,56 @@
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 const currentTime = Math.floor(Date.now() / 1000);
 
+                // Check token expiration
                 if (payload.exp && payload.exp <= currentTime) {
                     console.log('Token expired, redirecting to login');
                     localStorage.removeItem('authToken');
+                    localStorage.removeItem('userData');
                     window.location.href = 'login.html';
                     return;
                 }
 
-                console.log('✅ Authentication successful:', payload.username);
+                // Verify with server to ensure token is still valid
+                try {
+                    const authResponse = await fetch('/api/auth/user', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include'
+                    });
 
-                // Show basic content
-                document.querySelector('.header h1').textContent = `점자 타자 연습기 - ${payload.username}님`;
+                    if (!authResponse.ok) {
+                        console.log('Server auth failed, redirecting to login');
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('userData');
+                        window.location.href = 'login.html';
+                        return;
+                    }
 
-                // Load main functionality only after auth is confirmed
-                const script = document.createElement('script');
-                script.src = 'js/main.js';
-                script.onload = () => console.log('Main functionality loaded');
-                document.head.appendChild(script);
+                    console.log('✅ Authentication successful:', payload.username);
+
+                    // Show basic content
+                    document.querySelector('.header h1').textContent = `점자 타자 연습기 - ${payload.username}님`;
+
+                    // Load main functionality only after auth is confirmed
+                    const script = document.createElement('script');
+                    script.src = 'js/main.js';
+                    script.onload = () => console.log('Main functionality loaded');
+                    document.head.appendChild(script);
+
+                } catch (serverError) {
+                    console.log('Server auth check failed:', serverError.message);
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('userData');
+                    window.location.href = 'login.html';
+                    return;
+                }
 
             } catch (error) {
                 console.log('Invalid token, redirecting to login');
                 localStorage.removeItem('authToken');
+                localStorage.removeItem('userData');
                 window.location.href = 'login.html';
             }
 

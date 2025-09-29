@@ -248,13 +248,13 @@
 
     <script>
         // 로그인 상태 체크 및 자동 리다이렉트
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             const token = localStorage.getItem('authToken');
             const appStatus = document.getElementById('app-status');
             const pageContent = document.getElementById('page-content');
 
             // 애니메이션 효과를 위한 딜레이
-            setTimeout(() => {
+            setTimeout(async () => {
                 // JWT 토큰이 있는지 확인
                 if (token) {
                     // 토큰의 유효성을 간단히 체크 (만료 시간 확인)
@@ -263,28 +263,53 @@
                         const currentTime = Math.floor(Date.now() / 1000);
 
                         if (payload.exp && payload.exp > currentTime) {
-                            // 유효한 토큰이면 메인 페이지로 리다이렉트
-                            appStatus.innerHTML = `
-                                <div class="loading-spinner"></div>
-                                ✅ 로그인 상태입니다. 메인 페이지로 이동합니다...
-                            `;
-                            appStatus.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%)';
-                            appStatus.style.borderColor = 'rgba(76, 175, 80, 0.3)';
-                            appStatus.style.color = '#4CAF50';
+                            // 유효한 토큰이면 서버에서 실제 인증 상태 확인
+                            try {
+                                const authResponse = await fetch('/api/auth/user', {
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    credentials: 'include'
+                                });
 
-                            setTimeout(() => {
-                                window.location.href = 'main.html';
-                            }, 1500);
-                            return;
+                                if (authResponse.ok) {
+                                    // 서버 인증 성공 - 메인 페이지로 이동
+                                    appStatus.innerHTML = `
+                                        <div class="loading-spinner"></div>
+                                        ✅ 로그인 상태입니다. 메인 페이지로 이동합니다...
+                                    `;
+                                    appStatus.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%)';
+                                    appStatus.style.borderColor = 'rgba(76, 175, 80, 0.3)';
+                                    appStatus.style.color = '#4CAF50';
+
+                                    setTimeout(() => {
+                                        window.location.href = 'main.html';
+                                    }, 1500);
+                                    return;
+                                } else {
+                                    // 서버에서 인증 실패 - 토큰 제거
+                                    localStorage.removeItem('authToken');
+                                    localStorage.removeItem('userData');
+                                    console.log('서버 인증 실패, 토큰 제거');
+                                }
+                            } catch (serverError) {
+                                console.log('서버 인증 체크 실패:', serverError.message);
+                                // 네트워크 오류 등으로 서버 체크 실패시에도 토큰 제거
+                                localStorage.removeItem('authToken');
+                                localStorage.removeItem('userData');
+                            }
                         } else {
                             // 만료된 토큰이면 제거
                             localStorage.removeItem('authToken');
                             localStorage.removeItem('userData');
+                            console.log('토큰 만료, 토큰 제거');
                         }
                     } catch (error) {
                         // 유효하지 않은 토큰이면 제거
                         localStorage.removeItem('authToken');
                         localStorage.removeItem('userData');
+                        console.log('유효하지 않은 토큰, 토큰 제거');
                     }
                 }
 
