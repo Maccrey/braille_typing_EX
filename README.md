@@ -1358,3 +1358,13 @@ MIT License - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 여러분의 기여와 피드백을 환영합니다! 🙏
 
 _Made with ❤️ for the visually impaired community_
+
+📝 각 설정 설명
+
+- Port: 8080 - 서버가 실행될 포트 (server.js에서 기본값으로
+  설정됨)
+- Install command: npm ci - 의존성 설치 (package-lock.json 기반
+  빠른 설치)
+- Build command: npm run build - 빌드 스크립트 실행
+- Start command: npm start - 서버 시작 (backend/server.js 실행)
+- Health Check: /health - 헬스체크 엔드포인트 (app.js에 구현됨)
