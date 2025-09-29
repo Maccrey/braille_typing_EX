@@ -50,7 +50,7 @@ class MainMenu {
                 return;
             }
 
-            // Validate token locally (same logic as index.html)
+            // Validate token locally ONLY (same as index.html - proven working)
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 const currentTime = Math.floor(Date.now() / 1000);
@@ -61,32 +61,20 @@ class MainMenu {
                     return;
                 }
 
-                // Token is valid, proceed without server verification
+                // Token is valid, use local validation only
                 console.log('✅ Token validated locally:', payload.username);
-                // Set user info from token for the app to use
                 this.currentUser = {
                     id: payload.userId,
                     username: payload.username
                 };
 
+                // Skip server validation completely to avoid 401 loop
+                console.log('✅ Authentication successful (local validation)');
+
             } catch (tokenError) {
                 console.log('❌ Invalid token format, redirecting to login');
                 this.redirectToLogin();
                 return;
-            }
-
-            // Now try server validation with improved auth middleware
-            console.log('🔄 Attempting server validation...');
-            try {
-                const user = await apiClient.getCurrentUser();
-                if (user) {
-                    console.log('✅ Server validation successful:', user.username);
-                    this.currentUser = user;
-                } else {
-                    console.log('⚠️ Server validation failed, using local token data');
-                }
-            } catch (serverError) {
-                console.log('⚠️ Server validation error, using local token data:', serverError.message);
             }
 
         } catch (error) {

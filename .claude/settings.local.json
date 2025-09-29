@@ -34,7 +34,8 @@
       "Bash(PORT=3001 node backend/app.js)",
       "Bash(npm run:*)",
       "Bash(PORT=8080 node backend/server.js)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "WebFetch(domain:typing.maccrey.com)"
     ],
     "deny": [],
     "ask": []
