@@ -99,49 +99,74 @@ function handleFormSubmit(event) {
     }
 }
 
-// Check if user is already logged in with improved validation
+// Check if user is already logged in with improved validation (무한 루프 방지 강화)
 async function checkAuthentication() {
+    console.log('🔐 Checking authentication on login page');
     const token = localStorage.getItem('authToken');
 
-    if (!token) {
-        console.log('No token found, staying on login page');
+    if (!token || !token.includes('.')) {
+        console.log('ℹ️ No valid token found, staying on login page');
         return;
     }
 
     try {
-        // First check token structure and expiration
+        console.log('🔍 Validating token structure...');
         const payload = JSON.parse(atob(token.split('.')[1]));
         const currentTime = Math.floor(Date.now() / 1000);
 
+        console.log('🕐 Token expiry check:', payload.exp, 'vs', currentTime);
+
         if (payload.exp && payload.exp <= currentTime) {
-            console.log('Token expired, removing and staying on login page');
+            console.log('⏰ Token expired, removing and staying on login page');
             localStorage.removeItem('authToken');
             localStorage.removeItem('userData');
             return;
         }
 
-        // Then verify with server
-        const authResponse = await fetch('/api/auth/user', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        });
+        console.log('✅ Token appears valid, checking with server...');
 
-        if (authResponse.ok) {
-            // User is already authenticated, redirect to main page
-            console.log('✅ User already authenticated, redirecting to main');
-            window.location.href = 'main.html';
-        } else {
-            // Server auth failed, remove token
-            console.log('Server authentication failed, removing token');
+        // 타임아웃이 있는 서버 검증
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+        try {
+            const authResponse = await fetch('/api/auth/user', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (authResponse.ok) {
+                const userData = await authResponse.json();
+                console.log('✅ User already authenticated:', userData.user?.username);
+                console.log('🔄 Redirecting to main page...');
+
+                // 무한 루프 방지를 위한 딜레이
+                setTimeout(() => {
+                    window.location.href = 'main.html';
+                }, 100);
+            } else {
+                console.log('❌ Server authentication failed:', authResponse.status);
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userData');
+            }
+        } catch (fetchError) {
+            clearTimeout(timeoutId);
+            if (fetchError.name === 'AbortError') {
+                console.log('🚨 Authentication check timeout');
+            } else {
+                console.log('🚨 Server connection failed:', fetchError.message);
+            }
             localStorage.removeItem('authToken');
             localStorage.removeItem('userData');
         }
     } catch (error) {
-        console.log('Authentication check failed:', error.message);
-        // Remove invalid token
+        console.log('❌ Token parsing failed:', error.message);
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
     }

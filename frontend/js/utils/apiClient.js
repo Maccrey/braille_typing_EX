@@ -57,19 +57,42 @@ class ApiClient {
         });
 
         if (response.ok) {
-            const data = await response.json();
-            this.currentUser = data.user;
+            try {
+                const data = await response.json();
+                this.currentUser = data.user;
 
-            // Store JWT token if provided
-            if (data.token) {
-                localStorage.setItem('authToken', data.token);
-                console.log('✅ JWT token stored');
+                // Store JWT token if provided
+                if (data.token) {
+                    localStorage.setItem('authToken', data.token);
+                    console.log('✅ JWT token stored');
+                }
+
+                return data;
+            } catch (jsonError) {
+                console.error('JSON parsing error in success response:', jsonError);
+                throw new Error('서버 응답 형식이 올바르지 않습니다.');
             }
-
-            return data;
         } else {
-            const error = await response.json();
-            throw new Error(error.error || 'Login failed');
+            try {
+                const errorText = await response.text();
+                console.error('Login failed - Status:', response.status, 'Response:', errorText);
+
+                // Try to parse as JSON, fallback to text
+                let errorMessage = 'Login failed';
+                try {
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.error || errorData.message || 'Login failed';
+                } catch {
+                    errorMessage = errorText || `서버 오류 (${response.status})`;
+                }
+
+                throw new Error(errorMessage);
+            } catch (parseError) {
+                if (parseError instanceof Error && parseError.message !== 'Login failed') {
+                    throw parseError;
+                }
+                throw new Error(`서버 연결 오류 (${response.status})`);
+            }
         }
     }
 

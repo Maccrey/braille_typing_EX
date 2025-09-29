@@ -2005,29 +2005,55 @@
     <script src="js/utils/apiClient.js"></script>
     <script src="js/config.js"></script>
     <script>
-        // Enhanced auth check to prevent infinite loops
+        // Enhanced auth check to prevent infinite loops (최강화 버전)
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🏛️ Main page loaded');
             const token = localStorage.getItem('authToken');
 
+            // 무한 루프 방지를 위한 즉시 실행 체크
+            const startTime = Date.now();
+            const MAX_AUTH_TIME = 5000; // 5초 제한
+
+            // 인증 실패시 로그인으로 리디렉션하는 함수
+            function redirectToLogin(reason) {
+                console.log('🔄 Redirecting to login:', reason);
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userData');
+
+                // 무한 루프 방지를 위한 딜레이
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 100);
+            }
+
+            // 타임아웃 설정
+            const authTimeout = setTimeout(() => {
+                console.log('🚨 Authentication timeout, redirecting to login');
+                redirectToLogin('Authentication timeout');
+            }, MAX_AUTH_TIME);
+
             // No token - redirect to login
-            if (!token) {
-                console.log('No token found, redirecting to login');
-                window.location.href = 'login.html';
+            if (!token || !token.includes('.')) {
+                clearTimeout(authTimeout);
+                redirectToLogin('No valid token found');
                 return;
             }
 
             try {
+                console.log('🔍 Validating token...');
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 const currentTime = Math.floor(Date.now() / 1000);
 
+                console.log('🕐 Token expiry check:', payload.exp, 'vs', currentTime);
+
                 // Check token expiration
                 if (payload.exp && payload.exp <= currentTime) {
-                    console.log('Token expired, redirecting to login');
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('userData');
-                    window.location.href = 'login.html';
+                    clearTimeout(authTimeout);
+                    redirectToLogin('Token expired');
                     return;
                 }
+
+                console.log('✅ Token appears valid, verifying with server...');
 
                 // Verify with server to ensure token is still valid
                 try {
@@ -2036,41 +2062,46 @@
                             'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'
                         },
-                        credentials: 'include'
+                        credentials: 'include',
+                        timeout: 3000 // 3초 타임아웃
                     });
 
                     if (!authResponse.ok) {
-                        console.log('Server auth failed, redirecting to login');
-                        localStorage.removeItem('authToken');
-                        localStorage.removeItem('userData');
-                        window.location.href = 'login.html';
+                        clearTimeout(authTimeout);
+                        console.log('❌ Server auth failed:', authResponse.status);
+                        redirectToLogin('Server authentication failed');
                         return;
                     }
 
-                    console.log('✅ Authentication successful:', payload.username);
+                    const userData = await authResponse.json();
+                    console.log('✅ Authentication successful:', userData.user?.username || payload.username);
+
+                    clearTimeout(authTimeout);
 
                     // Show basic content
-                    document.querySelector('.header h1').textContent = `점자 타자 연습기 - ${payload.username}님`;
+                    const headerTitle = document.querySelector('.header h1');
+                    if (headerTitle) {
+                        headerTitle.textContent = `점자 타자 연습기 - ${userData.user?.username || payload.username}님`;
+                    }
 
                     // Load main functionality only after auth is confirmed
                     const script = document.createElement('script');
                     script.src = 'js/main.js';
-                    script.onload = () => console.log('Main functionality loaded');
+                    script.onload = () => console.log('✅ Main functionality loaded');
+                    script.onerror = () => console.error('❌ Failed to load main.js');
                     document.head.appendChild(script);
 
                 } catch (serverError) {
-                    console.log('Server auth check failed:', serverError.message);
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('userData');
-                    window.location.href = 'login.html';
+                    clearTimeout(authTimeout);
+                    console.log('🚨 Server auth check failed:', serverError.message);
+                    redirectToLogin('Server connection failed');
                     return;
                 }
 
             } catch (error) {
-                console.log('Invalid token, redirecting to login');
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('userData');
-                window.location.href = 'login.html';
+                clearTimeout(authTimeout);
+                console.log('❌ Invalid token format:', error.message);
+                redirectToLogin('Invalid token format');
             }
 
             // Dark mode toggle
