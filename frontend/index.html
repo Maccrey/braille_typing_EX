@@ -317,6 +317,9 @@
 
                                     setTimeout(() => {
                                         console.log('🔄 Redirecting to main.html');
+                                        if (window.trackRedirect) {
+                                            window.trackRedirect('index.html', 'main.html');
+                                        }
                                         window.location.href = 'main.html';
                                     }, 1500);
                                     return;
@@ -349,6 +352,7 @@
             }, 800);
         });
     </script>
+    <script src="js/anti-loop.js"></script>
     <script src="js/dark-mode.js"></script>
 </body>
 </html>

@@ -2001,6 +2001,7 @@
         </div>
     </div>
 
+    <script src="js/anti-loop.js"></script>
     <script src="js/dark-mode.js"></script>
     <script src="js/utils/apiClient.js"></script>
     <script src="js/config.js"></script>
@@ -2022,6 +2023,9 @@
 
                 // 무한 루프 방지를 위한 딜레이
                 setTimeout(() => {
+                    if (window.trackRedirect) {
+                        window.trackRedirect('main.html', 'login.html');
+                    }
                     window.location.href = 'login.html';
                 }, 100);
             }

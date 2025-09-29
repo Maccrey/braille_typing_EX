@@ -148,6 +148,9 @@ async function checkAuthentication() {
 
                 // 무한 루프 방지를 위한 딜레이
                 setTimeout(() => {
+                    if (window.trackRedirect) {
+                        window.trackRedirect('login.html', 'main.html');
+                    }
                     window.location.href = 'main.html';
                 }, 100);
             } else {
