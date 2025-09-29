@@ -19,25 +19,26 @@ const authMiddleware = async (req, res, next) => {
       return next();
     }
 
-    // Secondary: For frontend requests without session, validate JWT token locally
+    // Secondary: For frontend requests without session, validate JWT token PROPERLY
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
 
       try {
-        // For deployment stability, extract user info from token without secret verification
-        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        // PROPER JWT verification with secret and expiration check
+        const payload = jwt.verify(token, JWT_SECRET);
 
         if (payload.userId && payload.username) {
-          console.log('✅ JWT payload auth successful (no secret verification)');
+          console.log('✅ JWT auth successful with proper verification');
           req.user = {
             id: payload.userId,
             username: payload.username
           };
           return next();
         }
-      } catch (tokenParseError) {
-        console.log('❌ JWT payload parsing failed:', tokenParseError.message);
+      } catch (tokenError) {
+        console.log('❌ JWT verification failed:', tokenError.message);
+        // Token is invalid or expired
       }
     }
 
