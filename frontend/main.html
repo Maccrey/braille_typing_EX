@@ -2004,17 +2004,53 @@
     <script src="js/dark-mode.js"></script>
     <script src="js/utils/apiClient.js"></script>
     <script src="js/config.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/community.js"></script>
     <script>
-        // Initialize dark mode toggle for main page
+        // Emergency auth check bypass for deployment issues
         document.addEventListener('DOMContentLoaded', () => {
-            // The dark mode manager will automatically update toggle switches
-            // Just need to add event listener to existing toggle
+            const token = localStorage.getItem('authToken');
+
+            // Simple token validation like index.html
+            if (!token) {
+                console.log('No token found, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const currentTime = Math.floor(Date.now() / 1000);
+
+                if (payload.exp && payload.exp <= currentTime) {
+                    console.log('Token expired, redirecting to login');
+                    localStorage.removeItem('authToken');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                console.log('✅ Authentication successful:', payload.username);
+
+                // Show basic content
+                document.querySelector('.header h1').textContent = `점자 타자 연습기 - ${payload.username}님`;
+
+                // Load main functionality only after auth is confirmed
+                const script = document.createElement('script');
+                script.src = 'js/main.js';
+                script.onload = () => console.log('Main functionality loaded');
+                document.head.appendChild(script);
+
+            } catch (error) {
+                console.log('Invalid token, redirecting to login');
+                localStorage.removeItem('authToken');
+                window.location.href = 'login.html';
+            }
+
+            // Dark mode toggle
             const toggleSwitch = document.querySelector('.toggle-switch');
             if (toggleSwitch) {
                 toggleSwitch.addEventListener('click', () => {
-                    window.darkModeManager.toggle();
+                    if (window.darkModeManager) {
+                        window.darkModeManager.toggle();
+                    }
                 });
             }
 
@@ -2024,5 +2060,6 @@
             }
         });
     </script>
+    <script src="js/community.js"></script>
 </body>
 </html>
