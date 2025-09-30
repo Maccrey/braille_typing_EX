@@ -5,6 +5,8 @@ class JsonDatabase {
   constructor() {
     this.dbPath = path.join(__dirname, '..', 'data');
     this.tables = {};
+    this.cache = {}; // Simple in-memory cache
+    this.cacheTimeout = 30000; // 30 seconds cache timeout
   }
 
   async init() {
@@ -54,12 +56,25 @@ class JsonDatabase {
     this.tables[tableName].push(record);
     await this.saveTable(tableName);
 
+    // Clear cache for this table
+    this.clearTableCache(tableName);
+
     return { lastID: id, changes: 1 };
   }
 
   async select(tableName, where = {}) {
     if (!this.tables[tableName]) {
       throw new Error(`Table ${tableName} does not exist`);
+    }
+
+    // Create cache key
+    const cacheKey = `${tableName}_${JSON.stringify(where)}`;
+    const cached = this.cache[cacheKey];
+
+    // Check if cached result is still valid
+    if (cached && (Date.now() - cached.timestamp) < this.cacheTimeout) {
+      console.log(`🚀 Cache hit for ${cacheKey}`);
+      return cached.data;
     }
 
     let results = [...this.tables[tableName]];
@@ -69,6 +84,13 @@ class JsonDatabase {
       results = results.filter(row => row[key] === where[key]);
     });
 
+    // Cache the results
+    this.cache[cacheKey] = {
+      data: results,
+      timestamp: Date.now()
+    };
+
+    console.log(`💾 Cached results for ${cacheKey}`);
     return results;
   }
 
@@ -93,6 +115,10 @@ class JsonDatabase {
     });
 
     await this.saveTable(tableName);
+
+    // Clear cache for this table
+    this.clearTableCache(tableName);
+
     return { changes };
   }
 
@@ -108,6 +134,10 @@ class JsonDatabase {
 
     const changes = originalLength - this.tables[tableName].length;
     await this.saveTable(tableName);
+
+    // Clear cache for this table
+    this.clearTableCache(tableName);
+
     return { changes };
   }
 
@@ -115,6 +145,18 @@ class JsonDatabase {
     const table = this.tables[tableName];
     if (table.length === 0) return 1;
     return Math.max(...table.map(row => row.id || 0)) + 1;
+  }
+
+  // Cache management methods
+  clearTableCache(tableName) {
+    const keysToDelete = Object.keys(this.cache).filter(key => key.startsWith(`${tableName}_`));
+    keysToDelete.forEach(key => delete this.cache[key]);
+    console.log(`🧹 Cleared cache for table ${tableName} (${keysToDelete.length} entries)`);
+  }
+
+  clearAllCache() {
+    this.cache = {};
+    console.log('🧹 Cleared all cache');
   }
 
   // Compatibility methods for existing code

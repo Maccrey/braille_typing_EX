@@ -11,18 +11,30 @@ const getMyCategoriesWithCount = async (req, res) => {
     const categories = await db.select('categories', { created_by: userId });
     console.log('📋 Found categories:', categories);
 
-    // Get braille data for each category and add count
-    const categoriesWithCount = await Promise.all(
-      categories.map(async (category) => {
-        const brailleData = await db.select('braille_data', { category_id: category.id });
-        console.log(`📊 Category "${category.name}" has ${brailleData.length} braille entries`);
+    if (categories.length === 0) {
+      return res.status(200).json({
+        categories: [],
+        total: 0
+      });
+    }
 
-        return {
-          ...category,
-          braille_count: brailleData.length
-        };
-      })
-    );
+    // Get ALL braille data in one query and group by category_id for performance
+    const allBrailleData = await db.select('braille_data', {});
+    const brailleCountMap = {};
+
+    // Group braille data by category_id
+    allBrailleData.forEach(braille => {
+      if (!brailleCountMap[braille.category_id]) {
+        brailleCountMap[braille.category_id] = 0;
+      }
+      brailleCountMap[braille.category_id]++;
+    });
+
+    // Add count to each category
+    const categoriesWithCount = categories.map(category => ({
+      ...category,
+      braille_count: brailleCountMap[category.id] || 0
+    }));
 
     // Sort by created_at DESC
     categoriesWithCount.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));

@@ -168,11 +168,17 @@ class MainMenu {
             // Construct API URL dynamically based on environment
             const apiUrl = getApiBaseUrl() + '/api/protected/categories/my';
 
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
             const response = await fetch(apiUrl, {
                 headers: {
                     'Authorization': `Bearer ${token}`
-                }
+                },
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
 
             if (response.status === 401) {
                 console.log('Unauthorized, removing invalid token and redirecting to login');
@@ -180,8 +186,13 @@ class MainMenu {
                 return;
             }
 
+            if (response.status === 503) {
+                throw new Error('Service temporarily unavailable');
+            }
+
             if (!response.ok) {
-                throw new Error('Failed to fetch categories');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to fetch categories');
             }
 
             const data = await response.json();
@@ -190,6 +201,21 @@ class MainMenu {
             this.renderCategories();
         } catch (error) {
             console.error('Error loading categories:', error);
+
+            if (error.name === 'AbortError') {
+                console.warn('⏰ Request timeout - server may be slow');
+                this.showError('서버 응답이 지연되고 있습니다. 네트워크 연결을 확인해주세요.');
+            } else if (error.message.includes('Service temporarily unavailable')) {
+                this.showError('서비스가 일시적으로 중단되었습니다. 잠시 후 다시 시도해주세요.');
+            } else {
+                this.showError('카테고리를 불러오는데 실패했습니다.');
+            }
+
+            // Set empty categories as fallback
+            this.categories = [];
+            this.updateCategoryStats();
+            this.renderCategories();
+
             throw error;
         }
     }

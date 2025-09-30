@@ -120,15 +120,51 @@ class BraillePractice {
             this.resetValidationState();
 
             const token = localStorage.getItem('authToken');
+
+            if (!token) {
+                console.error('❌ No auth token found');
+                this.updateProgress('로그인이 필요합니다.');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
             const response = await fetch(`/api/protected/braille/${this.categoryId}/random`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
-                }
+                },
+                signal: controller.signal
             });
 
+            clearTimeout(timeoutId);
+
+            if (response.status === 401) {
+                console.error('❌ Unauthorized - invalid token');
+                localStorage.removeItem('authToken');
+                this.updateProgress('인증이 만료되었습니다. 로그인 페이지로 이동합니다.');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+
+            if (response.status === 404) {
+                console.error('❌ Category not found or no braille data');
+                this.updateProgress('카테고리가 존재하지 않거나 점자 데이터가 없습니다.');
+                setTimeout(() => {
+                    window.location.href = 'main.html';
+                }, 3000);
+                return;
+            }
+
             if (!response.ok) {
-                throw new Error('Failed to load braille data');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `Server error: ${response.status}`);
             }
 
             const data = await response.json();
@@ -148,7 +184,17 @@ class BraillePractice {
 
         } catch (error) {
             console.error('Error loading character:', error);
-            this.showError('오류가 발생했습니다: ' + error.message);
+
+            if (error.name === 'AbortError') {
+                this.updateProgress('서버 응답이 지연되고 있습니다. 네트워크 연결을 확인해주세요.');
+            } else if (error.message.includes('fetch')) {
+                this.updateProgress('네트워크 연결 오류입니다. 잠시 후 다시 시도해주세요.');
+            } else {
+                this.updateProgress('문제를 불러오는데 실패했습니다. 메인 페이지로 돌아갑니다.');
+                setTimeout(() => {
+                    window.location.href = 'main.html';
+                }, 3000);
+            }
         }
     }
 
