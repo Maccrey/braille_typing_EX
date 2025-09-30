@@ -95,7 +95,7 @@ class MainMenu {
 
     setupEventListeners() {
         // Logout button
-        document.getElementById('logout-btn').addEventListener('click', this.logout);
+        document.getElementById('logout-btn').addEventListener('click', () => this.logout());
 
         // Search input
         const searchInput = document.getElementById('search-input');
@@ -1090,12 +1090,18 @@ class MainMenu {
     async logout() {
         console.log('🔓 Logout button clicked');
         try {
-            // Use apiClient logout for proper server logout + token cleanup
-            await window.apiClient.logout();
+            // Simple and reliable logout - clear all auth data and redirect
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            sessionStorage.clear();
+            console.log('✅ Local logout completed');
+
+            // Redirect to login page
+            window.location.href = 'login.html';
         } catch (error) {
             console.error('Logout error:', error);
-            // Fallback to local logout
-            this.redirectToLogin();
+            // Force redirect even if cleanup fails
+            window.location.href = 'login.html';
         }
     }
 }
