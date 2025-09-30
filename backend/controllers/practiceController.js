@@ -29,62 +29,42 @@ const logPracticeSession = async (req, res) => {
 
     const db = getDb();
 
+    // Create practice log data
+    const practiceLog = {
+      user_id: userId,
+      duration_seconds: duration_seconds,
+      practiced_at: practiced_at,
+      created_at: new Date().toISOString()
+    };
+
     // Insert practice log
-    const practiceLogId = await new Promise((resolve, reject) => {
-      db.run(
-        'INSERT INTO practice_logs (user_id, duration_seconds, practiced_at) VALUES (?, ?, ?)',
-        [userId, duration_seconds, practiced_at],
-        function(err) {
-          if (err) reject(err);
-          else resolve(this.lastID);
-        }
-      );
-    });
+    const insertedLog = await db.insert('practice_logs', practiceLog);
+    console.log('✅ Practice log inserted:', insertedLog);
 
     // Check if attendance record exists for this date
-    const existingAttendance = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT id FROM attendance WHERE user_id = ? AND date = ?',
-        [userId, practiced_at],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
+    const existingAttendance = await db.selectOne('attendance', {
+      user_id: userId,
+      date: practiced_at
     });
 
     let attendanceCreated = false;
 
     // Create attendance record if doesn't exist
     if (!existingAttendance) {
-      await new Promise((resolve, reject) => {
-        db.run(
-          'INSERT INTO attendance (user_id, date) VALUES (?, ?)',
-          [userId, practiced_at],
-          function(err) {
-            if (err) reject(err);
-            else resolve(this.lastID);
-          }
-        );
-      });
-      attendanceCreated = true;
-    }
+      const attendanceData = {
+        user_id: userId,
+        date: practiced_at,
+        created_at: new Date().toISOString()
+      };
 
-    // Get the created practice log
-    const practiceLog = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT * FROM practice_logs WHERE id = ?',
-        [practiceLogId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+      await db.insert('attendance', attendanceData);
+      attendanceCreated = true;
+      console.log('✅ Attendance record created for date:', practiced_at);
+    }
 
     res.status(201).json({
       message: 'Practice session logged successfully',
-      practice_log: practiceLog,
+      practice_log: insertedLog,
       attendance_created: attendanceCreated
     });
 

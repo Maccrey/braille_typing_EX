@@ -7,19 +7,12 @@ const getUserStats = async (req, res) => {
     const db = getDb();
 
     // Get total practice time and session count from practice_logs
-    const practiceStats = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT COALESCE(SUM(duration_seconds), 0) as total_practice_time, COUNT(*) as total_sessions FROM practice_logs WHERE user_id = ?',
-        [userId],
-        (err, row) => {
-          if (err) reject(err);
-          else {
-            console.log('📊 Practice stats for user', userId, ':', row);
-            resolve(row || { total_practice_time: 0, total_sessions: 0 });
-          }
-        }
-      );
-    });
+    const userPracticeLogs = await db.select('practice_logs', { user_id: userId });
+    const practiceStats = {
+      total_practice_time: userPracticeLogs.reduce((sum, log) => sum + (log.duration_seconds || 0), 0),
+      total_sessions: userPracticeLogs.length
+    };
+    console.log('📊 Practice stats for user', userId, ':', practiceStats);
 
     // Get total attendance days
     const totalattendanceDays = await new Promise((resolve, reject) => {
@@ -46,71 +39,49 @@ const getUserStats = async (req, res) => {
     });
 
     // Calculate average daily practice based on actual practice days (not attendance)
-    const practiceDays = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT COUNT(DISTINCT DATE(practiced_at)) as count FROM practice_logs WHERE user_id = ?',
-        [userId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row ? row.count : 0);
-        }
-      );
-    });
+    const uniquePracticeDates = new Set(
+      userPracticeLogs.map(log => log.practiced_at.split('T')[0])
+    );
+    const practiceDays = uniquePracticeDates.size;
 
     const averageDailyPractice = practiceDays > 0
       ? Math.round(practiceStats.total_practice_time / practiceDays)
       : 0;
 
     // Get weekly practice statistics (last 7 days)
-    const weeklyStats = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT COALESCE(SUM(duration_seconds), 0) as weekly_practice_time, COUNT(DISTINCT DATE(practiced_at)) as weekly_practice_days FROM practice_logs WHERE user_id = ? AND practiced_at >= date("now", "-7 days")',
-        [userId],
-        (err, row) => {
-          if (err) reject(err);
-          else {
-            console.log('📈 Weekly stats calculated:', row);
-            resolve(row || { weekly_practice_time: 0, weekly_practice_days: 0 });
-          }
-        }
-      );
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+
+    const weeklyLogs = userPracticeLogs.filter(log => {
+      const logDate = log.practiced_at.split('T')[0];
+      return logDate >= sevenDaysAgoStr;
     });
 
-    // Get first practice date
-    const firstPracticeDate = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT MIN(practiced_at) as first_date FROM practice_logs WHERE user_id = ?',
-        [userId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row ? row.first_date : null);
-        }
-      );
-    });
+    const weeklyStats = {
+      weekly_practice_time: weeklyLogs.reduce((sum, log) => sum + (log.duration_seconds || 0), 0),
+      weekly_practice_days: new Set(weeklyLogs.map(log => log.practiced_at.split('T')[0])).size
+    };
+    console.log('📈 Weekly stats calculated:', weeklyStats);
 
-    // Get last practice date
-    const lastPracticeDate = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT MAX(practiced_at) as last_date FROM practice_logs WHERE user_id = ?',
-        [userId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row ? row.last_date : null);
-        }
-      );
-    });
+    // Get first and last practice dates, and longest session
+    const firstPracticeDate = userPracticeLogs.length > 0
+      ? userPracticeLogs.reduce((earliest, log) =>
+          log.practiced_at < earliest ? log.practiced_at : earliest,
+          userPracticeLogs[0].practiced_at
+        )
+      : null;
 
-    // Get longest session
-    const longestSession = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT COALESCE(MAX(duration_seconds), 0) as longest FROM practice_logs WHERE user_id = ?',
-        [userId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row ? row.longest : 0);
-        }
-      );
-    });
+    const lastPracticeDate = userPracticeLogs.length > 0
+      ? userPracticeLogs.reduce((latest, log) =>
+          log.practiced_at > latest ? log.practiced_at : latest,
+          userPracticeLogs[0].practiced_at
+        )
+      : null;
+
+    const longestSession = userPracticeLogs.length > 0
+      ? Math.max(...userPracticeLogs.map(log => log.duration_seconds || 0))
+      : 0;
 
     // Build response
     const stats = {
