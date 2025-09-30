@@ -235,10 +235,18 @@ const uploadFile = async (req, res) => {
 
     // Check if category already exists for this user
     console.log('🔍 Authentication check - req.user:', req.user);
+    console.log('🔍 req.user type:', typeof req.user);
+    console.log('🔍 req.user.id:', req.user?.id);
+    console.log('🔍 req.user properties:', Object.keys(req.user || {}));
 
-    if (!req.user || !req.user.id) {
-      console.log('❌ No authenticated user found');
+    if (!req.user) {
+      console.log('❌ req.user is null/undefined');
       return res.status(401).json({ error: 'Authentication required. Please log in again.' });
+    }
+
+    if (!req.user.id) {
+      console.log('❌ req.user.id is missing:', req.user);
+      return res.status(401).json({ error: 'User ID missing. Please log in again.' });
     }
 
     const userId = req.user.id;
