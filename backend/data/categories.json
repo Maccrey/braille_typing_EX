@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "id": 1,
+    "name": "Test Upload Category",
+    "description": "Testing the fixed upload functionality",
+    "is_public": 1,
+    "created_by": 43,
+    "created_at": "2025-09-30T06:13:20.703Z"
+  }
+]

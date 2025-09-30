@@ -356,79 +356,76 @@ function parseBraillePattern(patternStr) {
 }
 
 // Database helper functions
-function checkCategoryExists(name, userId) {
-  return new Promise((resolve, reject) => {
+async function checkCategoryExists(name, userId) {
+  try {
     const db = getDb();
-    const query = 'SELECT id FROM categories WHERE name = ? AND created_by = ?';
-    db.get(query, [name, userId], (err, row) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(row);
-      }
+    const existingCategory = await db.selectOne('categories', {
+      name: name,
+      created_by: userId
     });
-  });
+
+    console.log(`🔍 Checking category "${name}" for user ${userId}:`, existingCategory ? 'EXISTS' : 'NOT FOUND');
+    return existingCategory;
+
+  } catch (error) {
+    console.log('❌ Category existence check failed:', error);
+    throw error;
+  }
 }
 
-function createCategory(categoryData) {
-  return new Promise((resolve, reject) => {
+async function createCategory(categoryData) {
+  try {
     const db = getDb();
-    const query = `
-      INSERT INTO categories (name, description, is_public, created_by)
-      VALUES (?, ?, ?, ?)
-    `;
 
-    db.run(query, [
-      categoryData.name,
-      categoryData.description,
-      categoryData.isPublic ? 1 : 0,
-      categoryData.createdBy
-    ], function(err) {
-      if (err) {
-        reject(err);
-      } else {
-        // Fetch the created category
-        db.get('SELECT * FROM categories WHERE id = ?', [this.lastID], (err, row) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(row);
-          }
-        });
-      }
+    console.log('🔧 Creating category with data:', categoryData);
+
+    // Insert new category using JSON database method
+    const result = await db.insert('categories', {
+      name: categoryData.name,
+      description: categoryData.description,
+      is_public: categoryData.isPublic ? 1 : 0,
+      created_by: categoryData.createdBy
     });
-  });
+
+    console.log('🔧 INSERT result:', result);
+
+    // Fetch the created category
+    const createdCategory = await db.selectOne('categories', { id: result.lastID });
+    console.log('✅ Category created successfully:', createdCategory);
+
+    return createdCategory;
+
+  } catch (error) {
+    console.log('❌ Category creation failed:', error);
+    throw error;
+  }
 }
 
-function insertBrailleData(categoryId, brailleEntries) {
-  return new Promise((resolve, reject) => {
+async function insertBrailleData(categoryId, brailleEntries) {
+  try {
     const db = getDb();
-    const insertPromises = brailleEntries.map(entry => {
-      return new Promise((resolveEntry, rejectEntry) => {
-        const query = `
-          INSERT INTO braille_data (category_id, character, braille_pattern, description)
-          VALUES (?, ?, ?, ?)
-        `;
+    const insertPromises = brailleEntries.map(async (entry) => {
+      console.log(`🔧 Inserting braille data: ${entry.character} with pattern: ${JSON.stringify(entry.pattern)}`);
 
-        db.run(query, [
-          categoryId,
-          entry.character,
-          JSON.stringify(entry.pattern),
-          entry.description || ''
-        ], function(err) {
-          if (err) {
-            rejectEntry(err);
-          } else {
-            resolveEntry({ id: this.lastID, ...entry });
-          }
-        });
+      const result = await db.insert('braille_data', {
+        category_id: categoryId,
+        character: entry.character,
+        braille_pattern: JSON.stringify(entry.pattern),
+        description: entry.description || ''
       });
+
+      console.log(`✅ Inserted braille data for "${entry.character}" with ID: ${result.lastID}`);
+      return { id: result.lastID, ...entry };
     });
 
-    Promise.all(insertPromises)
-      .then(results => resolve(results))
-      .catch(error => reject(error));
-  });
+    const results = await Promise.all(insertPromises);
+    console.log(`✅ Successfully inserted ${results.length} braille data records`);
+    return results;
+
+  } catch (error) {
+    console.log('❌ Braille data insertion failed:', error);
+    throw error;
+  }
 }
 
 // Download example file function
