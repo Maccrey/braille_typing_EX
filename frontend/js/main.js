@@ -283,14 +283,26 @@ class MainMenu {
             const apiUrl = baseUrl + '/api/profile/stats';
             console.log('🔗 Using API URL:', apiUrl);
 
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
             const response = await fetch(apiUrl, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
-                }
+                },
+                signal: controller.signal
             });
 
+            clearTimeout(timeoutId);
+
             if (!response.ok) {
+                // Handle specific server errors
+                if (response.status === 502) {
+                    console.warn('🔧 Server temporarily unavailable (502). Using cached/default data.');
+                    document.getElementById('practice-time').textContent = '0분';
+                    return;
+                }
                 const errorText = await response.text();
                 throw new Error(`API request failed: ${response.status} - ${errorText}`);
             }
@@ -309,7 +321,11 @@ class MainMenu {
 
             this.updatePracticeTimeDisplay(practiceTimeSeconds);
         } catch (error) {
-            console.error('❌ Error loading user stats:', error);
+            if (error.name === 'AbortError') {
+                console.warn('⏰ Request timeout - server may be down');
+            } else {
+                console.error('❌ Error loading user stats:', error);
+            }
             // Show default value on error
             document.getElementById('practice-time').textContent = '0분';
         }
