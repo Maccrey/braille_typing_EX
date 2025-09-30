@@ -827,6 +827,130 @@ button {
   color: var(--text-primary) !important;
 }
 
+/* Statistics page specific dark mode styles */
+[data-theme="dark"] .chart-section {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .chart-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .recent-sessions {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .sessions-list {
+  background: transparent !important;
+}
+
+[data-theme="dark"] .session-item {
+  background: transparent !important;
+  border-bottom-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .session-item:hover {
+  background: var(--hover-bg) !important;
+}
+
+[data-theme="dark"] .session-date {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .session-details {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .session-duration {
+  color: #667eea !important;
+}
+
+[data-theme="dark"] .progress-label {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .progress-bar {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .progress-fill {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+[data-theme="dark"] .loading-spinner {
+  border-color: var(--border-color) !important;
+  border-top-color: #667eea !important;
+}
+
+[data-theme="dark"] .empty-state {
+  background: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .empty-state a {
+  color: #667eea !important;
+}
+
+/* Main page attendance calendar dark mode styles */
+[data-theme="dark"] #attendance-calendar {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] #calendar-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] #calendar-grid {
+  background: var(--border-color) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .calendar-nav {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .calendar-nav button {
+  background: var(--hover-bg) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .calendar-nav button:hover {
+  background: var(--border-color) !important;
+}
+
+[data-theme="dark"] #current-month {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .attendance-day {
+  background: #065f46 !important;
+  color: #68d391 !important;
+  border: 1px solid #34d399 !important;
+}
+
+[data-theme="dark"] .current-day {
+  background: #667eea !important;
+  color: white !important;
+  border: 2px solid #667eea !important;
+}
+
+[data-theme="dark"] .attendance-day.current-day {
+  background: linear-gradient(135deg, #065f46 0%, #667eea 100%) !important;
+  color: white !important;
+  border: 2px solid #34d399 !important;
+}
+
 /* Animation for theme transition */
 * {
   transition: background-color 0.3s ease, border-color 0.3s ease,

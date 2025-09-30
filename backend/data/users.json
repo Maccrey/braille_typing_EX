@@ -1186,5 +1186,17 @@
     "username": "debug123",
     "password": "$2a$10$VSJg2CTmaMFBRRF1CrzyeuMeZ3m1Jos12TyFleTGV2dPLCOBPCcva",
     "created_at": "2025-09-30T19:51:05.097Z"
+  },
+  {
+    "id": 199,
+    "username": "finaluser_1759262677009",
+    "password": "$2a$10$oscBYkdjSGGwPgPkb841KO8xmnagZPvMb2h3mGUcO.VBCtW4zfC6e",
+    "created_at": "2025-09-30T20:04:37.182Z"
+  },
+  {
+    "id": 200,
+    "username": "refreshtest_1759262678008",
+    "password": "$2a$10$q1KCo.IrW1SuyOBQisbFf.A45DTSeGW9Mi6ceZQykRpp5zT6gVISm",
+    "created_at": "2025-09-30T20:04:38.089Z"
   }
 ]
