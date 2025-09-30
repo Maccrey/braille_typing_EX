@@ -464,9 +464,9 @@ describe('Authentication API Tests', () => {
         .set('Authorization', `Bearer ${validToken}`)
         .expect(200);
 
-      // Test second protected route
+      // Test second protected route (using profile stats instead)
       const response2 = await request(app)
-        .get('/api/protected/stats')
+        .get('/api/profile/stats')
         .set('Authorization', `Bearer ${validToken}`)
         .expect(200);
 

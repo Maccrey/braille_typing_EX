@@ -163,7 +163,7 @@ const logPracticeSession = async (req, res) => {
 
 module.exports = {
   getProfile,
-  getStats,
+  // getStats removed - use profileController.getUserStats instead
   getPracticeLogs,
   logPracticeSession
 };

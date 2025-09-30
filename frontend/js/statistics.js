@@ -80,7 +80,12 @@ class StatisticsManager {
             console.log('🔄 Loading statistics from API...');
             // Use the same API as main.js for consistency
             // Construct API URL dynamically based on environment
-            const apiUrl = ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3001' : window.location.origin) + '/api/profile/stats';
+            const baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:3001'
+                : (window.location.protocol === 'file:')
+                    ? 'https://typing.maccrey.com'
+                    : window.location.origin;
+            const apiUrl = baseUrl + '/api/profile/stats';
             console.log('🔗 Using API URL:', apiUrl);
 
             const response = await fetch(apiUrl, {

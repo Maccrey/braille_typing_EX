@@ -2,7 +2,11 @@
 const API_CONFIG = {
     // Development mode - use explicit backend URL
     // Production mode - use relative path (same domain)
-    BASE_URL: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3001' : window.location.origin,
+    BASE_URL: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:3001'
+        : (window.location.protocol === 'file:')
+            ? 'https://typing.maccrey.com'
+            : window.location.origin,
 
     // API 엔드포인트
     ENDPOINTS: {
@@ -41,4 +45,20 @@ const API_CONFIG = {
 // API 호출 헬퍼 함수
 function getApiUrl(endpoint) {
     return API_CONFIG.BASE_URL + endpoint;
+}
+
+// 기존 코드와의 호환성을 위한 함수
+function getApiBaseUrl() {
+    // For development (localhost)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:3001';
+    }
+
+    // For file:// protocol (opening HTML files directly) - use production server
+    if (window.location.protocol === 'file:') {
+        return 'https://typing.maccrey.com';
+    }
+
+    // For production - use the same domain
+    return window.location.origin;
 }

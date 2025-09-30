@@ -5,6 +5,11 @@ function getApiBaseUrl() {
         return 'http://localhost:3001';
     }
 
+    // For file:// protocol (opening HTML files directly) - use production server
+    if (window.location.protocol === 'file:') {
+        return 'https://typing.maccrey.com';
+    }
+
     // For production - use the same domain
     return window.location.origin;
 }

@@ -36,7 +36,17 @@
       "Bash(PORT=8080 node backend/server.js)",
       "Bash(kill:*)",
       "WebFetch(domain:typing.maccrey.com)",
-      "WebFetch(domain:localhost)"
+      "WebFetch(domain:localhost)",
+      "Bash(sort:*)",
+      "Bash(for file in js/*.js)",
+      "Bash(if [ -f \"frontend/js/$basename\" ])",
+      "Bash(then echo \"=== $basename ===\")",
+      "Bash(ls:*)",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(open index.html)",
+      "Bash(open test-api-url.html)",
+      "Bash(open:*)"
     ],
     "deny": [],
     "ask": []

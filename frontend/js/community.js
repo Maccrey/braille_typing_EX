@@ -1,6 +1,17 @@
 // Helper function to get the correct API base URL
 function getApiBaseUrl() {
-    return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3001' : window.location.origin;
+    // For development (localhost)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:3001';
+    }
+
+    // For file:// protocol (opening HTML files directly) - use production server
+    if (window.location.protocol === 'file:') {
+        return 'https://typing.maccrey.com';
+    }
+
+    // For production - use the same domain
+    return window.location.origin;
 }
 
 class CommunityManager {

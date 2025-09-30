@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const { getProfile, getStats, getPracticeLogs, logPracticeSession } = require('../controllers/protectedController');
+const { getProfile, getPracticeLogs, logPracticeSession } = require('../controllers/protectedController');
 const { logPracticeSession: logPracticeSessionDedicated } = require('../controllers/practiceController');
 const { upload, uploadFile, downloadExampleFile } = require('../controllers/uploadController');
 const { getMyCategoriesWithCount, searchPublicCategories, addToFavorites, removeFromFavorites, getFavorites, getRandomBrailleData, deleteCategory, updateCategory, getCategoryBrailleData, updateCategoryBrailleData } = require('../controllers/dataController');
@@ -11,7 +11,7 @@ router.use(authMiddleware);
 
 // Protected routes
 router.get('/profile', getProfile);
-router.get('/stats', getStats);
+// stats route moved to /api/profile/stats (profileController.getUserStats)
 router.get('/practice-logs', getPracticeLogs);
 router.post('/practice-logs', logPracticeSession);
 
