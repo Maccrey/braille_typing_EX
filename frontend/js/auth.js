@@ -137,7 +137,7 @@ async function checkAuthentication() {
 
         // 타임아웃이 있는 서버 검증
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased for production stability
 
         try {
             const authResponse = await fetch('/api/auth/user', {
