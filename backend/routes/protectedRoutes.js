@@ -28,8 +28,8 @@ router.post('/favorites', addToFavorites);
 router.delete('/favorites/:categoryId', removeFromFavorites);
 router.get('/favorites', getFavorites);
 
-// Upload routes - explicit auth middleware to ensure it runs before multer
-router.post('/upload', authMiddleware, upload, uploadFile);
+// Upload routes
+router.post('/upload', upload, uploadFile);
 router.get('/download-example', downloadExampleFile);
 
 // Braille practice routes - Task 7.1

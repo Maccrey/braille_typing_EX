@@ -1,7 +1,17 @@
 // Authentication JavaScript for login functionality
 
-// API base URL - use relative paths for production
-const API_BASE_URL = '/api';
+// Helper function to get the correct API base URL
+function getApiBaseUrl() {
+    // For development (localhost)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:3001';
+    }
+
+    // For production - use the same domain
+    return window.location.origin;
+}
+
+const API_BASE_URL = getApiBaseUrl() + '/api';
 
 // DOM elements
 const loginForm = document.getElementById('login-form');
