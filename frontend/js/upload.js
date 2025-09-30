@@ -236,8 +236,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (response.status === 400) {
                     errorMsg = data.error || errorMsg;
                 } else if (response.status === 401) {
+                    console.log('🔓 Authentication failed, forcing logout...');
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('userData');
+                    sessionStorage.clear();
                     window.location.href = 'login.html';
                     return;
                 } else if (response.status === 413) {

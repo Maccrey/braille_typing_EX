@@ -1087,8 +1087,16 @@ class MainMenu {
         alert(message); // You can replace this with a better notification system
     }
 
-    logout() {
-        this.redirectToLogin();
+    async logout() {
+        console.log('🔓 Logout button clicked');
+        try {
+            // Use apiClient logout for proper server logout + token cleanup
+            await window.apiClient.logout();
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Fallback to local logout
+            this.redirectToLogin();
+        }
     }
 }
 

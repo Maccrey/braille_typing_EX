@@ -113,16 +113,23 @@ class ApiClient {
     }
 
     async logout() {
+        console.log('🔓 Starting logout process...');
         try {
             await this.request('/api/auth/logout', {
                 method: 'POST'
             });
+            console.log('✅ Server logout successful');
         } catch (error) {
             console.warn('Logout request failed:', error.message);
         } finally {
+            // Complete cleanup regardless of server response
             this.currentUser = null;
             localStorage.removeItem('authToken');
-            console.log('🔐 Token removed');
+            localStorage.removeItem('userData');
+            sessionStorage.clear();
+            console.log('🧹 Complete token cleanup done');
+
+            // Force redirect
             window.location.href = 'login.html';
         }
     }
