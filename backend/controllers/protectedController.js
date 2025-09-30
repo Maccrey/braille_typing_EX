@@ -94,6 +94,8 @@ const getPracticeLogs = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const db = getDb();
 
+    console.log(`🔍 getPracticeLogs called for user ${userId} with limit ${limit}`);
+
     const logs = await new Promise((resolve, reject) => {
       const query = `
         SELECT
@@ -107,10 +109,13 @@ const getPracticeLogs = async (req, res) => {
         LIMIT ?
       `;
 
+      console.log(`📊 Executing query for user ${userId}`);
       db.all(query, [userId, limit], (err, rows) => {
         if (err) {
+          console.error('❌ Database error:', err);
           reject(err);
         } else {
+          console.log(`✅ Found ${rows.length} practice log entries:`, rows);
           resolve(rows || []);
         }
       });

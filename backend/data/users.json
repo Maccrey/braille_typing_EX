@@ -1168,5 +1168,23 @@
     "username": "datauser2_1759259492282_bhrev1kmu",
     "password": "$2a$10$3sPV7Qc75s0umKLIWV..Nef9fs5.2mHKQDtCZwoKFJjdZBH8r8n/C",
     "created_at": "2025-09-30T19:11:32.351Z"
+  },
+  {
+    "id": 196,
+    "username": "finaluser_1759261695254",
+    "password": "$2a$10$EcBe5pXp.opvnXqCF1GSeuZzqob9C26BnbW2/tq0to2j/0wXK.J3a",
+    "created_at": "2025-09-30T19:48:15.428Z"
+  },
+  {
+    "id": 197,
+    "username": "refreshtest_1759261696088",
+    "password": "$2a$10$vkWxSFWeM2O7RtdPt4JGke9RhOAPdj96Kb/hIjdMZhBrJwIOdy3FW",
+    "created_at": "2025-09-30T19:48:16.172Z"
+  },
+  {
+    "id": 198,
+    "username": "debug123",
+    "password": "$2a$10$VSJg2CTmaMFBRRF1CrzyeuMeZ3m1Jos12TyFleTGV2dPLCOBPCcva",
+    "created_at": "2025-09-30T19:51:05.097Z"
   }
 ]
