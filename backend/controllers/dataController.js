@@ -5,31 +5,33 @@ const getMyCategoriesWithCount = async (req, res) => {
     const userId = req.user.id;
     const db = getDb();
 
-    // Get user's categories with actual braille data count
-    const categories = await new Promise((resolve, reject) => {
-      const query = `
-        SELECT
-          c.*,
-          COUNT(bd.id) as braille_count
-        FROM categories c
-        LEFT JOIN braille_data bd ON c.id = bd.category_id
-        WHERE c.created_by = ?
-        GROUP BY c.id
-        ORDER BY c.created_at DESC
-      `;
+    console.log('🔍 Getting categories for user:', userId);
 
-      db.all(query, [userId], (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows || []);
-        }
-      });
-    });
+    // Get user's categories using JSON database method
+    const categories = await db.select('categories', { created_by: userId });
+    console.log('📋 Found categories:', categories);
+
+    // Get braille data for each category and add count
+    const categoriesWithCount = await Promise.all(
+      categories.map(async (category) => {
+        const brailleData = await db.select('braille_data', { category_id: category.id });
+        console.log(`📊 Category "${category.name}" has ${brailleData.length} braille entries`);
+
+        return {
+          ...category,
+          braille_count: brailleData.length
+        };
+      })
+    );
+
+    // Sort by created_at DESC
+    categoriesWithCount.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    console.log('✅ Successfully retrieved categories with counts');
 
     res.status(200).json({
-      categories,
-      total: categories.length
+      categories: categoriesWithCount,
+      total: categoriesWithCount.length
     });
 
   } catch (error) {
@@ -49,42 +51,44 @@ const searchPublicCategories = async (req, res) => {
     }
 
     const db = getDb();
+    console.log('🔍 Searching public categories with query:', searchQuery);
 
-    // Search public categories (including user's own public categories)
-    const categories = await new Promise((resolve, reject) => {
-      let query = `
-        SELECT
-          c.*,
-          COUNT(bd.id) as braille_count
-        FROM categories c
-        LEFT JOIN braille_data bd ON c.id = bd.category_id
-        WHERE c.is_public = 1
-        GROUP BY c.id
-      `;
+    // Get all public categories using JSON database method
+    const allPublicCategories = await db.select('categories', { is_public: 1 });
+    console.log('📋 Found public categories:', allPublicCategories.length);
 
-      let params = [];
-
-      // Add search filter if query is not empty
-      if (searchQuery && searchQuery.trim() !== '') {
-        query += ` HAVING (LOWER(c.name) LIKE LOWER(?) OR LOWER(c.description) LIKE LOWER(?))`;
-        const searchTerm = `%${searchQuery}%`;
-        params.push(searchTerm, searchTerm);
-      }
-
-      query += ` ORDER BY c.created_at DESC`;
-
-      db.all(query, params, (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows || []);
-        }
+    // Filter by search query if provided
+    let filteredCategories = allPublicCategories;
+    if (searchQuery && searchQuery.trim() !== '') {
+      const searchTerm = searchQuery.toLowerCase();
+      filteredCategories = allPublicCategories.filter(category => {
+        return category.name.toLowerCase().includes(searchTerm) ||
+               (category.description || '').toLowerCase().includes(searchTerm);
       });
-    });
+      console.log('🔎 Filtered categories:', filteredCategories.length);
+    }
+
+    // Add braille data count to each category
+    const categoriesWithCount = await Promise.all(
+      filteredCategories.map(async (category) => {
+        const brailleData = await db.select('braille_data', { category_id: category.id });
+        console.log(`📊 Category "${category.name}" has ${brailleData.length} braille entries`);
+
+        return {
+          ...category,
+          braille_count: brailleData.length
+        };
+      })
+    );
+
+    // Sort by created_at DESC
+    categoriesWithCount.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    console.log('✅ Successfully retrieved public categories');
 
     res.status(200).json({
-      categories,
-      total: categories.length
+      categories: categoriesWithCount,
+      total: categoriesWithCount.length
     });
 
   } catch (error) {
@@ -106,39 +110,17 @@ const addToFavorites = async (req, res) => {
     const db = getDb();
 
     // Check if category exists and is public (and not owned by user)
-    const category = await new Promise((resolve, reject) => {
-      const query = `
-        SELECT * FROM categories
-        WHERE id = ? AND is_public = 1 AND created_by != ?
-      `;
-
-      db.get(query, [categoryId, userId], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
-    });
+    const categories = await db.select('categories', { id: parseInt(categoryId), is_public: 1 });
+    const category = categories.find(cat => cat.created_by !== userId);
 
     if (!category) {
       return res.status(404).json({ error: 'Category not found or not public' });
     }
 
     // Check if already in favorites
-    const existingFavorite = await new Promise((resolve, reject) => {
-      const query = `
-        SELECT * FROM favorites
-        WHERE user_id = ? AND category_id = ?
-      `;
-
-      db.get(query, [userId, categoryId], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
+    const existingFavorite = await db.selectOne('favorites', {
+      user_id: userId,
+      category_id: parseInt(categoryId)
     });
 
     if (existingFavorite) {
@@ -146,19 +128,9 @@ const addToFavorites = async (req, res) => {
     }
 
     // Add to favorites
-    await new Promise((resolve, reject) => {
-      const query = `
-        INSERT INTO favorites (user_id, category_id)
-        VALUES (?, ?)
-      `;
-
-      db.run(query, [userId, categoryId], function(err) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(this.lastID);
-        }
-      });
+    await db.insert('favorites', {
+      user_id: userId,
+      category_id: parseInt(categoryId)
     });
 
     res.status(201).json({ message: 'Category added to favorites' });
@@ -177,19 +149,9 @@ const removeFromFavorites = async (req, res) => {
     const db = getDb();
 
     // Check if favorite exists
-    const existingFavorite = await new Promise((resolve, reject) => {
-      const query = `
-        SELECT * FROM favorites
-        WHERE user_id = ? AND category_id = ?
-      `;
-
-      db.get(query, [userId, categoryId], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
+    const existingFavorite = await db.selectOne('favorites', {
+      user_id: userId,
+      category_id: parseInt(categoryId)
     });
 
     if (!existingFavorite) {
@@ -197,19 +159,9 @@ const removeFromFavorites = async (req, res) => {
     }
 
     // Remove from favorites
-    await new Promise((resolve, reject) => {
-      const query = `
-        DELETE FROM favorites
-        WHERE user_id = ? AND category_id = ?
-      `;
-
-      db.run(query, [userId, categoryId], function(err) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
+    await db.delete('favorites', {
+      user_id: userId,
+      category_id: parseInt(categoryId)
     });
 
     res.status(200).json({ message: 'Category removed from favorites' });
@@ -225,27 +177,23 @@ const getFavorites = async (req, res) => {
     const userId = req.user.id;
     const db = getDb();
 
-    // Get user's favorites with category details
-    const favorites = await new Promise((resolve, reject) => {
-      const query = `
-        SELECT
-          c.*,
-          0 as braille_count,
-          f.favorited_at as favorited_at
-        FROM favorites f
-        JOIN categories c ON f.category_id = c.id
-        WHERE f.user_id = ?
-        ORDER BY f.favorited_at DESC
-      `;
+    // Get user's favorites
+    const userFavorites = await db.select('favorites', { user_id: userId });
 
-      db.all(query, [userId], (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows || []);
-        }
-      });
-    });
+    // Get category details for each favorite
+    const favorites = await Promise.all(
+      userFavorites.map(async (favorite) => {
+        const category = await db.selectOne('categories', { id: favorite.category_id });
+        return {
+          ...category,
+          braille_count: 0,
+          favorited_at: favorite.created_at
+        };
+      })
+    );
+
+    // Sort by favorited_at descending
+    favorites.sort((a, b) => new Date(b.favorited_at) - new Date(a.favorited_at));
 
     res.status(200).json({
       categories: favorites,
@@ -266,49 +214,51 @@ const getRandomBrailleData = async (req, res) => {
     const db = getDb();
 
     // First check if user has access to this category
-    const category = await new Promise((resolve, reject) => {
-      const query = `
-        SELECT c.* FROM categories c
-        LEFT JOIN favorites f ON c.id = f.category_id AND f.user_id = ?
-        WHERE c.id = ? AND (c.created_by = ? OR c.is_public = 1 OR f.id IS NOT NULL)
-      `;
-
-      db.get(query, [userId, categoryId, userId], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
-    });
+    const category = await db.selectOne('categories', { id: parseInt(categoryId) });
 
     if (!category) {
       return res.status(404).json({ error: 'Category not found or access denied' });
     }
 
-    // Get random braille data from this category
-    const brailleData = await new Promise((resolve, reject) => {
-      const query = `
-        SELECT id, category_id, character, braille_pattern, description FROM braille_data
-        WHERE category_id = ?
-        ORDER BY RANDOM()
-        LIMIT 1
-      `;
-
-      db.get(query, [categoryId], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
+    // Check access: owned by user, public, or in favorites
+    let hasAccess = false;
+    if (category.created_by === userId || category.is_public === 1) {
+      hasAccess = true;
+    } else {
+      const favorite = await db.selectOne('favorites', {
+        user_id: userId,
+        category_id: parseInt(categoryId)
       });
-    });
+      if (favorite) {
+        hasAccess = true;
+      }
+    }
 
-    if (!brailleData) {
+    if (!hasAccess) {
+      return res.status(404).json({ error: 'Category not found or access denied' });
+    }
+
+    // Get all braille data from this category and pick random one
+    const allBrailleData = await db.select('braille_data', { category_id: parseInt(categoryId) });
+
+    if (!allBrailleData || allBrailleData.length === 0) {
       return res.status(404).json({ error: 'No braille data found in this category' });
     }
 
-    res.json(brailleData);
+    // Pick random braille data
+    const randomIndex = Math.floor(Math.random() * allBrailleData.length);
+    const brailleData = allBrailleData[randomIndex];
+
+    // Return only needed fields
+    const result = {
+      id: brailleData.id,
+      category_id: brailleData.category_id,
+      character: brailleData.character,
+      braille_pattern: brailleData.braille_pattern,
+      description: brailleData.description
+    };
+
+    res.json(result);
 
   } catch (error) {
     console.error('Get random braille data error:', error);
@@ -324,15 +274,9 @@ const deleteCategory = async (req, res) => {
     const db = getDb();
 
     // Check if category exists and is owned by user
-    const category = await new Promise((resolve, reject) => {
-      const query = 'SELECT * FROM categories WHERE id = ? AND created_by = ?';
-      db.get(query, [categoryId, userId], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
+    const category = await db.selectOne('categories', {
+      id: parseInt(categoryId),
+      created_by: userId
     });
 
     if (!category) {
@@ -340,40 +284,13 @@ const deleteCategory = async (req, res) => {
     }
 
     // Delete related braille data first
-    await new Promise((resolve, reject) => {
-      const query = 'DELETE FROM braille_data WHERE category_id = ?';
-      db.run(query, [categoryId], (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
+    await db.delete('braille_data', { category_id: parseInt(categoryId) });
 
     // Delete from favorites
-    await new Promise((resolve, reject) => {
-      const query = 'DELETE FROM favorites WHERE category_id = ?';
-      db.run(query, [categoryId], (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
+    await db.delete('favorites', { category_id: parseInt(categoryId) });
 
     // Delete category
-    await new Promise((resolve, reject) => {
-      const query = 'DELETE FROM categories WHERE id = ?';
-      db.run(query, [categoryId], (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
+    await db.delete('categories', { id: parseInt(categoryId) });
 
     res.status(200).json({ message: 'Category deleted successfully' });
 
@@ -401,15 +318,9 @@ const updateCategory = async (req, res) => {
     }
 
     // Check if category exists and is owned by user
-    const category = await new Promise((resolve, reject) => {
-      const query = 'SELECT * FROM categories WHERE id = ? AND created_by = ?';
-      db.get(query, [categoryId, userId], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
+    const category = await db.selectOne('categories', {
+      id: parseInt(categoryId),
+      created_by: userId
     });
 
     if (!category) {
@@ -417,49 +328,24 @@ const updateCategory = async (req, res) => {
     }
 
     // Check if name already exists for this user (excluding current category)
-    const existingCategory = await new Promise((resolve, reject) => {
-      const query = 'SELECT id FROM categories WHERE name = ? AND created_by = ? AND id != ?';
-      db.get(query, [name.trim(), userId, categoryId], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
-    });
+    const userCategories = await db.select('categories', { created_by: userId });
+    const existingCategory = userCategories.find(cat =>
+      cat.name === name.trim() && cat.id !== parseInt(categoryId)
+    );
 
     if (existingCategory) {
       return res.status(400).json({ error: 'Category name already exists for this user' });
     }
 
     // Update category
-    const updatedCategory = await new Promise((resolve, reject) => {
-      const query = `
-        UPDATE categories
-        SET name = ?, description = ?, is_public = ?
-        WHERE id = ?
-      `;
+    await db.update('categories', {
+      name: name.trim(),
+      description: description || '',
+      is_public: isPublic ? 1 : 0
+    }, { id: parseInt(categoryId) });
 
-      db.run(query, [
-        name.trim(),
-        description || '',
-        isPublic ? 1 : 0,
-        categoryId
-      ], function(err) {
-        if (err) {
-          reject(err);
-        } else {
-          // Fetch updated category
-          db.get('SELECT * FROM categories WHERE id = ?', [categoryId], (err, row) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(row);
-            }
-          });
-        }
-      });
-    });
+    // Fetch updated category
+    const updatedCategory = await db.selectOne('categories', { id: parseInt(categoryId) });
 
     res.status(200).json({
       message: 'Category updated successfully',
@@ -480,15 +366,9 @@ const getCategoryBrailleData = async (req, res) => {
     const db = getDb();
 
     // Check if category exists and is owned by user
-    const category = await new Promise((resolve, reject) => {
-      const query = 'SELECT * FROM categories WHERE id = ? AND created_by = ?';
-      db.get(query, [categoryId, userId], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
+    const category = await db.selectOne('categories', {
+      id: parseInt(categoryId),
+      created_by: userId
     });
 
     if (!category) {
@@ -496,29 +376,18 @@ const getCategoryBrailleData = async (req, res) => {
     }
 
     // Get braille data
-    const brailleData = await new Promise((resolve, reject) => {
-      const query = `
-        SELECT id, character, braille_pattern, description
-        FROM braille_data
-        WHERE category_id = ?
-        ORDER BY id ASC
-      `;
-      db.all(query, [categoryId], (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows || []);
-        }
-      });
-    });
+    const brailleData = await db.select('braille_data', { category_id: parseInt(categoryId) });
 
-    // Parse braille patterns from JSON
-    const parsedData = brailleData.map(item => ({
-      id: item.id,
-      character: item.character,
-      braille_pattern: JSON.parse(item.braille_pattern),
-      description: item.description || ''
-    }));
+    // Sort by id and parse braille patterns from JSON
+    const parsedData = brailleData
+      .sort((a, b) => a.id - b.id)
+      .map(item => ({
+        id: item.id,
+        character: item.character,
+        braille_pattern: typeof item.braille_pattern === 'string' ?
+          JSON.parse(item.braille_pattern) : item.braille_pattern,
+        description: item.description || ''
+      }));
 
     res.status(200).json({
       category,
@@ -540,15 +409,9 @@ const updateCategoryBrailleData = async (req, res) => {
     const db = getDb();
 
     // Check if category exists and is owned by user
-    const category = await new Promise((resolve, reject) => {
-      const query = 'SELECT * FROM categories WHERE id = ? AND created_by = ?';
-      db.get(query, [categoryId, userId], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
+    const category = await db.selectOne('categories', {
+      id: parseInt(categoryId),
+      created_by: userId
     });
 
     if (!category) {
@@ -560,68 +423,42 @@ const updateCategoryBrailleData = async (req, res) => {
       return res.status(400).json({ error: 'Braille data must be an array' });
     }
 
-    // Delete existing braille data
-    await new Promise((resolve, reject) => {
-      const query = 'DELETE FROM braille_data WHERE category_id = ?';
-      db.run(query, [categoryId], (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
+    // Validate each braille data item
+    for (const item of brailleData) {
+      if (!item.character || !item.character.trim()) {
+        throw new Error('Character is required');
+      }
+
+      if (!Array.isArray(item.braille_pattern)) {
+        throw new Error('Braille pattern must be an array');
+      }
+
+      // Validate braille pattern structure
+      for (const block of item.braille_pattern) {
+        if (!Array.isArray(block)) {
+          throw new Error('Each braille block must be an array');
         }
-      });
-    });
+        for (const dot of block) {
+          if (typeof dot !== 'number' || dot < 1 || dot > 6) {
+            throw new Error('Braille dots must be numbers between 1 and 6');
+          }
+        }
+      }
+    }
+
+    // Delete existing braille data
+    await db.delete('braille_data', { category_id: parseInt(categoryId) });
 
     // Insert new braille data
     if (brailleData.length > 0) {
-      const insertPromises = brailleData.map(item => {
-        return new Promise((resolve, reject) => {
-          // Validate each item
-          if (!item.character || !item.character.trim()) {
-            reject(new Error('Character is required'));
-            return;
-          }
-
-          if (!Array.isArray(item.braille_pattern)) {
-            reject(new Error('Braille pattern must be an array'));
-            return;
-          }
-
-          // Validate braille pattern structure
-          for (const block of item.braille_pattern) {
-            if (!Array.isArray(block)) {
-              reject(new Error('Each braille block must be an array'));
-              return;
-            }
-            for (const dot of block) {
-              if (typeof dot !== 'number' || dot < 1 || dot > 6) {
-                reject(new Error('Braille dots must be numbers between 1 and 6'));
-                return;
-              }
-            }
-          }
-
-          const query = `
-            INSERT INTO braille_data (category_id, character, braille_pattern, description)
-            VALUES (?, ?, ?, ?)
-          `;
-
-          db.run(query, [
-            categoryId,
-            item.character.trim(),
-            JSON.stringify(item.braille_pattern),
-            (item.description || '').trim()
-          ], function(err) {
-            if (err) {
-              reject(err);
-            } else {
-              resolve({ id: this.lastID, ...item });
-            }
-          });
+      for (const item of brailleData) {
+        await db.insert('braille_data', {
+          category_id: parseInt(categoryId),
+          character: item.character.trim(),
+          braille_pattern: JSON.stringify(item.braille_pattern),
+          description: (item.description || '').trim()
         });
-      });
-
-      await Promise.all(insertPromises);
+      }
     }
 
     res.status(200).json({
