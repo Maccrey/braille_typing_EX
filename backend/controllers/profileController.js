@@ -15,7 +15,7 @@ const getUserStats = async (req, res) => {
           if (err) reject(err);
           else {
             console.log('📊 Practice stats for user', userId, ':', row);
-            resolve(row);
+            resolve(row || { total_practice_time: 0, total_sessions: 0 });
           }
         }
       );
@@ -28,7 +28,7 @@ const getUserStats = async (req, res) => {
         [userId],
         (err, row) => {
           if (err) reject(err);
-          else resolve(row.count);
+          else resolve(row ? row.count : 0);
         }
       );
     });
@@ -40,7 +40,7 @@ const getUserStats = async (req, res) => {
         [userId],
         (err, row) => {
           if (err) reject(err);
-          else resolve(row.count);
+          else resolve(row ? row.count : 0);
         }
       );
     });
@@ -52,7 +52,7 @@ const getUserStats = async (req, res) => {
         [userId],
         (err, row) => {
           if (err) reject(err);
-          else resolve(row.count);
+          else resolve(row ? row.count : 0);
         }
       );
     });
@@ -70,7 +70,7 @@ const getUserStats = async (req, res) => {
           if (err) reject(err);
           else {
             console.log('📈 Weekly stats calculated:', row);
-            resolve(row);
+            resolve(row || { weekly_practice_time: 0, weekly_practice_days: 0 });
           }
         }
       );
@@ -83,7 +83,7 @@ const getUserStats = async (req, res) => {
         [userId],
         (err, row) => {
           if (err) reject(err);
-          else resolve(row.first_date);
+          else resolve(row ? row.first_date : null);
         }
       );
     });
@@ -95,7 +95,7 @@ const getUserStats = async (req, res) => {
         [userId],
         (err, row) => {
           if (err) reject(err);
-          else resolve(row.last_date);
+          else resolve(row ? row.last_date : null);
         }
       );
     });
@@ -107,7 +107,7 @@ const getUserStats = async (req, res) => {
         [userId],
         (err, row) => {
           if (err) reject(err);
-          else resolve(row.longest);
+          else resolve(row ? row.longest : 0);
         }
       );
     });
