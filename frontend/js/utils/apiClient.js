@@ -12,7 +12,12 @@ class ApiClient {
             href: window.location.href
         });
 
-        this.baseUrl = ''; // API calls will be relative to the current origin
+        // Development: use localhost:3001, Production: use relative URLs
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            this.baseUrl = 'http://localhost:3001'; // Development backend
+        } else {
+            this.baseUrl = ''; // Production: relative to current origin
+        }
 
         this.currentUser = null;
         console.log('🔗 ApiClient baseUrl:', this.baseUrl || window.location.origin);
