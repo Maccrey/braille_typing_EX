@@ -1141,6 +1141,19 @@ function switchTab(tabName) {
 
 // Initialize main menu when page loads
 let mainMenu;
-document.addEventListener('DOMContentLoaded', () => {
-    mainMenu = new MainMenu();
-});
+
+// Handle both normal load and dynamic script load
+function initMainMenu() {
+    if (!mainMenu) {
+        console.log('🚀 Initializing MainMenu...');
+        mainMenu = new MainMenu();
+    }
+}
+
+// If DOM is already loaded (dynamic script load), initialize immediately
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMainMenu);
+} else {
+    // DOM is already loaded, initialize immediately
+    initMainMenu();
+}
