@@ -187,15 +187,37 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Upload file
+            console.log('🔄 Starting upload to:', `${API_BASE_URL}/protected/upload`);
+            console.log('📋 Form data:', {
+                categoryName,
+                description,
+                isPublic: isPublicCheckbox.checked,
+                fileName: selectedFile.name,
+                fileSize: selectedFile.size
+            });
+
             const response = await fetch(`${API_BASE_URL}/protected/upload`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
+                    // Don't set Content-Type for FormData - browser will set it automatically with boundary
                 },
                 body: formData
             });
 
-            const data = await response.json();
+            console.log('📡 Response status:', response.status);
+            console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
+            let data;
+            try {
+                data = await response.json();
+                console.log('📄 Response data:', data);
+            } catch (jsonError) {
+                console.error('❌ JSON parsing error:', jsonError);
+                const responseText = await response.text();
+                console.error('📄 Raw response:', responseText);
+                throw new Error('서버 응답을 파싱할 수 없습니다: ' + responseText.substring(0, 100));
+            }
 
             if (response.ok) {
                 showSuccess(`업로드가 완료되었습니다! ${data.brailleDataCount}개의 점자 데이터가 추가되었습니다.`);
