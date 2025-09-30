@@ -96,31 +96,31 @@ const getPracticeLogs = async (req, res) => {
 
     console.log(`🔍 getPracticeLogs called for user ${userId} with limit ${limit}`);
 
-    const logs = await new Promise((resolve, reject) => {
-      const query = `
-        SELECT
-          DATE(practiced_at) as date,
-          SUM(duration_seconds) as duration,
-          COUNT(*) as session_count
-        FROM practice_logs
-        WHERE user_id = ?
-        GROUP BY DATE(practiced_at)
-        ORDER BY DATE(practiced_at) DESC
-        LIMIT ?
-      `;
+    // Get practice logs for this user from JSON database
+    const allLogs = await db.select('practice_logs', { user_id: userId });
+    console.log(`📊 Found ${allLogs.length} practice log entries for user ${userId}`);
 
-      console.log(`📊 Executing query for user ${userId}`);
-      db.all(query, [userId, limit], (err, rows) => {
-        if (err) {
-          console.error('❌ Database error:', err);
-          reject(err);
-        } else {
-          console.log(`✅ Found ${rows.length} practice log entries:`, rows);
-          resolve(rows || []);
-        }
-      });
+    // Group by date and sum duration
+    const logsByDate = {};
+    allLogs.forEach(log => {
+      const date = log.practiced_at;
+      if (!logsByDate[date]) {
+        logsByDate[date] = {
+          date: date,
+          duration: 0,
+          session_count: 0
+        };
+      }
+      logsByDate[date].duration += log.duration_seconds;
+      logsByDate[date].session_count += 1;
     });
 
+    // Convert to array and sort by date descending
+    const logs = Object.values(logsByDate)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, limit);
+
+    console.log(`✅ Returning ${logs.length} grouped practice log entries:`, logs);
     res.json(logs);
 
   } catch (error) {
