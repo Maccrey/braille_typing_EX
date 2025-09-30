@@ -155,31 +155,17 @@ const getattendanceData = async (req, res) => {
     const targetMonth = month || new Date().toISOString().slice(0, 7);
 
     // Get attendance dates for the specified month with work status
-    const attendanceRecords = await new Promise((resolve, reject) => {
-      db.all(
-        'SELECT date, check_in_time, check_out_time, is_work_day FROM attendance WHERE user_id = ? AND date LIKE ? ORDER BY date',
-        [userId, `${targetMonth}%`],
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
-        }
-      );
+    const attendanceRecords = await db.select('attendance', {
+      user_id: userId,
+      date: { $like: `${targetMonth}%` }
     });
 
     // Extract just dates for backward compatibility
     const attendanceDates = attendanceRecords.map(row => row.date);
 
     // Get total attendance count
-    const totalDays = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT COUNT(*) as count FROM attendance WHERE user_id = ?',
-        [userId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row.count);
-        }
-      );
-    });
+    const allAttendance = await db.select('attendance', { user_id: userId });
+    const totalDays = allAttendance.length;
 
     res.status(200).json({
       attendance_dates: attendanceDates,
@@ -551,24 +537,43 @@ const getDailyRanking = async (req, res) => {
     const db = getDb();
 
     // Get users with practice time for the specified date
-    const dailyRanking = await new Promise((resolve, reject) => {
-      db.all(`
-        SELECT
-          u.username,
-          COALESCE(SUM(pl.duration_seconds), 0) as daily_practice_time,
-          COUNT(pl.id) as practice_sessions
-        FROM users u
-        LEFT JOIN practice_logs pl ON u.id = pl.user_id
-          AND DATE(pl.practiced_at) = ?
-        GROUP BY u.id, u.username
-        HAVING daily_practice_time > 0
-        ORDER BY daily_practice_time DESC, practice_sessions DESC
-        LIMIT 20
-      `, [targetDate], (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows || []);
-      });
+    const users = await db.select('users', {});
+    const practiceLogs = await db.select('practice_logs', {});
+
+    // Filter practice logs for the target date
+    const targetDateLogs = practiceLogs.filter(log => {
+      const logDate = new Date(log.practiced_at).toISOString().split('T')[0];
+      return logDate === targetDate;
     });
+
+    // Create ranking by aggregating practice data for each user
+    const userRankingMap = {};
+    users.forEach(user => {
+      userRankingMap[user.id] = {
+        username: user.username,
+        daily_practice_time: 0,
+        practice_sessions: 0
+      };
+    });
+
+    // Aggregate practice time for each user
+    targetDateLogs.forEach(log => {
+      if (userRankingMap[log.user_id]) {
+        userRankingMap[log.user_id].daily_practice_time += log.duration_seconds || 0;
+        userRankingMap[log.user_id].practice_sessions += 1;
+      }
+    });
+
+    // Convert to array and filter users with practice time > 0
+    const dailyRanking = Object.values(userRankingMap)
+      .filter(user => user.daily_practice_time > 0)
+      .sort((a, b) => {
+        if (b.daily_practice_time !== a.daily_practice_time) {
+          return b.daily_practice_time - a.daily_practice_time;
+        }
+        return b.practice_sessions - a.practice_sessions;
+      })
+      .slice(0, 20);
 
     // Format the response with ranking information
     const formattedRanking = dailyRanking.map((user, index) => {

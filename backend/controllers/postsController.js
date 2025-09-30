@@ -2,45 +2,58 @@ const { getDb } = require('../config/database');
 
 const postsController = {
   // 모든 게시글 조회
-  getAllPosts: (req, res) => {
-    const db = getDb();
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const offset = (page - 1) * limit;
+  getAllPosts: async (req, res) => {
+    try {
+      const db = getDb();
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const offset = (page - 1) * limit;
 
-    const query = `
-      SELECT p.*, u.username as author_name,
-             (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count
-      FROM posts p
-      JOIN users u ON p.author_id = u.id
-      ORDER BY p.created_at DESC
-      LIMIT ? OFFSET ?
-    `;
+      // Get all posts, users, and comments
+      const allPosts = await db.select('posts', {});
+      const allUsers = await db.select('users', {});
+      const allComments = await db.select('comments', {});
 
-    const countQuery = `SELECT COUNT(*) as total FROM posts`;
-
-    db.get(countQuery, (err, countResult) => {
-      if (err) {
-        return res.status(500).json({ error: '게시글 수를 조회할 수 없습니다.' });
-      }
-
-      db.all(query, [limit, offset], (err, posts) => {
-        if (err) {
-          return res.status(500).json({ error: '게시글을 조회할 수 없습니다.' });
-        }
-
-        res.json({
-          posts,
-          pagination: {
-            currentPage: page,
-            totalPages: Math.ceil(countResult.total / limit),
-            totalPosts: countResult.total,
-            hasNext: page * limit < countResult.total,
-            hasPrev: page > 1
-          }
-        });
+      // Create user lookup map
+      const userMap = {};
+      allUsers.forEach(user => {
+        userMap[user.id] = user;
       });
-    });
+
+      // Create comment count map
+      const commentCountMap = {};
+      allComments.forEach(comment => {
+        commentCountMap[comment.post_id] = (commentCountMap[comment.post_id] || 0) + 1;
+      });
+
+      // Join posts with user data and add comment counts
+      const postsWithDetails = allPosts.map(post => ({
+        ...post,
+        author_name: userMap[post.author_id]?.username || 'Unknown',
+        comment_count: commentCountMap[post.id] || 0
+      }));
+
+      // Sort by created_at DESC
+      postsWithDetails.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      // Apply pagination
+      const totalPosts = postsWithDetails.length;
+      const paginatedPosts = postsWithDetails.slice(offset, offset + limit);
+
+      res.json({
+        posts: paginatedPosts,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(totalPosts / limit),
+          totalPosts: totalPosts,
+          hasNext: page * limit < totalPosts,
+          hasPrev: page > 1
+        }
+      });
+    } catch (error) {
+      console.error('Get all posts error:', error);
+      res.status(500).json({ error: '게시글을 조회할 수 없습니다.' });
+    }
   },
 
   // 특정 게시글 조회
