@@ -16,5 +16,107 @@
     "username": "testuser3",
     "password": "$2a$10$l2PPVqs7PAwRFjFb/jBQuOXGpeN7GiMYURhqP1oiDdtPUEaBd0sce",
     "created_at": "2025-09-28T12:55:58.784Z"
+  },
+  {
+    "id": 4,
+    "username": "uploaduser_1759203263239_7z4undhsu",
+    "password": "$2a$10$WtwBcBVicWXVBFOLg5dxwuls5MH3VSu1QkZvVTl5pG6.DpvuyiFs6",
+    "created_at": "2025-09-30T03:34:23.337Z"
+  },
+  {
+    "id": 5,
+    "username": "uploaduser_1759203263437_4qpmkcdlm",
+    "password": "$2a$10$90VYD/DC5jNn1e2M5YDKSea3RA/WZqrUY1PAZoVasb/vUZk64g3lm",
+    "created_at": "2025-09-30T03:34:23.507Z"
+  },
+  {
+    "id": 6,
+    "username": "uploaduser_1759203263602_peva94nna",
+    "password": "$2a$10$gCBhxgcrkrTWAw2MUfpAkuD/aLxDNbEaM9w4.ihexQCJw62fjqIRy",
+    "created_at": "2025-09-30T03:34:23.673Z"
+  },
+  {
+    "id": 7,
+    "username": "uploaduser_1759203263766_8vxaz5qyx",
+    "password": "$2a$10$4mJqakRF6iSSoxXCk82kAesoBO4RCYks4zH1f7SkX0cYHKRi85kq2",
+    "created_at": "2025-09-30T03:34:23.835Z"
+  },
+  {
+    "id": 8,
+    "username": "uploaduser_1759203263928_8wv4yzrpp",
+    "password": "$2a$10$5UI1xiwsJeG5cGiHyN7iw.FZjtMGS9HZKlM157Q0SmdZf4o0ze942",
+    "created_at": "2025-09-30T03:34:23.997Z"
+  },
+  {
+    "id": 9,
+    "username": "uploaduser_1759203264122_z1ezqk21i",
+    "password": "$2a$10$/427fqVQaZfq32FyYT.IpeX7s7ZiqdapbpjhIhZBOcM5xhO.zaBt6",
+    "created_at": "2025-09-30T03:34:24.191Z"
+  },
+  {
+    "id": 10,
+    "username": "uploaduser2_1759203264261_qehh8zp8z",
+    "password": "$2a$10$ukvAjRn25DcEzWpYntmKDe6b74tHgq9rpGr8VHSCxgafJ.86S/zyu",
+    "created_at": "2025-09-30T03:34:24.330Z"
+  },
+  {
+    "id": 11,
+    "username": "uploaduser_1759203264423_scww7gsfr",
+    "password": "$2a$10$rILBUhT5x0M24XTYLlwcoeAgKN7xWkKx5buUsEVncXOQrJpdaBvsu",
+    "created_at": "2025-09-30T03:34:24.492Z"
+  },
+  {
+    "id": 12,
+    "username": "uploaduser_1759203264584_g7xmycw5f",
+    "password": "$2a$10$94k4/H.FA4B8Moz3PNnVruiZCGM.RVtAFciTdsgHvT7H3LfbbpKlS",
+    "created_at": "2025-09-30T03:34:24.653Z"
+  },
+  {
+    "id": 13,
+    "username": "uploaduser_1759203264740_ol5auzeex",
+    "password": "$2a$10$vJ4zYFpfi0cJ/3nWjedE1uAIJjZVQ5FvJArTRFxaZ42AUvKkY4i2m",
+    "created_at": "2025-09-30T03:34:24.809Z"
+  },
+  {
+    "id": 14,
+    "username": "uploaduser_1759203264900_gfav1z15s",
+    "password": "$2a$10$/q3LyrtJrGZiG9CTh/l1w.O4qUlRbTMdswTuAarnHnB9iFGQkC4B.",
+    "created_at": "2025-09-30T03:34:24.969Z"
+  },
+  {
+    "id": 15,
+    "username": "uploaduser_1759203265059_jl1z28lx8",
+    "password": "$2a$10$n0yn.bCOlFOtJJ9bNoepoOadu0oXJhMlA1OtHZvp1cCZYOwm0I2Rq",
+    "created_at": "2025-09-30T03:34:25.128Z"
+  },
+  {
+    "id": 16,
+    "username": "uploaduser_1759203265218_u4pue8p51",
+    "password": "$2a$10$L.0jMyVKDgw5Cre8gKQBG.LXm/4ljU0dHw1kY6OuPnIiUG1cZ56W2",
+    "created_at": "2025-09-30T03:34:25.287Z"
+  },
+  {
+    "id": 17,
+    "username": "uploaduser_1759203265376_9lt23gb1l",
+    "password": "$2a$10$xm5GsMf5NQfRvMaY8og7t.rbDxXyUsunakfEsgH3XHFIM8kBJKm1u",
+    "created_at": "2025-09-30T03:34:25.456Z"
+  },
+  {
+    "id": 18,
+    "username": "uploaduser_1759203265546_05lpwlgiu",
+    "password": "$2a$10$BkASnKN0b5rjp1DG9yTmheHaFuReDNM2zP6TR0b9mbSGftsHJGbam",
+    "created_at": "2025-09-30T03:34:25.615Z"
+  },
+  {
+    "id": 19,
+    "username": "uploaduser_1759203265705_umgxfmy5a",
+    "password": "$2a$10$CZWJV9FwuefXRh8K9hCDbeM.KoZwYdY67wt3SlaGl3IWfUjhUytM2",
+    "created_at": "2025-09-30T03:34:25.774Z"
+  },
+  {
+    "id": 20,
+    "username": "uploaduser_1759203265862_wgichpwb1",
+    "password": "$2a$10$7Qle3qxBbMdpxAmOqp6MD.bc5JPaSYHONScJsMcZrz2erKbwehCiC",
+    "created_at": "2025-09-30T03:34:25.931Z"
   }
 ]
