@@ -63,7 +63,10 @@ const upload = multer({
 
 const uploadFile = async (req, res) => {
   try {
-    console.log('Upload request received:', {
+    console.log('🔄 Upload request received');
+    console.log('👤 req.user:', req.user);
+    console.log('🔑 Authorization header:', req.headers.authorization);
+    console.log('📄 Request details:', {
       hasFile: !!req.file,
       body: req.body,
       fileInfo: req.file ? {
@@ -231,7 +234,15 @@ const uploadFile = async (req, res) => {
     }
 
     // Check if category already exists for this user
+    console.log('🔍 Authentication check - req.user:', req.user);
+
+    if (!req.user || !req.user.id) {
+      console.log('❌ No authenticated user found');
+      return res.status(401).json({ error: 'Authentication required. Please log in again.' });
+    }
+
     const userId = req.user.id;
+    console.log(`✅ Authenticated user ID: ${userId}`);
     console.log(`Checking if category "${categoryName.trim()}" exists for user ${userId}`);
     const existingCategory = await checkCategoryExists(categoryName.trim(), userId);
 
