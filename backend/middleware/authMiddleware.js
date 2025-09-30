@@ -25,12 +25,17 @@ const authMiddleware = async (req, res, next) => {
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       console.log('🔍 Extracted token:', token.substring(0, 20) + '...');
+      console.log('🔍 Full token length:', token.length);
 
       try {
         // PROPER JWT verification with secret and expiration check
-        console.log('🔑 Using JWT_SECRET:', JWT_SECRET.substring(0, 10) + '...');
+        console.log('🔑 Using JWT_SECRET:', JWT_SECRET.substring(0, 10) + '... (length: ' + JWT_SECRET.length + ')');
+        console.log('🔍 Token parts:', token.split('.').length);
+
         const payload = jwt.verify(token, JWT_SECRET);
         console.log('✅ JWT payload decoded:', payload);
+        console.log('✅ Payload userId:', payload.userId);
+        console.log('✅ Payload username:', payload.username);
 
         if (payload.userId && payload.username) {
           console.log('✅ JWT auth successful with proper verification');
