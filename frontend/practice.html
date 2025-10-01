@@ -103,21 +103,35 @@
             margin-bottom: 2rem;
             min-height: 120px;
             align-items: center;
+            /* 반응형 컨테이너 설정 */
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            padding: 0 10px;
+        }
+
+        :root {
+            --braille-block-scale: 1;
         }
 
         .braille-block {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            gap: 8px;
-            padding: 1rem;
+            gap: calc(8px * var(--braille-block-scale));
+            padding: calc(1rem * var(--braille-block-scale));
             border: 2px solid #e1e5e9;
             border-radius: 8px;
             background: white;
-            width: 80px;
-            height: 120px;
+            /* 기본 크기 (최대 크기) - CSS 변수로 스케일링 */
+            width: calc(80px * var(--braille-block-scale));
+            height: calc(120px * var(--braille-block-scale));
             position: relative;
             transition: all 0.3s ease;
+            /* 반응형 크기 조정 */
+            flex-shrink: 0;
+            min-width: 24px;  /* 80px * 0.3 = 24px */
+            min-height: 36px; /* 120px * 0.3 = 36px */
         }
 
         .braille-block.current-block {
@@ -169,11 +183,11 @@
         }
 
         .dot {
-            width: 20px;
-            height: 20px;
+            width: calc(20px * var(--braille-block-scale));
+            height: calc(20px * var(--braille-block-scale));
             border-radius: 50%;
             background: #e1e5e9;
-            border: 2px solid #ccc;
+            border: calc(2px * var(--braille-block-scale)) solid #ccc;
             transition: all 0.2s ease;
             cursor: pointer;
         }
@@ -381,6 +395,7 @@
             position: relative;
         }
 
+        /* 반응형 레이아웃 - 점자 블록 제외한 다른 요소들만 */
         @media (max-width: 768px) {
             #practice-container {
                 padding: 1.5rem;
@@ -388,16 +403,6 @@
 
             #current-char {
                 font-size: 2rem;
-            }
-
-            .braille-block {
-                width: 60px;
-                height: 90px;
-            }
-
-            .dot {
-                width: 15px;
-                height: 15px;
             }
 
             .control-panel {

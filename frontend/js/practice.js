@@ -34,10 +34,66 @@ class BraillePractice {
     init() {
         this.bindEvents();
         this.checkAuthentication();
+        this.setupResponsiveLayout();
 
         // Get category ID from URL params or use default
         const urlParams = new URLSearchParams(window.location.search);
         this.categoryId = urlParams.get('categoryId') || 5; // Default to public category 5
+    }
+
+    setupResponsiveLayout() {
+        // 화면 크기 변화 감지
+        window.addEventListener('resize', () => {
+            this.adjustBrailleBlockSizes();
+        });
+
+        // 초기 크기 조정
+        this.adjustBrailleBlockSizes();
+    }
+
+    adjustBrailleBlockSizes() {
+        const container = document.getElementById('braille-blocks');
+        if (!container || !this.currentBraillePattern) return;
+
+        const containerWidth = container.offsetWidth;
+        const blockCount = this.currentBraillePattern.length;
+
+        // 기본 크기와 여백 설정
+        const defaultBlockWidth = 80;
+        const defaultGap = 16; // 1rem = 16px
+        const containerPadding = 20; // 좌우 패딩
+
+        // 필요한 총 너비 계산
+        const totalNeededWidth = (blockCount * defaultBlockWidth) + ((blockCount - 1) * defaultGap) + containerPadding;
+
+        // 화면 크기에 맞게 스케일 조정
+        if (totalNeededWidth > containerWidth) {
+            const availableWidth = containerWidth - containerPadding;
+            const availableWidthPerBlock = availableWidth / blockCount;
+            const maxBlockWidth = availableWidthPerBlock - defaultGap;
+
+            // 최소 크기 제한 (최대 크기의 30% - 70%까지 축소 가능)
+            const minBlockWidth = defaultBlockWidth * 0.3; // 80px * 0.3 = 24px
+            const finalBlockWidth = Math.max(minBlockWidth, Math.min(defaultBlockWidth, maxBlockWidth));
+            const scale = finalBlockWidth / defaultBlockWidth;
+
+            // CSS 변수를 통해 동적 크기 조정
+            document.documentElement.style.setProperty('--braille-block-scale', scale);
+
+            // 컨테이너 스타일 조정
+            if (scale < 1) {
+                container.style.gap = Math.max(4, defaultGap * scale) + 'px';
+                container.style.overflow = 'visible';
+            } else {
+                container.style.gap = '';
+                container.style.overflow = '';
+            }
+        } else {
+            // 기본 크기 유지
+            document.documentElement.style.setProperty('--braille-block-scale', '1');
+            container.style.gap = '';
+            container.style.overflow = '';
+        }
     }
 
     bindEvents() {
@@ -306,6 +362,11 @@ class BraillePractice {
 
         // Update hint display after creating blocks
         this.updateHintDisplay();
+
+        // 블록 생성 후 크기 조정
+        setTimeout(() => {
+            this.adjustBrailleBlockSizes();
+        }, 100);
     }
 
     createSingleBrailleBlock(pattern, blockIndex) {
