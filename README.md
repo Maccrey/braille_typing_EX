@@ -783,6 +783,35 @@ Excel 파일 업로드 (multipart/form-data)
 
 즐겨찾기 제거
 
+### Admin Endpoints
+
+#### GET /api/admin/stats
+
+시스템 통계 조회 (관리자 전용)
+
+#### GET /api/admin/users
+
+전체 사용자 목록 조회 (관리자 전용)
+
+#### PUT /api/admin/users/role
+
+사용자 권한 변경 (관리자 전용)
+
+```json
+{
+  "userId": 123,
+  "role": "admin"
+}
+```
+
+#### GET /api/admin/backup/download
+
+전체 데이터베이스 백업 다운로드 (관리자 전용)
+
+#### POST /api/admin/backup/restore
+
+백업 파일을 통한 데이터베이스 복원 (관리자 전용, multipart/form-data)
+
 ## 👨‍💻 개발자 가이드
 
 ### 개발 환경 설정
@@ -915,8 +944,18 @@ braille-typing-practice/
 │   ├── __tests__/          # Jest 테스트 파일
 │   ├── config/             # 데이터베이스 설정
 │   ├── controllers/        # 비즈니스 로직
+│   │   ├── authController.js    # 인증 및 사용자 관리
+│   │   ├── dataController.js    # 카테고리 및 점자 데이터
+│   │   ├── profileController.js # 사용자 프로필 및 통계
+│   │   └── adminController.js   # 관리자 전용 기능
 │   ├── middleware/         # Express 미들웨어
+│   │   ├── authMiddleware.js    # JWT 인증 미들웨어
+│   │   └── adminMiddleware.js   # 관리자 권한 확인
 │   ├── routes/            # API 라우트 정의
+│   │   ├── auth.js             # 인증 라우트
+│   │   ├── data.js             # 데이터 라우트
+│   │   ├── profile.js          # 프로필 라우트
+│   │   └── admin.js            # 관리자 라우트
 │   ├── scripts/           # 유틸리티 스크립트
 │   ├── uploads/           # 업로드된 파일 저장소
 │   ├── app.js             # Express 앱 설정
@@ -1124,6 +1163,17 @@ cd backend && npm test
 - ✅ **연습 페이지 UI 개선**: 현재 세션 시간과 완성한 문자 수 실시간 표시 기능 추가
 - ✅ **API 엔드포인트 통합**: 중복된 연습 세션 로그 라우트 정리 및 단일 엔드포인트로 통합
 - ✅ **세션 리셋 버그 수정**: 문자 전환 시 발생하던 세션 시간 리셋 현상 해결
+
+### v1.1.0 (2025-10-01) - 관리자 시스템 및 UI 개선
+
+- ✅ **비밀번호 가시성 토글**: 로그인 및 비밀번호 변경 페이지에 눈 아이콘 추가
+- ✅ **관리자 시스템 구축**: 'maccrey' 사용자 자동 관리자 권한 부여
+- ✅ **관리자 패널 UI**: 시스템 통계, 사용자 관리, 데이터 백업/복원 기능
+- ✅ **JWT 역할 기반 인증**: 토큰에 사용자 역할 정보 포함 및 미들웨어 개선
+- ✅ **데이터베이스 백업**: JSON 형태로 전체 데이터 다운로드 기능
+- ✅ **데이터베이스 복원**: 드래그 앤 드롭 파일 업로드를 통한 데이터 복원
+- ✅ **사용자 권한 관리**: 관리자가 다른 사용자의 권한 변경 가능
+- ✅ **403 에러 해결**: 관리자 API 접근 권한 문제 수정
 
 ## 📞 지원 및 문의
 

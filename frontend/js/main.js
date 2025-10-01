@@ -1545,8 +1545,21 @@ class MainMenu {
         const restoreBtn = document.getElementById('restore-backup-btn');
         const removeFileBtn = document.getElementById('remove-file-btn');
 
+        console.log('Setting up file upload...', {
+            fileInput: !!fileInput,
+            dropZone: !!dropZone,
+            restoreBtn: !!restoreBtn,
+            removeFileBtn: !!removeFileBtn
+        });
+
+        if (!fileInput || !dropZone) {
+            console.error('Required file upload elements not found');
+            return;
+        }
+
         // Click to select file
         dropZone.addEventListener('click', () => {
+            console.log('Drop zone clicked, opening file dialog');
             fileInput.click();
         });
 
@@ -1588,6 +1601,7 @@ class MainMenu {
     }
 
     handleFileSelection(file) {
+        console.log('File selected:', file);
         if (!file) return;
 
         // Validate file type
@@ -1604,6 +1618,7 @@ class MainMenu {
         }
 
         this.selectedBackupFile = file;
+        console.log('File validation passed, updating display');
         this.updateFileDisplay();
     }
 
