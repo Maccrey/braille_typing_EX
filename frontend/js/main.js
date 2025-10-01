@@ -1187,12 +1187,52 @@ class MainMenu {
                 this.hidePasswordModal();
             }
         };
+
+        // Password toggle functionality
+        this.setupPasswordToggle('current-password', 'current-password-toggle');
+        this.setupPasswordToggle('new-password', 'new-password-toggle');
+        this.setupPasswordToggle('confirm-password', 'confirm-password-toggle');
+    }
+
+    setupPasswordToggle(inputId, toggleId) {
+        const passwordInput = document.getElementById(inputId);
+        const passwordToggle = document.getElementById(toggleId);
+
+        if (passwordInput && passwordToggle) {
+            passwordToggle.onclick = () => {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+
+                // Update icon
+                passwordToggle.textContent = type === 'password' ? '👁️' : '🙈';
+                passwordToggle.title = type === 'password' ? '비밀번호 보기' : '비밀번호 숨기기';
+            };
+        }
     }
 
     clearPasswordForm() {
+        // Clear password values
         document.getElementById('current-password').value = '';
         document.getElementById('new-password').value = '';
         document.getElementById('confirm-password').value = '';
+
+        // Reset password field types and icons to initial state
+        const passwordFields = [
+            { input: 'current-password', toggle: 'current-password-toggle' },
+            { input: 'new-password', toggle: 'new-password-toggle' },
+            { input: 'confirm-password', toggle: 'confirm-password-toggle' }
+        ];
+
+        passwordFields.forEach(({ input, toggle }) => {
+            const passwordInput = document.getElementById(input);
+            const passwordToggle = document.getElementById(toggle);
+
+            if (passwordInput && passwordToggle) {
+                passwordInput.setAttribute('type', 'password');
+                passwordToggle.textContent = '👁️';
+                passwordToggle.title = '비밀번호 보기';
+            }
+        });
     }
 
     async handlePasswordChange(e) {

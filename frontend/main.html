@@ -1142,6 +1142,36 @@
             padding: 30px;
         }
 
+        /* Password Modal Styles */
+        .password-input-container {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: #333;
+        }
+
+        .password-input-container .form-input {
+            padding-right: 45px;
+        }
+
         /* Community Styles */
         .community-header {
             display: flex;
@@ -2012,16 +2042,31 @@
             <form id="password-change-form">
                 <div class="form-group">
                     <label for="current-password" class="form-label">현재 패스워드 *</label>
-                    <input type="password" id="current-password" class="form-input" required>
+                    <div class="password-input-container">
+                        <input type="password" id="current-password" class="form-input" required>
+                        <button type="button" class="password-toggle" id="current-password-toggle" title="비밀번호 보기/숨기기">
+                            👁️
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="new-password" class="form-label">새 패스워드 *</label>
-                    <input type="password" id="new-password" class="form-input" minlength="6" required>
+                    <div class="password-input-container">
+                        <input type="password" id="new-password" class="form-input" minlength="6" required>
+                        <button type="button" class="password-toggle" id="new-password-toggle" title="비밀번호 보기/숨기기">
+                            👁️
+                        </button>
+                    </div>
                     <small style="color: #666; font-size: 0.8rem;">최소 6자 이상 입력해주세요</small>
                 </div>
                 <div class="form-group">
                     <label for="confirm-password" class="form-label">새 패스워드 확인 *</label>
-                    <input type="password" id="confirm-password" class="form-input" minlength="6" required>
+                    <div class="password-input-container">
+                        <input type="password" id="confirm-password" class="form-input" minlength="6" required>
+                        <button type="button" class="password-toggle" id="confirm-password-toggle" title="비밀번호 보기/숨기기">
+                            👁️
+                        </button>
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-cancel" id="password-cancel-btn">취소</button>
