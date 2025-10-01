@@ -933,10 +933,10 @@ button {
   color: var(--text-primary) !important;
 }
 
-[data-theme="dark"] .attendance-day {
-  background: #065f46 !important;
-  color: #68d391 !important;
-  border: 1px solid #34d399 !important;
+[data-theme="dark"] .date-cell.attended {
+  background: #dc3545 !important;
+  color: white !important;
+  border: 1px solid #dc3545 !important;
 }
 
 [data-theme="dark"] .current-day {
@@ -945,10 +945,10 @@ button {
   border: 2px solid #667eea !important;
 }
 
-[data-theme="dark"] .attendance-day.current-day {
-  background: linear-gradient(135deg, #065f46 0%, #667eea 100%) !important;
+[data-theme="dark"] .date-cell.attended.current-date {
+  background: linear-gradient(135deg, #dc3545 0%, #667eea 100%) !important;
   color: white !important;
-  border: 2px solid #34d399 !important;
+  border: 2px solid #dc3545 !important;
 }
 
 /* Animation for theme transition */
