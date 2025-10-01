@@ -3,7 +3,8 @@
     "allow": [
       "Bash(export ADMIN_TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsInVzZXJuYW1lIjoibWFjY3JleSIsImlhdCI6MTc1OTI5ODk2MywiZXhwIjoxNzU5Mzg1MzYzfQ.kJW1D-oEDQNFYnHUC0cB3rIkmz6GzkUMrYkvPsZcD3Y\")",
       "Bash(export:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(npm audit:*)"
     ],
     "deny": [],
     "ask": []
