@@ -102,6 +102,9 @@ class MainMenu {
         // Logout button
         document.getElementById('logout-btn').addEventListener('click', () => this.logout());
 
+        // Password change button
+        document.getElementById('change-password-btn').addEventListener('click', () => this.showPasswordModal());
+
         // Search input
         const searchInput = document.getElementById('search-input');
         let searchTimeout;
@@ -1149,6 +1152,103 @@ class MainMenu {
             console.error('Logout error:', error);
             // Force redirect even if cleanup fails
             window.location.href = 'login.html';
+        }
+    }
+
+    // Password change functionality
+    showPasswordModal() {
+        const modal = document.getElementById('password-modal');
+        modal.style.display = 'block';
+        this.setupPasswordModalEventListeners();
+    }
+
+    hidePasswordModal() {
+        const modal = document.getElementById('password-modal');
+        modal.style.display = 'none';
+        this.clearPasswordForm();
+    }
+
+    setupPasswordModalEventListeners() {
+        // Close modal events
+        const closeBtn = document.getElementById('password-modal-close');
+        const cancelBtn = document.getElementById('password-cancel-btn');
+
+        closeBtn.onclick = () => this.hidePasswordModal();
+        cancelBtn.onclick = () => this.hidePasswordModal();
+
+        // Form submit event
+        const form = document.getElementById('password-change-form');
+        form.onsubmit = (e) => this.handlePasswordChange(e);
+
+        // Click outside to close
+        const modal = document.getElementById('password-modal');
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                this.hidePasswordModal();
+            }
+        };
+    }
+
+    clearPasswordForm() {
+        document.getElementById('current-password').value = '';
+        document.getElementById('new-password').value = '';
+        document.getElementById('confirm-password').value = '';
+    }
+
+    async handlePasswordChange(e) {
+        e.preventDefault();
+
+        const currentPassword = document.getElementById('current-password').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+
+        // Validation
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            this.showError('모든 필드를 입력해주세요.');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            this.showError('새 패스워드는 최소 6자 이상이어야 합니다.');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            this.showError('새 패스워드와 확인 패스워드가 일치하지 않습니다.');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                this.redirectToLogin();
+                return;
+            }
+
+            const response = await fetch(`${getApiBaseUrl()}/api/auth/change-password`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    currentPassword,
+                    newPassword
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || '패스워드 변경에 실패했습니다.');
+            }
+
+            this.showSuccess(data.message || '패스워드가 성공적으로 변경되었습니다.');
+            this.hidePasswordModal();
+
+        } catch (error) {
+            console.error('Password change error:', error);
+            this.showError(error.message || '패스워드 변경 중 오류가 발생했습니다.');
         }
     }
 }

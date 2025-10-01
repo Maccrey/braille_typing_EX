@@ -46,7 +46,10 @@
       "Bash(done)",
       "Bash(open index.html)",
       "Bash(open test-api-url.html)",
-      "Bash(open:*)"
+      "Bash(open:*)",
+      "Bash(for file in *.json)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

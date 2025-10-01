@@ -14,29 +14,12 @@ const getUserStats = async (req, res) => {
     };
     console.log('📊 Practice stats for user', userId, ':', practiceStats);
 
-    // Get total attendance days
-    const totalattendanceDays = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT COUNT(*) as count FROM attendance WHERE user_id = ?',
-        [userId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row ? row.count : 0);
-        }
-      );
-    });
+    // Get total attendance days from JSON database
+    const attendanceRecords = await db.select('attendance', { user_id: userId });
+    const totalattendanceDays = attendanceRecords.length;
 
     // Get normal work days count
-    const normalWorkDays = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT COUNT(*) as count FROM attendance WHERE user_id = ? AND is_work_day = 1',
-        [userId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row ? row.count : 0);
-        }
-      );
-    });
+    const normalWorkDays = attendanceRecords.filter(record => record.is_work_day === 1).length;
 
     // Calculate average daily practice based on actual practice days (not attendance)
     const uniquePracticeDates = new Set(
@@ -122,21 +105,32 @@ const getattendanceData = async (req, res) => {
     const { month } = req.query; // Format: YYYY-MM
     const db = getDb();
 
+    console.log(`🔍 getattendanceData called for user ${userId} with month ${month}`);
+
     // If no month specified, use current month
     const targetMonth = month || new Date().toISOString().slice(0, 7);
 
-    // Get attendance dates for the specified month with work status
-    const attendanceRecords = await db.select('attendance', {
-      user_id: userId,
-      date: { $like: `${targetMonth}%` }
+    // Get all attendance records for the user from JSON database
+    const allAttendance = await db.select('attendance', { user_id: userId });
+    console.log(`📊 Found ${allAttendance.length} attendance records for user ${userId}`);
+
+    // Filter for the specified month
+    const attendanceRecords = allAttendance.filter(record => {
+      return record.date && record.date.startsWith(targetMonth);
     });
+
+    console.log(`📅 Found ${attendanceRecords.length} attendance records for month ${targetMonth}`);
 
     // Extract just dates for backward compatibility
     const attendanceDates = attendanceRecords.map(row => row.date);
 
-    // Get total attendance count
-    const allAttendance = await db.select('attendance', { user_id: userId });
     const totalDays = allAttendance.length;
+
+    console.log(`✅ Returning attendance data:`, {
+      attendance_dates: attendanceDates,
+      current_month: targetMonth,
+      total_days: totalDays
+    });
 
     res.status(200).json({
       attendance_dates: attendanceDates,

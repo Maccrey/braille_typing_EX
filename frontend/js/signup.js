@@ -28,6 +28,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const passwordStrength = document.getElementById('password-strength');
     const passwordToggle = document.getElementById('password-toggle');
     const confirmPasswordToggle = document.getElementById('confirm-password-toggle');
+    const checkDuplicateBtn = document.getElementById('check-duplicate-btn');
+    const usernameValidation = document.getElementById('username-validation');
+
+    // Username duplicate check state
+    let isUsernameDuplicateChecked = false;
+    let lastCheckedUsername = '';
 
     // Form submission handler
     signupForm.addEventListener('submit', async function(e) {
@@ -44,6 +50,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const validationError = validateForm(username, password, confirmPassword);
         if (validationError) {
             showError(validationError);
+            return;
+        }
+
+        // Check if username duplicate check is completed
+        if (!isUsernameDuplicateChecked || lastCheckedUsername !== username) {
+            showError('사용자명 중복확인을 먼저 해주세요.');
             return;
         }
 
@@ -73,6 +85,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Real-time username validation
     usernameInput.addEventListener('input', function() {
         validateUsernameField();
+        resetDuplicateCheck();
+    });
+
+    // Username duplicate check button
+    checkDuplicateBtn.addEventListener('click', async function() {
+        await handleUsernameCheck();
     });
 
     // Password visibility toggle handlers
@@ -286,6 +304,75 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleButton.textContent = '👁️';
             toggleButton.title = '비밀번호 보기';
             console.log('Changed to password type');
+        }
+    }
+
+    async function handleUsernameCheck() {
+        const username = usernameInput.value.trim();
+
+        // Basic validation
+        if (!username) {
+            showUsernameValidation('사용자명을 입력해주세요.', 'error');
+            return;
+        }
+
+        if (username.length < 3) {
+            showUsernameValidation('사용자명은 최소 3글자 이상이어야 합니다.', 'error');
+            return;
+        }
+
+        // Set loading state
+        checkDuplicateBtn.disabled = true;
+        checkDuplicateBtn.textContent = '확인중...';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/check-username?username=${encodeURIComponent(username)}`);
+            const data = await response.json();
+
+            if (response.ok) {
+                if (data.available) {
+                    showUsernameValidation(data.message, 'success');
+                    isUsernameDuplicateChecked = true;
+                    lastCheckedUsername = username;
+                    usernameInput.classList.remove('invalid');
+                    usernameInput.classList.add('valid');
+                } else {
+                    showUsernameValidation(data.message, 'error');
+                    isUsernameDuplicateChecked = false;
+                    lastCheckedUsername = '';
+                    usernameInput.classList.remove('valid');
+                    usernameInput.classList.add('invalid');
+                }
+            } else {
+                showUsernameValidation(data.error || '중복확인 중 오류가 발생했습니다.', 'error');
+                isUsernameDuplicateChecked = false;
+                lastCheckedUsername = '';
+            }
+        } catch (error) {
+            console.error('Username check error:', error);
+            showUsernameValidation('네트워크 오류가 발생했습니다.', 'error');
+            isUsernameDuplicateChecked = false;
+            lastCheckedUsername = '';
+        } finally {
+            // Restore button state
+            checkDuplicateBtn.disabled = false;
+            checkDuplicateBtn.textContent = '중복확인';
+        }
+    }
+
+    function showUsernameValidation(message, type) {
+        usernameValidation.textContent = message;
+        usernameValidation.className = `validation-message ${type}`;
+        usernameValidation.style.display = 'block';
+    }
+
+    function resetDuplicateCheck() {
+        const currentUsername = usernameInput.value.trim();
+        if (currentUsername !== lastCheckedUsername) {
+            isUsernameDuplicateChecked = false;
+            lastCheckedUsername = '';
+            usernameValidation.textContent = '';
+            usernameValidation.style.display = 'none';
         }
     }
 });

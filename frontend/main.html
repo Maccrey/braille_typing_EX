@@ -1703,6 +1703,7 @@
                 </div>
                 <a href="statistics.html" class="btn btn-primary" id="statistics-btn">학습통계</a>
                 <a href="upload.html" class="btn btn-primary" id="upload-btn">카테고리 업로드</a>
+                <button class="btn btn-secondary" id="change-password-btn">패스워드 변경</button>
                 <button class="btn btn-secondary" id="logout-btn">로그아웃</button>
             </div>
         </div>
@@ -1996,6 +1997,35 @@
                 <div class="modal-actions">
                     <button type="button" class="btn btn-cancel" id="edit-cancel-btn">취소</button>
                     <button type="submit" class="btn btn-primary">수정</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Password Change Modal -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">패스워드 변경</h2>
+                <span class="close" id="password-modal-close">&times;</span>
+            </div>
+            <form id="password-change-form">
+                <div class="form-group">
+                    <label for="current-password" class="form-label">현재 패스워드 *</label>
+                    <input type="password" id="current-password" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password" class="form-label">새 패스워드 *</label>
+                    <input type="password" id="new-password" class="form-input" minlength="6" required>
+                    <small style="color: #666; font-size: 0.8rem;">최소 6자 이상 입력해주세요</small>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password" class="form-label">새 패스워드 확인 *</label>
+                    <input type="password" id="confirm-password" class="form-input" minlength="6" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancel" id="password-cancel-btn">취소</button>
+                    <button type="submit" class="btn btn-primary" id="password-submit-btn">변경</button>
                 </div>
             </form>
         </div>

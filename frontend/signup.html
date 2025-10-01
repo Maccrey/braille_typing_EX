@@ -204,6 +204,53 @@
             color: #28a745;
         }
 
+        .username-input-container {
+            position: relative;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .username-input-container input {
+            flex: 1;
+        }
+
+        .check-duplicate-btn {
+            padding: 0.8rem 1rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        .check-duplicate-btn:hover {
+            background: #5a6fd8;
+        }
+
+        .check-duplicate-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .validation-message {
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+        }
+
+        .validation-message.success {
+            color: #28a745;
+        }
+
+        .validation-message.error {
+            color: #dc3545;
+        }
+
         @media (max-width: 480px) {
             .signup-container {
                 margin: 1rem;
@@ -225,12 +272,18 @@
 
             <div class="form-group">
                 <label for="username">사용자명</label>
-                <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    placeholder="사용자명을 입력하세요 (3글자 이상)"
-                >
+                <div class="username-input-container">
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        placeholder="사용자명을 입력하세요 (3글자 이상)"
+                    >
+                    <button type="button" class="check-duplicate-btn" id="check-duplicate-btn">
+                        중복확인
+                    </button>
+                </div>
+                <div class="validation-message" id="username-validation"></div>
             </div>
 
             <div class="form-group">
