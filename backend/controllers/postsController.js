@@ -131,24 +131,19 @@ const postsController = {
   },
 
   // 게시글 수정
-  updatePost: (req, res) => {
-    const db = getDb();
-    const postId = req.params.id;
-    const { title, content } = req.body;
-    const userId = req.user.id;
+  updatePost: async (req, res) => {
+    try {
+      const db = getDb();
+      const postId = parseInt(req.params.id);
+      const { title, content } = req.body;
+      const userId = req.user.id;
 
-    if (!title || !content) {
-      return res.status(400).json({ error: '제목과 내용은 필수입니다.' });
-    }
-
-    // 게시글 작성자 확인
-    const checkQuery = `SELECT author_id FROM posts WHERE id = ?`;
-
-    db.get(checkQuery, [postId], (err, post) => {
-      if (err) {
-        return res.status(500).json({ error: '게시글을 조회할 수 없습니다.' });
+      if (!title || !content) {
+        return res.status(400).json({ error: '제목과 내용은 필수입니다.' });
       }
 
+      // 게시글 작성자 확인
+      const post = await db.selectOne('posts', { id: postId });
       if (!post) {
         return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
       }
@@ -157,50 +152,37 @@ const postsController = {
         return res.status(403).json({ error: '게시글을 수정할 권한이 없습니다.' });
       }
 
-      const updateQuery = `
-        UPDATE posts
-        SET title = ?, content = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `;
+      // 게시글 수정
+      await db.update('posts',
+        { title, content },
+        { id: postId }
+      );
 
-      db.run(updateQuery, [title, content, postId], function(err) {
-        if (err) {
-          return res.status(500).json({ error: '게시글을 수정할 수 없습니다.' });
-        }
+      // 수정된 게시글 정보 조회 (작성자 이름 포함)
+      const updatedPost = await db.selectOne('posts', { id: postId });
+      const author = await db.selectOne('users', { id: updatedPost.author_id });
 
-        // 수정된 게시글 정보 반환
-        const selectQuery = `
-          SELECT p.*, u.username as author_name
-          FROM posts p
-          JOIN users u ON p.author_id = u.id
-          WHERE p.id = ?
-        `;
+      const responsePost = {
+        ...updatedPost,
+        author_name: author?.username || 'Unknown'
+      };
 
-        db.get(selectQuery, [postId], (err, updatedPost) => {
-          if (err) {
-            return res.status(500).json({ error: '게시글 정보를 조회할 수 없습니다.' });
-          }
-
-          res.json(updatedPost);
-        });
-      });
-    });
+      res.json(responsePost);
+    } catch (err) {
+      console.error('게시글 수정 오류:', err);
+      res.status(500).json({ error: '게시글을 수정할 수 없습니다.' });
+    }
   },
 
   // 게시글 삭제
-  deletePost: (req, res) => {
-    const db = getDb();
-    const postId = req.params.id;
-    const userId = req.user.id;
+  deletePost: async (req, res) => {
+    try {
+      const db = getDb();
+      const postId = parseInt(req.params.id);
+      const userId = req.user.id;
 
-    // 게시글 작성자 확인
-    const checkQuery = `SELECT author_id FROM posts WHERE id = ?`;
-
-    db.get(checkQuery, [postId], (err, post) => {
-      if (err) {
-        return res.status(500).json({ error: '게시글을 조회할 수 없습니다.' });
-      }
-
+      // 게시글 작성자 확인
+      const post = await db.selectOne('posts', { id: postId });
       if (!post) {
         return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
       }
@@ -209,16 +191,17 @@ const postsController = {
         return res.status(403).json({ error: '게시글을 삭제할 권한이 없습니다.' });
       }
 
-      const deleteQuery = `DELETE FROM posts WHERE id = ?`;
+      // 관련 댓글들도 함께 삭제
+      await db.delete('comments', { post_id: postId });
 
-      db.run(deleteQuery, [postId], function(err) {
-        if (err) {
-          return res.status(500).json({ error: '게시글을 삭제할 수 없습니다.' });
-        }
+      // 게시글 삭제
+      await db.delete('posts', { id: postId });
 
-        res.json({ message: '게시글이 삭제되었습니다.' });
-      });
-    });
+      res.json({ message: '게시글이 삭제되었습니다.' });
+    } catch (err) {
+      console.error('게시글 삭제 오류:', err);
+      res.status(500).json({ error: '게시글을 삭제할 수 없습니다.' });
+    }
   }
 };
 

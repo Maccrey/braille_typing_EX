@@ -2,35 +2,39 @@ const { getDb } = require('../config/database');
 
 const commentsController = {
   // 특정 게시글의 댓글 조회 (계층구조)
-  getCommentsByPostId: (req, res) => {
-    const db = getDb();
-    const postId = req.params.postId;
+  getCommentsByPostId: async (req, res) => {
+    try {
+      const db = getDb();
+      const postId = parseInt(req.params.postId);
 
-    const query = `
-      SELECT c.*, u.username as author_name
-      FROM comments c
-      JOIN users u ON c.author_id = u.id
-      WHERE c.post_id = ?
-      ORDER BY c.created_at ASC
-    `;
+      // 댓글과 사용자 정보를 조회
+      const comments = await db.select('comments', { post_id: postId });
+      const users = await db.select('users');
 
-    db.all(query, [postId], (err, comments) => {
-      if (err) {
-        return res.status(500).json({ error: '댓글을 조회할 수 없습니다.' });
-      }
+      // 사용자 정보를 맵으로 변환
+      const userMap = new Map();
+      users.forEach(user => {
+        userMap.set(user.id, user);
+      });
+
+      // 댓글에 작성자 이름 추가
+      const commentsWithAuthor = comments.map(comment => ({
+        ...comment,
+        author_name: userMap.get(comment.author_id)?.username || 'Unknown'
+      }));
 
       // 댓글을 계층구조로 변환
       const commentMap = new Map();
       const rootComments = [];
 
       // 모든 댓글을 맵에 저장하고 children 배열 초기화
-      comments.forEach(comment => {
+      commentsWithAuthor.forEach(comment => {
         comment.children = [];
         commentMap.set(comment.id, comment);
       });
 
       // 부모-자식 관계 설정
-      comments.forEach(comment => {
+      commentsWithAuthor.forEach(comment => {
         if (comment.parent_comment_id) {
           const parent = commentMap.get(comment.parent_comment_id);
           if (parent) {
@@ -41,114 +45,86 @@ const commentsController = {
         }
       });
 
+      // 생성 시간 순으로 정렬
+      rootComments.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
       res.json(rootComments);
-    });
+    } catch (err) {
+      console.error('댓글 조회 오류:', err);
+      res.status(500).json({ error: '댓글을 조회할 수 없습니다.' });
+    }
   },
 
   // 댓글 생성
-  createComment: (req, res) => {
-    const db = getDb();
-    const { postId } = req.params;
-    const { content, parentCommentId } = req.body;
-    const authorId = req.user.id;
+  createComment: async (req, res) => {
+    try {
+      const db = getDb();
+      const postId = parseInt(req.params.postId);
+      const { content, parentCommentId } = req.body;
+      const authorId = req.user.id;
 
-    if (!content || content.trim().length === 0) {
-      return res.status(400).json({ error: '댓글 내용은 필수입니다.' });
-    }
-
-    // 게시글 존재 확인
-    const checkPostQuery = `SELECT id FROM posts WHERE id = ?`;
-
-    db.get(checkPostQuery, [postId], (err, post) => {
-      if (err) {
-        return res.status(500).json({ error: '게시글을 확인할 수 없습니다.' });
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ error: '댓글 내용은 필수입니다.' });
       }
 
+      // 게시글 존재 확인
+      const post = await db.selectOne('posts', { id: postId });
       if (!post) {
         return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
       }
 
       // 부모 댓글이 있는 경우 존재 확인
-      const checkParentComment = (callback) => {
-        if (!parentCommentId) {
-          return callback(null);
-        }
-
-        const checkParentQuery = `
-          SELECT id FROM comments
-          WHERE id = ? AND post_id = ?
-        `;
-
-        db.get(checkParentQuery, [parentCommentId, postId], (err, parentComment) => {
-          if (err) {
-            return callback(err);
-          }
-
-          if (!parentComment) {
-            return callback(new Error('부모 댓글을 찾을 수 없습니다.'));
-          }
-
-          callback(null);
+      if (parentCommentId) {
+        const parentComment = await db.selectOne('comments', {
+          id: parseInt(parentCommentId),
+          post_id: postId
         });
+        if (!parentComment) {
+          return res.status(400).json({ error: '부모 댓글을 찾을 수 없습니다.' });
+        }
+      }
+
+      // 댓글 생성
+      const commentData = {
+        post_id: postId,
+        parent_comment_id: parentCommentId ? parseInt(parentCommentId) : null,
+        content: content.trim(),
+        author_id: authorId
       };
 
-      checkParentComment((err) => {
-        if (err) {
-          return res.status(400).json({ error: err.message });
-        }
+      const result = await db.insert('comments', commentData);
 
-        const insertQuery = `
-          INSERT INTO comments (post_id, parent_comment_id, content, author_id)
-          VALUES (?, ?, ?, ?)
-        `;
+      // 생성된 댓글 정보 조회 (작성자 이름 포함)
+      const createdComment = await db.selectOne('comments', { id: result.lastID });
+      const author = await db.selectOne('users', { id: authorId });
 
-        const values = [postId, parentCommentId || null, content.trim(), authorId];
+      const responseComment = {
+        ...createdComment,
+        author_name: author?.username || 'Unknown',
+        children: []
+      };
 
-        db.run(insertQuery, values, function(err) {
-          if (err) {
-            return res.status(500).json({ error: '댓글을 생성할 수 없습니다.' });
-          }
-
-          // 생성된 댓글 정보 반환
-          const selectQuery = `
-            SELECT c.*, u.username as author_name
-            FROM comments c
-            JOIN users u ON c.author_id = u.id
-            WHERE c.id = ?
-          `;
-
-          db.get(selectQuery, [this.lastID], (err, comment) => {
-            if (err) {
-              return res.status(500).json({ error: '댓글 정보를 조회할 수 없습니다.' });
-            }
-
-            comment.children = [];
-            res.status(201).json(comment);
-          });
-        });
-      });
-    });
+      res.status(201).json(responseComment);
+    } catch (err) {
+      console.error('댓글 생성 오류:', err);
+      res.status(500).json({ error: '댓글을 생성할 수 없습니다.' });
+    }
   },
 
   // 댓글 수정
-  updateComment: (req, res) => {
-    const db = getDb();
-    const commentId = req.params.id;
-    const { content } = req.body;
-    const userId = req.user.id;
+  updateComment: async (req, res) => {
+    try {
+      const db = getDb();
+      const commentId = parseInt(req.params.id);
+      const { content } = req.body;
+      const userId = req.user.id;
 
-    if (!content || content.trim().length === 0) {
-      return res.status(400).json({ error: '댓글 내용은 필수입니다.' });
-    }
-
-    // 댓글 작성자 확인
-    const checkQuery = `SELECT author_id FROM comments WHERE id = ?`;
-
-    db.get(checkQuery, [commentId], (err, comment) => {
-      if (err) {
-        return res.status(500).json({ error: '댓글을 조회할 수 없습니다.' });
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ error: '댓글 내용은 필수입니다.' });
       }
 
+      // 댓글 작성자 확인
+      const comment = await db.selectOne('comments', { id: commentId });
       if (!comment) {
         return res.status(404).json({ error: '댓글을 찾을 수 없습니다.' });
       }
@@ -157,51 +133,38 @@ const commentsController = {
         return res.status(403).json({ error: '댓글을 수정할 권한이 없습니다.' });
       }
 
-      const updateQuery = `
-        UPDATE comments
-        SET content = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `;
+      // 댓글 수정
+      await db.update('comments',
+        { content: content.trim() },
+        { id: commentId }
+      );
 
-      db.run(updateQuery, [content.trim(), commentId], function(err) {
-        if (err) {
-          return res.status(500).json({ error: '댓글을 수정할 수 없습니다.' });
-        }
+      // 수정된 댓글 정보 조회 (작성자 이름 포함)
+      const updatedComment = await db.selectOne('comments', { id: commentId });
+      const author = await db.selectOne('users', { id: updatedComment.author_id });
 
-        // 수정된 댓글 정보 반환
-        const selectQuery = `
-          SELECT c.*, u.username as author_name
-          FROM comments c
-          JOIN users u ON c.author_id = u.id
-          WHERE c.id = ?
-        `;
+      const responseComment = {
+        ...updatedComment,
+        author_name: author?.username || 'Unknown',
+        children: []
+      };
 
-        db.get(selectQuery, [commentId], (err, updatedComment) => {
-          if (err) {
-            return res.status(500).json({ error: '댓글 정보를 조회할 수 없습니다.' });
-          }
-
-          updatedComment.children = [];
-          res.json(updatedComment);
-        });
-      });
-    });
+      res.json(responseComment);
+    } catch (err) {
+      console.error('댓글 수정 오류:', err);
+      res.status(500).json({ error: '댓글을 수정할 수 없습니다.' });
+    }
   },
 
   // 댓글 삭제
-  deleteComment: (req, res) => {
-    const db = getDb();
-    const commentId = req.params.id;
-    const userId = req.user.id;
+  deleteComment: async (req, res) => {
+    try {
+      const db = getDb();
+      const commentId = parseInt(req.params.id);
+      const userId = req.user.id;
 
-    // 댓글 작성자 확인
-    const checkQuery = `SELECT author_id FROM comments WHERE id = ?`;
-
-    db.get(checkQuery, [commentId], (err, comment) => {
-      if (err) {
-        return res.status(500).json({ error: '댓글을 조회할 수 없습니다.' });
-      }
-
+      // 댓글 작성자 확인
+      const comment = await db.selectOne('comments', { id: commentId });
       if (!comment) {
         return res.status(404).json({ error: '댓글을 찾을 수 없습니다.' });
       }
@@ -210,16 +173,17 @@ const commentsController = {
         return res.status(403).json({ error: '댓글을 삭제할 권한이 없습니다.' });
       }
 
-      const deleteQuery = `DELETE FROM comments WHERE id = ?`;
+      // 대댓글들도 함께 삭제
+      await db.delete('comments', { parent_comment_id: commentId });
 
-      db.run(deleteQuery, [commentId], function(err) {
-        if (err) {
-          return res.status(500).json({ error: '댓글을 삭제할 수 없습니다.' });
-        }
+      // 댓글 삭제
+      await db.delete('comments', { id: commentId });
 
-        res.json({ message: '댓글이 삭제되었습니다.' });
-      });
-    });
+      res.json({ message: '댓글이 삭제되었습니다.' });
+    } catch (err) {
+      console.error('댓글 삭제 오류:', err);
+      res.status(500).json({ error: '댓글을 삭제할 수 없습니다.' });
+    }
   }
 };
 
