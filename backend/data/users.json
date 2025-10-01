@@ -1,10 +1,1 @@
-[
-  {
-    "id": 1,
-    "username": "maccrey",
-    "password": "$2a$10$qm.14IwOlWAcr8FWzVYUoOsU9MVbmq/AAzLsbWm3p/bMgsGTZ0Ir6",
-    "created_at": "2025-10-01T06:09:23.073Z",
-    "role": "admin",
-    "updated_at": "2025-10-01T07:23:18.741Z"
-  }
-]
+[]
