@@ -280,7 +280,7 @@ class CommunityManager {
         try {
             const token = localStorage.getItem('authToken');
             const isEdit = this.editingPost !== null;
-            const url = isEdit ? `/api/posts/${this.editingPost.id}` : '/api/posts';
+            const url = isEdit ? `${getApiBaseUrl()}/api/posts/${this.editingPost.id}` : `${getApiBaseUrl()}/api/posts`;
             const method = isEdit ? 'PUT' : 'POST';
 
             const response = await fetch(url, {

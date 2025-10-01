@@ -57,70 +57,77 @@ const postsController = {
   },
 
   // 특정 게시글 조회
-  getPostById: (req, res) => {
-    const db = getDb();
-    const postId = req.params.id;
+  getPostById: async (req, res) => {
+    try {
+      const db = getDb();
+      const postId = parseInt(req.params.id);
 
-    const query = `
-      SELECT p.*, u.username as author_name
-      FROM posts p
-      JOIN users u ON p.author_id = u.id
-      WHERE p.id = ?
-    `;
-
-    db.get(query, [postId], (err, post) => {
-      if (err) {
-        return res.status(500).json({ error: '게시글을 조회할 수 없습니다.' });
-      }
+      // 게시글 조회
+      const post = await db.selectOne('posts', { id: postId });
 
       if (!post) {
         return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
       }
 
-      res.json(post);
-    });
+      // 작성자 정보 조회
+      const author = await db.selectOne('users', { id: post.author_id });
+
+      // 응답 데이터 구성
+      const postWithAuthor = {
+        ...post,
+        author_name: author ? author.username : 'Unknown'
+      };
+
+      res.json(postWithAuthor);
+
+    } catch (error) {
+      console.error('Get post by id error:', error);
+      res.status(500).json({ error: '게시글을 조회할 수 없습니다.' });
+    }
   },
 
   // 게시글 생성
-  createPost: (req, res) => {
-    const db = getDb();
-    const { title, content } = req.body;
-    const authorId = req.user.id;
+  createPost: async (req, res) => {
+    try {
+      const db = getDb();
+      const { title, content } = req.body;
+      const authorId = req.user.id;
 
-    if (!title || !content) {
-      return res.status(400).json({ error: '제목과 내용은 필수입니다.' });
-    }
-
-    if (title.length > 255) {
-      return res.status(400).json({ error: '제목은 255자를 초과할 수 없습니다.' });
-    }
-
-    const query = `
-      INSERT INTO posts (title, content, author_id)
-      VALUES (?, ?, ?)
-    `;
-
-    db.run(query, [title, content, authorId], function(err) {
-      if (err) {
-        return res.status(500).json({ error: '게시글을 생성할 수 없습니다.' });
+      if (!title || !content) {
+        return res.status(400).json({ error: '제목과 내용은 필수입니다.' });
       }
 
-      // 생성된 게시글 정보 반환
-      const selectQuery = `
-        SELECT p.*, u.username as author_name
-        FROM posts p
-        JOIN users u ON p.author_id = u.id
-        WHERE p.id = ?
-      `;
+      if (title.length > 255) {
+        return res.status(400).json({ error: '제목은 255자를 초과할 수 없습니다.' });
+      }
 
-      db.get(selectQuery, [this.lastID], (err, post) => {
-        if (err) {
-          return res.status(500).json({ error: '게시글 정보를 조회할 수 없습니다.' });
-        }
-
-        res.status(201).json(post);
+      // 게시글 생성
+      const result = await db.insert('posts', {
+        title,
+        content,
+        author_id: authorId
       });
-    });
+
+      // 작성자 정보 조회
+      const author = await db.selectOne('users', { id: authorId });
+
+      // 생성된 게시글 정보 구성
+      const createdPost = {
+        id: result.lastID,
+        title,
+        content,
+        author_id: authorId,
+        author_name: author ? author.username : 'Unknown',
+        created_at: new Date().toISOString(),
+        updated_at: null
+      };
+
+      res.status(201).json(createdPost);
+
+    } catch (error) {
+      console.error('Create post error:', error);
+      res.status(500).json({ error: '게시글을 생성할 수 없습니다.' });
+    }
   },
 
   // 게시글 수정
