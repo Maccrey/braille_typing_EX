@@ -1283,6 +1283,90 @@
             color: white;
         }
 
+        /* File Upload Styles */
+        .backup-restore-section {
+            border-top: 2px solid #e74c3c;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .file-upload-area {
+            margin-top: 15px;
+        }
+
+        .file-drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .file-drop-zone:hover,
+        .file-drop-zone.dragover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .file-drop-zone.has-file {
+            border-color: #28a745;
+            background: #f8fff8;
+        }
+
+        .drop-zone-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            color: #666;
+        }
+
+        .upload-text {
+            color: #666;
+        }
+
+        .upload-text strong {
+            color: #333;
+        }
+
+        #selected-file-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* Community Styles */
         .community-header {
             display: flex;
@@ -2168,9 +2252,36 @@
                         <button class="btn btn-primary" id="download-backup-btn">
                             📥 데이터베이스 백업 다운로드
                         </button>
-                        <small style="color: #666; display: block; margin-top: 5px;">
+                        <small style="color: #666; display: block; margin-top: 5px; margin-bottom: 20px;">
                             모든 데이터를 JSON 파일로 다운로드합니다.
                         </small>
+
+                        <div class="backup-restore-section">
+                            <h4 style="margin: 0 0 10px 0; color: #e74c3c;">데이터베이스 복구</h4>
+                            <div class="file-upload-area">
+                                <input type="file" id="backup-file-input" accept=".json" style="display: none;">
+                                <div class="file-drop-zone" id="file-drop-zone">
+                                    <div class="drop-zone-content">
+                                        <div class="upload-icon">📁</div>
+                                        <div class="upload-text">
+                                            <strong>백업 파일을 드래그하거나 클릭하여 선택</strong>
+                                            <br>
+                                            <small>JSON 파일만 업로드 가능 (최대 50MB)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="selected-file-info" style="display: none; margin-top: 10px;">
+                                    <span id="selected-file-name"></span>
+                                    <button type="button" id="remove-file-btn" style="margin-left: 10px; background: none; border: none; color: #e74c3c; cursor: pointer;">✕</button>
+                                </div>
+                                <button class="btn btn-danger" id="restore-backup-btn" style="display: none; margin-top: 15px;">
+                                    🔄 데이터베이스 복구 실행
+                                </button>
+                            </div>
+                            <div class="warning-message" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 10px; margin-top: 15px;">
+                                <strong>⚠️ 주의사항:</strong> 데이터베이스 복구는 기존 모든 데이터를 덮어씁니다. 복구 전에 현재 데이터를 백업하는 것을 권장합니다.
+                            </div>
+                        </div>
                     </div>
                 </div>
 

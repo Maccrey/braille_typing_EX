@@ -12,12 +12,29 @@ const authMiddleware = async (req, res, next) => {
     // Primary: Check for session-based authentication
     if (req.session && req.session.user) {
       console.log('✅ Session auth successful');
-      req.user = {
-        id: req.session.user.id,
-        username: req.session.user.username
-      };
-      console.log('👤 Set req.user from session:', req.user);
-      return next();
+
+      // Get user role from database for session-based auth
+      try {
+        const db = getDb();
+        const user = await db.selectOne('users', { id: req.session.user.id });
+
+        req.user = {
+          id: req.session.user.id,
+          username: req.session.user.username,
+          role: user?.role || 'user'
+        };
+        console.log('👤 Set req.user from session with role:', req.user);
+        return next();
+      } catch (dbError) {
+        console.log('⚠️ Failed to get user role from database, using default:', dbError.message);
+        req.user = {
+          id: req.session.user.id,
+          username: req.session.user.username,
+          role: 'user'
+        };
+        console.log('👤 Set req.user from session (default role):', req.user);
+        return next();
+      }
     }
 
     // Secondary: For frontend requests without session, validate JWT token PROPERLY
@@ -41,7 +58,8 @@ const authMiddleware = async (req, res, next) => {
           console.log('✅ JWT auth successful with proper verification');
           req.user = {
             id: payload.userId,
-            username: payload.username
+            username: payload.username,
+            role: payload.role || 'user'
           };
           console.log('👤 Set req.user from JWT:', req.user);
           return next();

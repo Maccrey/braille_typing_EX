@@ -3,6 +3,102 @@ const path = require('path');
 const fs = require('fs').promises;
 
 // Download all database data as JSON
+// Restore database from uploaded JSON backup
+const restoreDatabaseFromBackup = async (req, res) => {
+  try {
+    console.log('📥 Admin requesting database restore');
+
+    if (!req.file) {
+      return res.status(400).json({
+        error: 'No backup file uploaded'
+      });
+    }
+
+    console.log('📄 Processing backup file:', req.file.originalname);
+
+    // Parse the uploaded JSON file
+    let backupData;
+    try {
+      const fileContent = req.file.buffer.toString('utf8');
+      backupData = JSON.parse(fileContent);
+      console.log('✅ Backup file parsed successfully');
+    } catch (parseError) {
+      console.error('❌ Failed to parse backup file:', parseError.message);
+      return res.status(400).json({
+        error: 'Invalid JSON format in backup file'
+      });
+    }
+
+    // Validate backup structure
+    if (!backupData || typeof backupData !== 'object') {
+      return res.status(400).json({
+        error: 'Invalid backup file structure'
+      });
+    }
+
+    const db = getDb();
+    const tableNames = ['users', 'categories', 'braille_data', 'practice_logs', 'attendance', 'favorites', 'posts', 'comments'];
+
+    let totalRestored = 0;
+    const restoredTables = {};
+
+    // Restore each table
+    for (const tableName of tableNames) {
+      try {
+        if (backupData[tableName] && Array.isArray(backupData[tableName])) {
+          // Clear existing data
+          console.log(`🧹 Clearing existing ${tableName} data...`);
+          db.tables[tableName] = [];
+
+          // Restore backup data
+          console.log(`📥 Restoring ${tableName}...`);
+          db.tables[tableName] = [...backupData[tableName]];
+          await db.saveTable(tableName);
+
+          const recordCount = backupData[tableName].length;
+          restoredTables[tableName] = recordCount;
+          totalRestored += recordCount;
+
+          console.log(`✅ Restored ${tableName}: ${recordCount} records`);
+        } else {
+          console.log(`⚠️ No valid data found for ${tableName} in backup`);
+          restoredTables[tableName] = 0;
+        }
+      } catch (tableError) {
+        console.error(`❌ Error restoring ${tableName}:`, tableError.message);
+        restoredTables[tableName] = 'error';
+      }
+    }
+
+    // Clear all cache after restoration
+    db.clearAllCache();
+
+    console.log(`🎉 Database restoration completed. Total records restored: ${totalRestored}`);
+
+    // Prepare response
+    const metadata = backupData._metadata || {};
+    res.json({
+      message: 'Database successfully restored from backup',
+      restoredTables,
+      totalRecords: totalRestored,
+      backupMetadata: {
+        exportDate: metadata.exportDate,
+        exportedBy: metadata.exportedBy,
+        version: metadata.version,
+        originalTotalRecords: metadata.totalRecords
+      },
+      restoredBy: req.user.username,
+      restoredAt: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Database restore error:', error);
+    res.status(500).json({
+      error: 'Failed to restore database from backup'
+    });
+  }
+};
+
 const downloadDatabaseBackup = async (req, res) => {
   try {
     console.log('📊 Admin requesting database backup download');
@@ -203,6 +299,7 @@ const updateUserRole = async (req, res) => {
 };
 
 module.exports = {
+  restoreDatabaseFromBackup,
   downloadDatabaseBackup,
   getSystemStats,
   getAllUsers,

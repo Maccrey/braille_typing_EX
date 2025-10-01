@@ -1335,6 +1335,9 @@ class MainMenu {
         const downloadBtn = document.getElementById('download-backup-btn');
         downloadBtn.onclick = () => this.downloadDatabaseBackup();
 
+        // File upload elements
+        this.setupFileUpload();
+
         // Click outside to close
         const modal = document.getElementById('admin-modal');
         modal.onclick = (e) => {
@@ -1533,6 +1536,190 @@ class MainMenu {
             const downloadBtn = document.getElementById('download-backup-btn');
             downloadBtn.textContent = '📥 데이터베이스 백업 다운로드';
             downloadBtn.disabled = false;
+        }
+    }
+
+    setupFileUpload() {
+        const fileInput = document.getElementById('backup-file-input');
+        const dropZone = document.getElementById('file-drop-zone');
+        const restoreBtn = document.getElementById('restore-backup-btn');
+        const removeFileBtn = document.getElementById('remove-file-btn');
+
+        // Click to select file
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Handle file selection
+        fileInput.addEventListener('change', (e) => {
+            this.handleFileSelection(e.target.files[0]);
+        });
+
+        // Drag and drop handlers
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                this.handleFileSelection(files[0]);
+            }
+        });
+
+        // Remove file button
+        removeFileBtn.addEventListener('click', () => {
+            this.clearFileSelection();
+        });
+
+        // Restore button
+        restoreBtn.addEventListener('click', () => {
+            this.showRestoreConfirmation();
+        });
+    }
+
+    handleFileSelection(file) {
+        if (!file) return;
+
+        // Validate file type
+        if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+            this.showError('JSON 파일만 업로드할 수 있습니다.');
+            return;
+        }
+
+        // Validate file size (50MB limit)
+        const maxSize = 50 * 1024 * 1024;
+        if (file.size > maxSize) {
+            this.showError('파일 크기는 50MB를 초과할 수 없습니다.');
+            return;
+        }
+
+        this.selectedBackupFile = file;
+        this.updateFileDisplay();
+    }
+
+    updateFileDisplay() {
+        const dropZone = document.getElementById('file-drop-zone');
+        const fileInfo = document.getElementById('selected-file-info');
+        const fileName = document.getElementById('selected-file-name');
+        const restoreBtn = document.getElementById('restore-backup-btn');
+
+        if (this.selectedBackupFile) {
+            dropZone.classList.add('has-file');
+            fileInfo.style.display = 'flex';
+            fileName.textContent = `📄 ${this.selectedBackupFile.name} (${this.formatFileSize(this.selectedBackupFile.size)})`;
+            restoreBtn.style.display = 'inline-block';
+        } else {
+            dropZone.classList.remove('has-file');
+            fileInfo.style.display = 'none';
+            restoreBtn.style.display = 'none';
+        }
+    }
+
+    clearFileSelection() {
+        this.selectedBackupFile = null;
+        document.getElementById('backup-file-input').value = '';
+        this.updateFileDisplay();
+    }
+
+    formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    showRestoreConfirmation() {
+        const confirmMessage = `
+데이터베이스 복구를 진행하시겠습니까?
+
+⚠️ 주의사항:
+- 현재 모든 데이터가 삭제됩니다
+- 백업 파일의 데이터로 완전히 교체됩니다
+- 이 작업은 되돌릴 수 없습니다
+
+복구를 진행하려면 "확인"을 클릭하세요.
+        `;
+
+        if (confirm(confirmMessage)) {
+            this.performDatabaseRestore();
+        }
+    }
+
+    async performDatabaseRestore() {
+        if (!this.selectedBackupFile) {
+            this.showError('복구할 백업 파일을 선택해주세요.');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('authToken');
+            const restoreBtn = document.getElementById('restore-backup-btn');
+
+            // Show loading state
+            const originalText = restoreBtn.textContent;
+            restoreBtn.textContent = '🔄 복구 중...';
+            restoreBtn.disabled = true;
+
+            // Create FormData
+            const formData = new FormData();
+            formData.append('backupFile', this.selectedBackupFile);
+
+            const response = await fetch(`${getApiBaseUrl()}/api/admin/backup/restore`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || '데이터베이스 복구에 실패했습니다.');
+            }
+
+            const result = await response.json();
+
+            // Show success message
+            const successMessage = `
+✅ 데이터베이스 복구가 완료되었습니다!
+
+📊 복구 결과:
+- 총 복구된 레코드: ${result.totalRecords}개
+- 복구 완료 시간: ${new Date(result.restoredAt).toLocaleString('ko-KR')}
+
+복구된 테이블:
+${Object.entries(result.restoredTables).map(([table, count]) =>
+    `  • ${table}: ${count}개`
+).join('\n')}
+
+페이지를 새로고침하여 변경사항을 확인하세요.
+            `;
+
+            alert(successMessage);
+
+            // Clear file selection
+            this.clearFileSelection();
+
+            // Refresh admin data
+            await this.loadAdminData();
+
+        } catch (error) {
+            console.error('Database restore error:', error);
+            this.showError(error.message || '데이터베이스 복구 중 오류가 발생했습니다.');
+        } finally {
+            // Restore button state
+            const restoreBtn = document.getElementById('restore-backup-btn');
+            restoreBtn.textContent = '🔄 데이터베이스 복구 실행';
+            restoreBtn.disabled = false;
         }
     }
 }
