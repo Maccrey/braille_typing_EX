@@ -36,10 +36,14 @@ const signup = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
+    // Check if this is the first user (admin user) or if username is 'maccrey'
+    const isAdmin = username === 'maccrey';
+
     // Create user
     const result = await db.insert('users', {
       username,
-      password: hashedPassword
+      password: hashedPassword,
+      role: isAdmin ? 'admin' : 'user'
     });
     const userId = result.lastID;
 
@@ -51,7 +55,7 @@ const signup = async (req, res) => {
 
     // Generate JWT token for backward compatibility
     const token = jwt.sign(
-      { userId: userId, username: username },
+      { userId: userId, username: username, role: isAdmin ? 'admin' : 'user' },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -61,7 +65,8 @@ const signup = async (req, res) => {
       token: token,
       user: {
         id: userId,
-        username: username
+        username: username,
+        role: isAdmin ? 'admin' : 'user'
       }
     });
 
@@ -111,7 +116,7 @@ const login = async (req, res) => {
 
     // Generate JWT token for backward compatibility
     const token = jwt.sign(
-      { userId: user.id, username: user.username },
+      { userId: user.id, username: user.username, role: user.role || 'user' },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -121,7 +126,8 @@ const login = async (req, res) => {
       token: token,
       user: {
         id: user.id,
-        username: user.username
+        username: user.username,
+        role: user.role || 'user'
       }
     });
 

@@ -86,6 +86,7 @@ const practiceRoutes = require('./routes/practiceRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const postsRoutes = require('./routes/posts');
 const commentsRoutes = require('./routes/comments');
+const adminRoutes = require('./routes/admin');
 
 // Lazy database initialization middleware
 const lazyDbInit = require('./middleware/lazyDbInit');
@@ -108,6 +109,9 @@ app.use('/api/posts', postsRoutes);
 
 // Comments routes
 app.use('/api/comments', commentsRoutes);
+
+// Admin routes
+app.use('/api/admin', adminRoutes);
 
 // Catch-all handler for frontend routes (SPA fallback)
 app.get('*', (req, res, next) => {

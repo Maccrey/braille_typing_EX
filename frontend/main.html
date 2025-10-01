@@ -1172,6 +1172,117 @@
             padding-right: 45px;
         }
 
+        /* Admin Panel Styles */
+        .admin-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+
+        .admin-section h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .admin-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #download-backup-btn {
+            background: #28a745;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-self: flex-start;
+        }
+
+        #download-backup-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .stat-item .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-item .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .users-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .users-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .role-badge.admin {
+            background: #dc3545;
+            color: white;
+        }
+
+        .role-badge.user {
+            background: #6c757d;
+            color: white;
+        }
+
         /* Community Styles */
         .community-header {
             display: flex;
@@ -1734,6 +1845,7 @@
                 <a href="statistics.html" class="btn btn-primary" id="statistics-btn">학습통계</a>
                 <a href="upload.html" class="btn btn-primary" id="upload-btn">카테고리 업로드</a>
                 <button class="btn btn-secondary" id="change-password-btn">패스워드 변경</button>
+                <button class="btn btn-secondary" id="admin-btn" style="display: none;">관리자</button>
                 <button class="btn btn-secondary" id="logout-btn">로그아웃</button>
             </div>
         </div>
@@ -2029,6 +2141,52 @@
                     <button type="submit" class="btn btn-primary">수정</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">관리자 패널</h2>
+                <span class="close" id="admin-modal-close">&times;</span>
+            </div>
+            <div id="admin-content">
+                <div class="admin-section">
+                    <h3>시스템 통계</h3>
+                    <div id="system-stats">
+                        <div class="loading-indicator">
+                            <div class="loading-spinner"></div>
+                            <p>통계를 불러오는 중...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>데이터베이스 관리</h3>
+                    <div class="admin-actions">
+                        <button class="btn btn-primary" id="download-backup-btn">
+                            📥 데이터베이스 백업 다운로드
+                        </button>
+                        <small style="color: #666; display: block; margin-top: 5px;">
+                            모든 데이터를 JSON 파일로 다운로드합니다.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>사용자 관리</h3>
+                    <div id="users-list">
+                        <div class="loading-indicator">
+                            <div class="loading-spinner"></div>
+                            <p>사용자 목록을 불러오는 중...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" id="admin-close-btn">닫기</button>
+            </div>
         </div>
     </div>
 

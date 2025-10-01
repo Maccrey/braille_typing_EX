@@ -70,8 +70,12 @@ class MainMenu {
                 console.log('✅ Token validated locally:', payload.username);
                 this.currentUser = {
                     id: payload.userId,
-                    username: payload.username
+                    username: payload.username,
+                    role: payload.role || 'user'
                 };
+
+                // Show admin button if user is admin
+                this.updateAdminButtonVisibility();
 
                 // Skip server validation completely to avoid 401 loop
                 console.log('✅ Authentication successful (local validation)');
@@ -104,6 +108,9 @@ class MainMenu {
 
         // Password change button
         document.getElementById('change-password-btn').addEventListener('click', () => this.showPasswordModal());
+
+        // Admin button
+        document.getElementById('admin-btn').addEventListener('click', () => this.showAdminModal());
 
         // Search input
         const searchInput = document.getElementById('search-input');
@@ -1289,6 +1296,243 @@ class MainMenu {
         } catch (error) {
             console.error('Password change error:', error);
             this.showError(error.message || '패스워드 변경 중 오류가 발생했습니다.');
+        }
+    }
+
+    // Admin functionality
+    updateAdminButtonVisibility() {
+        const adminBtn = document.getElementById('admin-btn');
+        if (this.currentUser && this.currentUser.role === 'admin') {
+            adminBtn.style.display = 'inline-block';
+            console.log('✅ Admin button shown for admin user');
+        } else {
+            adminBtn.style.display = 'none';
+            console.log('ℹ️ Admin button hidden for non-admin user');
+        }
+    }
+
+    showAdminModal() {
+        const modal = document.getElementById('admin-modal');
+        modal.style.display = 'block';
+        this.setupAdminModalEventListeners();
+        this.loadAdminData();
+    }
+
+    hideAdminModal() {
+        const modal = document.getElementById('admin-modal');
+        modal.style.display = 'none';
+    }
+
+    setupAdminModalEventListeners() {
+        // Close modal events
+        const closeBtn = document.getElementById('admin-modal-close');
+        const adminCloseBtn = document.getElementById('admin-close-btn');
+
+        closeBtn.onclick = () => this.hideAdminModal();
+        adminCloseBtn.onclick = () => this.hideAdminModal();
+
+        // Download backup button
+        const downloadBtn = document.getElementById('download-backup-btn');
+        downloadBtn.onclick = () => this.downloadDatabaseBackup();
+
+        // Click outside to close
+        const modal = document.getElementById('admin-modal');
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                this.hideAdminModal();
+            }
+        };
+    }
+
+    async loadAdminData() {
+        try {
+            // Load system stats and users list in parallel
+            await Promise.all([
+                this.loadSystemStats(),
+                this.loadUsersList()
+            ]);
+        } catch (error) {
+            console.error('Error loading admin data:', error);
+            this.showError('관리자 데이터를 불러오는데 실패했습니다.');
+        }
+    }
+
+    async loadSystemStats() {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`${getApiBaseUrl()}/api/admin/stats`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load system stats');
+            }
+
+            const data = await response.json();
+            this.renderSystemStats(data.stats);
+
+        } catch (error) {
+            console.error('Error loading system stats:', error);
+            document.getElementById('system-stats').innerHTML =
+                '<p style="color: #dc3545;">시스템 통계를 불러오는데 실패했습니다.</p>';
+        }
+    }
+
+    renderSystemStats(stats) {
+        const container = document.getElementById('system-stats');
+
+        container.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">${stats.users?.count || 0}</div>
+                    <div class="stat-label">사용자</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.categories?.count || 0}</div>
+                    <div class="stat-label">카테고리</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.braille_data?.count || 0}</div>
+                    <div class="stat-label">점자 데이터</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.practice_logs?.count || 0}</div>
+                    <div class="stat-label">연습 세션</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.posts?.count || 0}</div>
+                    <div class="stat-label">게시글</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${Math.round((stats.totalPracticeTime || 0) / 60)}</div>
+                    <div class="stat-label">총 연습시간(분)</div>
+                </div>
+            </div>
+            ${stats.recentActivity ? `
+                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-top: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">최근 7일 활동</h4>
+                    <p style="margin: 5px 0; color: #666;">연습 세션: ${stats.recentActivity.practiceSessionsLast7Days}회</p>
+                    <p style="margin: 5px 0; color: #666;">연습 시간: ${Math.round(stats.recentActivity.practiceTimeLast7Days / 60)}분</p>
+                </div>
+            ` : ''}
+        `;
+    }
+
+    async loadUsersList() {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`${getApiBaseUrl()}/api/admin/users`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load users list');
+            }
+
+            const data = await response.json();
+            this.renderUsersList(data.users);
+
+        } catch (error) {
+            console.error('Error loading users list:', error);
+            document.getElementById('users-list').innerHTML =
+                '<p style="color: #dc3545;">사용자 목록을 불러오는데 실패했습니다.</p>';
+        }
+    }
+
+    renderUsersList(users) {
+        const container = document.getElementById('users-list');
+
+        if (!users || users.length === 0) {
+            container.innerHTML = '<p style="color: #666;">등록된 사용자가 없습니다.</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>사용자명</th>
+                        <th>역할</th>
+                        <th>가입일</th>
+                        <th>최근 활동</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${users.map(user => `
+                        <tr>
+                            <td>${user.id}</td>
+                            <td>${this.escapeHtml(user.username)}</td>
+                            <td>
+                                <span class="role-badge ${user.role || 'user'}">
+                                    ${user.role === 'admin' ? '관리자' : '사용자'}
+                                </span>
+                            </td>
+                            <td>${user.created_at ? new Date(user.created_at).toLocaleDateString('ko-KR') : '-'}</td>
+                            <td>${user.updated_at ? new Date(user.updated_at).toLocaleDateString('ko-KR') : '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    async downloadDatabaseBackup() {
+        try {
+            const token = localStorage.getItem('authToken');
+
+            // Show loading state
+            const downloadBtn = document.getElementById('download-backup-btn');
+            const originalText = downloadBtn.textContent;
+            downloadBtn.textContent = '📥 다운로드 중...';
+            downloadBtn.disabled = true;
+
+            const response = await fetch(`${getApiBaseUrl()}/api/admin/backup/download`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to download backup');
+            }
+
+            // Get the filename from response headers or create one
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = 'braille-typing-db-backup.json';
+
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+
+            // Create download link
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            this.showSuccess('데이터베이스 백업 다운로드가 완료되었습니다.');
+
+        } catch (error) {
+            console.error('Error downloading database backup:', error);
+            this.showError('데이터베이스 백업 다운로드에 실패했습니다.');
+        } finally {
+            // Restore button state
+            const downloadBtn = document.getElementById('download-backup-btn');
+            downloadBtn.textContent = '📥 데이터베이스 백업 다운로드';
+            downloadBtn.disabled = false;
         }
     }
 }
