@@ -56,44 +56,79 @@ class BraillePractice {
         if (!container || !this.currentBraillePattern) return;
 
         const containerWidth = container.offsetWidth;
+        const containerHeight = container.offsetHeight;
         const blockCount = this.currentBraillePattern.length;
 
         // 기본 크기와 여백 설정
         const defaultBlockWidth = 80;
+        const defaultBlockHeight = 120;
         const defaultGap = 16; // 1rem = 16px
         const containerPadding = 20; // 좌우 패딩
 
         // 필요한 총 너비 계산
         const totalNeededWidth = (blockCount * defaultBlockWidth) + ((blockCount - 1) * defaultGap) + containerPadding;
 
-        // 화면 크기에 맞게 스케일 조정
-        if (totalNeededWidth > containerWidth) {
-            const availableWidth = containerWidth - containerPadding;
-            const availableWidthPerBlock = availableWidth / blockCount;
-            const maxBlockWidth = availableWidthPerBlock - defaultGap;
+        // 모바일 환경 감지
+        const isMobile = window.innerWidth <= 768;
+        const isSmallMobile = window.innerWidth <= 480;
 
-            // 최소 크기 제한 (최대 크기의 30% - 70%까지 축소 가능)
-            const minBlockWidth = defaultBlockWidth * 0.3; // 80px * 0.3 = 24px
-            const finalBlockWidth = Math.max(minBlockWidth, Math.min(defaultBlockWidth, maxBlockWidth));
-            const scale = finalBlockWidth / defaultBlockWidth;
+        // 화면 크기에 맞게 스케일 조정
+        let scale = 1;
+
+        if (totalNeededWidth > containerWidth) {
+            // 가로 크기 기준 스케일 계산
+            const availableWidth = containerWidth - containerPadding;
+            const gapTotalWidth = (blockCount - 1) * defaultGap;
+            const availableBlockWidth = availableWidth - gapTotalWidth;
+            const widthScale = availableBlockWidth / (blockCount * defaultBlockWidth);
+
+            // 세로 크기 기준 스케일 계산 (디바이스별 최대 높이 고려)
+            let maxContainerHeight = 200; // 기본값
+            if (isSmallMobile) {
+                maxContainerHeight = 140;
+            } else if (isMobile) {
+                maxContainerHeight = 160;
+            }
+
+            const availableHeight = Math.min(containerHeight, maxContainerHeight) - 20; // 상하 패딩
+            const heightScale = availableHeight / defaultBlockHeight;
+
+            // 더 작은 스케일 선택 (가로나 세로 중 더 제한적인 조건)
+            scale = Math.min(widthScale, heightScale);
+
+            // 디바이스별 최소/최대 스케일 제한
+            let minScale = 0.4; // 기본 40%까지 축소 가능
+            if (isSmallMobile) {
+                minScale = 0.3; // 소형 모바일에서는 30%까지
+            } else if (isMobile) {
+                minScale = 0.35; // 모바일에서는 35%까지
+            }
+
+            const maxScale = 1.0;  // 최대 100%
+            scale = Math.max(minScale, Math.min(maxScale, scale));
 
             // CSS 변수를 통해 동적 크기 조정
             document.documentElement.style.setProperty('--braille-block-scale', scale);
 
-            // 컨테이너 스타일 조정
-            if (scale < 1) {
-                container.style.gap = Math.max(4, defaultGap * scale) + 'px';
-                container.style.overflow = 'visible';
-            } else {
-                container.style.gap = '';
-                container.style.overflow = '';
-            }
+            // 스케일에 따른 gap 조정
+            const adjustedGap = Math.max(4, defaultGap * scale);
+            container.style.gap = adjustedGap + 'px';
+
+            console.log(`📏 Block scaling: ${scale.toFixed(2)} (${blockCount} blocks, container: ${containerWidth}px)`);
         } else {
             // 기본 크기 유지
+            scale = 1;
             document.documentElement.style.setProperty('--braille-block-scale', '1');
             container.style.gap = '';
-            container.style.overflow = '';
         }
+
+        // 컨테이너 높이 동적 조정
+        const finalBlockHeight = defaultBlockHeight * scale;
+        const minContainerHeight = Math.max(finalBlockHeight + 20, 60); // 최소 높이 보장
+        container.style.minHeight = minContainerHeight + 'px';
+
+        // 스크롤 방지
+        container.style.overflow = 'visible';
     }
 
     bindEvents() {

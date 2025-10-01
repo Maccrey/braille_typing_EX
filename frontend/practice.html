@@ -102,12 +102,15 @@
             gap: 1rem;
             margin-bottom: 2rem;
             min-height: 120px;
+            max-height: 200px; /* 최대 높이 제한으로 스크롤 방지 */
             align-items: center;
             /* 반응형 컨테이너 설정 */
             width: 100%;
             max-width: 100%;
-            overflow-x: auto;
-            padding: 0 10px;
+            overflow: visible; /* 스크롤 제거 */
+            padding: 10px;
+            /* 컨테이너 자체가 반응형으로 크기 조정 */
+            flex-wrap: nowrap;
         }
 
         :root {
@@ -120,8 +123,8 @@
             grid-template-rows: repeat(3, 1fr);
             gap: calc(8px * var(--braille-block-scale));
             padding: calc(1rem * var(--braille-block-scale));
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
+            border: calc(2px * var(--braille-block-scale)) solid #e1e5e9;
+            border-radius: calc(8px * var(--braille-block-scale));
             background: white;
             /* 기본 크기 (최대 크기) - CSS 변수로 스케일링 */
             width: calc(80px * var(--braille-block-scale));
@@ -129,9 +132,11 @@
             position: relative;
             transition: all 0.3s ease;
             /* 반응형 크기 조정 */
-            flex-shrink: 0;
-            min-width: 24px;  /* 80px * 0.3 = 24px */
-            min-height: 36px; /* 120px * 0.3 = 36px */
+            flex-shrink: 1; /* 필요시 축소 허용 */
+            min-width: 32px;  /* 최소 크기 증가 (80px * 0.4) */
+            min-height: 48px; /* 최소 크기 증가 (120px * 0.4) */
+            max-width: 80px;  /* 최대 크기 제한 */
+            max-height: 120px; /* 최대 크기 제한 */
         }
 
         .braille-block.current-block {
@@ -395,14 +400,21 @@
             position: relative;
         }
 
-        /* 반응형 레이아웃 - 점자 블록 제외한 다른 요소들만 */
+        /* 반응형 레이아웃 */
         @media (max-width: 768px) {
             #practice-container {
                 padding: 1.5rem;
+                min-height: 500px; /* 모바일에서 최소 높이 줄임 */
             }
 
             #current-char {
                 font-size: 2rem;
+            }
+
+            #braille-blocks {
+                min-height: 100px; /* 모바일에서 최소 높이 줄임 */
+                max-height: 160px;
+                padding: 5px;
             }
 
             .control-panel {
@@ -413,6 +425,42 @@
             .keyboard-mapping {
                 flex-wrap: wrap;
                 gap: 0.5rem;
+            }
+
+            /* 모바일에서 점자 블록 더 작게 조정 */
+            :root {
+                --mobile-scale-factor: 0.8;
+            }
+
+            .braille-block {
+                min-width: 28px;  /* 모바일 최소 크기 */
+                min-height: 42px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #practice-container {
+                padding: 1rem;
+            }
+
+            #braille-blocks {
+                min-height: 80px;
+                max-height: 140px;
+                gap: 0.5rem; /* 작은 화면에서 gap 줄임 */
+            }
+
+            .braille-block {
+                min-width: 24px;  /* 소형 모바일 최소 크기 */
+                min-height: 36px;
+            }
+
+            #current-char {
+                font-size: 1.5rem;
+            }
+
+            .control-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
             }
         }
     </style>
