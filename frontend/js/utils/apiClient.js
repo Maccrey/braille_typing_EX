@@ -72,6 +72,12 @@ class ApiClient {
                     console.log('✅ JWT token stored');
                 }
 
+                // Store user data for easy access
+                if (data.user) {
+                    localStorage.setItem('userData', JSON.stringify(data.user));
+                    console.log('✅ User data stored:', data.user.username);
+                }
+
                 return data;
             } catch (jsonError) {
                 console.error('JSON parsing error in success response:', jsonError);
@@ -110,6 +116,19 @@ class ApiClient {
         if (response.ok) {
             const data = await response.json();
             this.currentUser = data.user;
+
+            // Store JWT token if provided
+            if (data.token) {
+                localStorage.setItem('authToken', data.token);
+                console.log('✅ JWT token stored');
+            }
+
+            // Store user data for easy access
+            if (data.user) {
+                localStorage.setItem('userData', JSON.stringify(data.user));
+                console.log('✅ User data stored:', data.user.username);
+            }
+
             return data;
         } else {
             const error = await response.json();

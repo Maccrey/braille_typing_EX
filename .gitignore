@@ -45,4 +45,4 @@ backend/test.db
 
 # Temporary files
 *.tmp
-*.temp
+*.tempfrontend/playwright-report/
