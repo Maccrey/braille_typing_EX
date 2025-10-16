@@ -42,7 +42,7 @@ function startServer() {
     console.log(`🚀 Server running on http://${HOST}:${PORT}`);
     console.log(`📝 Environment: ${NODE_ENV}`);
     console.log(`🕐 Started at: ${new Date().toISOString()}`);
-    console.log(`ℹ️  Database will be initialized on first API request`);
+    console.log(`ℹ️  Firebase will be initialized on first API request`);
     console.log(`✅ Server is ready and healthy`);
     console.log(`🔗 Health endpoints: /health, /healthz, /ping, /api/health`);
     console.log(`🎯 READY - Server successfully started and listening`);

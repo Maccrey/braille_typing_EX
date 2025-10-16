@@ -2,7 +2,7 @@ const multer = require('multer');
 const xlsx = require('xlsx');
 const path = require('path');
 const fs = require('fs');
-const { getDb } = require('../config/database');
+const { getDb } = require('../config/firebase');
 // Simple example file creation function
 const createExampleFile = async () => {
   const uploadsDir = path.join(__dirname, '..', 'uploads');
@@ -359,10 +359,16 @@ function parseBraillePattern(patternStr) {
 async function checkCategoryExists(name, userId) {
   try {
     const db = getDb();
-    const existingCategory = await db.selectOne('categories', {
-      name: name,
-      created_by: userId
-    });
+    const categoriesSnapshot = await db.collection('categories')
+      .where('name', '==', name)
+      .where('created_by', '==', userId)
+      .limit(1)
+      .get();
+
+    const existingCategory = categoriesSnapshot.empty ? null : {
+      id: categoriesSnapshot.docs[0].id,
+      ...categoriesSnapshot.docs[0].data()
+    };
 
     console.log(`🔍 Checking category "${name}" for user ${userId}:`, existingCategory ? 'EXISTS' : 'NOT FOUND');
     return existingCategory;
@@ -379,18 +385,25 @@ async function createCategory(categoryData) {
 
     console.log('🔧 Creating category with data:', categoryData);
 
-    // Insert new category using JSON database method
-    const result = await db.insert('categories', {
+    // Insert new category using Firestore
+    const categoryDoc = {
       name: categoryData.name,
       description: categoryData.description,
-      is_public: categoryData.isPublic ? 1 : 0,
-      created_by: categoryData.createdBy
-    });
+      is_public: categoryData.isPublic ? true : false,
+      created_by: categoryData.createdBy,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
 
-    console.log('🔧 INSERT result:', result);
+    const categoryRef = await db.collection('categories').add(categoryDoc);
+    console.log('🔧 INSERT result: Document ID:', categoryRef.id);
 
     // Fetch the created category
-    const createdCategory = await db.selectOne('categories', { id: result.lastID });
+    const createdCategoryDoc = await categoryRef.get();
+    const createdCategory = {
+      id: createdCategoryDoc.id,
+      ...createdCategoryDoc.data()
+    };
     console.log('✅ Category created successfully:', createdCategory);
 
     return createdCategory;
@@ -407,15 +420,18 @@ async function insertBrailleData(categoryId, brailleEntries) {
     const insertPromises = brailleEntries.map(async (entry) => {
       console.log(`🔧 Inserting braille data: ${entry.character} with pattern: ${JSON.stringify(entry.pattern)}`);
 
-      const result = await db.insert('braille_data', {
+      const brailleDoc = {
         category_id: categoryId,
         character: entry.character,
         braille_pattern: JSON.stringify(entry.pattern),
-        description: entry.description || ''
-      });
+        description: entry.description || '',
+        created_at: new Date().toISOString()
+      };
 
-      console.log(`✅ Inserted braille data for "${entry.character}" with ID: ${result.lastID}`);
-      return { id: result.lastID, ...entry };
+      const brailleRef = await db.collection('braille_data').add(brailleDoc);
+
+      console.log(`✅ Inserted braille data for "${entry.character}" with ID: ${brailleRef.id}`);
+      return { id: brailleRef.id, ...entry };
     });
 
     const results = await Promise.all(insertPromises);

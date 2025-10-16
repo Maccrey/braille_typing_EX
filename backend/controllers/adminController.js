@@ -1,4 +1,4 @@
-const { getDb } = require('../config/database');
+const { getDb } = require('../config/firebase');
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -37,41 +37,61 @@ const restoreDatabaseFromBackup = async (req, res) => {
     }
 
     const db = getDb();
-    const tableNames = ['users', 'categories', 'braille_data', 'practice_logs', 'attendance', 'favorites', 'posts', 'comments'];
+    const collectionNames = ['users', 'categories', 'braille_data', 'practice_logs', 'attendance', 'favorites', 'posts', 'comments'];
 
     let totalRestored = 0;
     const restoredTables = {};
 
-    // Restore each table
-    for (const tableName of tableNames) {
+    // Restore each collection
+    for (const collectionName of collectionNames) {
       try {
-        if (backupData[tableName] && Array.isArray(backupData[tableName])) {
+        if (backupData[collectionName] && Array.isArray(backupData[collectionName])) {
           // Clear existing data
-          console.log(`🧹 Clearing existing ${tableName} data...`);
-          db.tables[tableName] = [];
+          console.log(`🧹 Clearing existing ${collectionName} data...`);
+          const existingSnapshot = await db.collection(collectionName).get();
+          const batch = db.batch();
+          existingSnapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+          await batch.commit();
 
-          // Restore backup data
-          console.log(`📥 Restoring ${tableName}...`);
-          db.tables[tableName] = [...backupData[tableName]];
-          await db.saveTable(tableName);
+          // Restore backup data in batches (Firestore batch limit is 500 operations)
+          console.log(`📥 Restoring ${collectionName}...`);
+          const records = backupData[collectionName];
+          const batchSize = 500;
 
-          const recordCount = backupData[tableName].length;
-          restoredTables[tableName] = recordCount;
+          for (let i = 0; i < records.length; i += batchSize) {
+            const batch = db.batch();
+            const batchRecords = records.slice(i, i + batchSize);
+
+            batchRecords.forEach(record => {
+              const { id, ...data } = record;
+              // If record has an id, use it; otherwise let Firestore generate one
+              if (id) {
+                batch.set(db.collection(collectionName).doc(id), data);
+              } else {
+                const newDocRef = db.collection(collectionName).doc();
+                batch.set(newDocRef, data);
+              }
+            });
+
+            await batch.commit();
+          }
+
+          const recordCount = records.length;
+          restoredTables[collectionName] = recordCount;
           totalRestored += recordCount;
 
-          console.log(`✅ Restored ${tableName}: ${recordCount} records`);
+          console.log(`✅ Restored ${collectionName}: ${recordCount} records`);
         } else {
-          console.log(`⚠️ No valid data found for ${tableName} in backup`);
-          restoredTables[tableName] = 0;
+          console.log(`⚠️ No valid data found for ${collectionName} in backup`);
+          restoredTables[collectionName] = 0;
         }
       } catch (tableError) {
-        console.error(`❌ Error restoring ${tableName}:`, tableError.message);
-        restoredTables[tableName] = 'error';
+        console.error(`❌ Error restoring ${collectionName}:`, tableError.message);
+        restoredTables[collectionName] = 'error';
       }
     }
-
-    // Clear all cache after restoration
-    db.clearAllCache();
 
     console.log(`🎉 Database restoration completed. Total records restored: ${totalRestored}`);
 
@@ -104,21 +124,22 @@ const downloadDatabaseBackup = async (req, res) => {
     console.log('📊 Admin requesting database backup download');
 
     const db = getDb();
-    const dataPath = path.join(__dirname, '..', 'data');
 
-    // Read all JSON files
+    // Read all collections from Firestore
     const backup = {};
-    const tableNames = ['users', 'categories', 'braille_data', 'practice_logs', 'attendance', 'favorites', 'posts', 'comments'];
+    const collectionNames = ['users', 'categories', 'braille_data', 'practice_logs', 'attendance', 'favorites', 'posts', 'comments'];
 
-    for (const tableName of tableNames) {
+    for (const collectionName of collectionNames) {
       try {
-        const filePath = path.join(dataPath, `${tableName}.json`);
-        const data = await fs.readFile(filePath, 'utf8');
-        backup[tableName] = JSON.parse(data);
-        console.log(`✅ Loaded ${tableName}: ${backup[tableName].length} records`);
+        const snapshot = await db.collection(collectionName).get();
+        backup[collectionName] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        console.log(`✅ Loaded ${collectionName}: ${backup[collectionName].length} records`);
       } catch (error) {
-        console.log(`⚠️ Could not load ${tableName}: ${error.message}`);
-        backup[tableName] = [];
+        console.log(`⚠️ Could not load ${collectionName}: ${error.message}`);
+        backup[collectionName] = [];
       }
     }
 
@@ -164,25 +185,27 @@ const getSystemStats = async (req, res) => {
     const db = getDb();
 
     const stats = {};
-    const tableNames = ['users', 'categories', 'braille_data', 'practice_logs', 'attendance', 'favorites', 'posts', 'comments'];
+    const collectionNames = ['users', 'categories', 'braille_data', 'practice_logs', 'attendance', 'favorites', 'posts', 'comments'];
 
-    for (const tableName of tableNames) {
+    for (const collectionName of collectionNames) {
       try {
-        const records = await db.select(tableName);
-        stats[tableName] = {
+        const snapshot = await db.collection(collectionName).get();
+        const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        stats[collectionName] = {
           count: records.length,
           lastUpdated: records.length > 0 ? Math.max(...records.map(r => new Date(r.updated_at || r.created_at || '1970-01-01').getTime())) : null
         };
       } catch (error) {
-        console.log(`⚠️ Could not get stats for ${tableName}: ${error.message}`);
-        stats[tableName] = { count: 0, lastUpdated: null };
+        console.log(`⚠️ Could not get stats for ${collectionName}: ${error.message}`);
+        stats[collectionName] = { count: 0, lastUpdated: null };
       }
     }
 
     // Calculate total practice time
     try {
-      const practiceLogs = await db.select('practice_logs');
-      const totalPracticeTime = practiceLogs.reduce((sum, log) => sum + (log.duration || 0), 0);
+      const practiceLogsSnapshot = await db.collection('practice_logs').get();
+      const practiceLogs = practiceLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const totalPracticeTime = practiceLogs.reduce((sum, log) => sum + (log.duration_seconds || 0), 0);
       stats.totalPracticeTime = totalPracticeTime;
     } catch (error) {
       stats.totalPracticeTime = 0;
@@ -193,14 +216,15 @@ const getSystemStats = async (req, res) => {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const recentLogs = await db.select('practice_logs');
+      const recentLogsSnapshot = await db.collection('practice_logs').get();
+      const recentLogs = recentLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       const recentActivity = recentLogs.filter(log =>
         new Date(log.created_at) > sevenDaysAgo
       );
 
       stats.recentActivity = {
         practiceSessionsLast7Days: recentActivity.length,
-        practiceTimeLast7Days: recentActivity.reduce((sum, log) => sum + (log.duration || 0), 0)
+        practiceTimeLast7Days: recentActivity.reduce((sum, log) => sum + (log.duration_seconds || 0), 0)
       };
     } catch (error) {
       stats.recentActivity = {
@@ -229,7 +253,8 @@ const getAllUsers = async (req, res) => {
     console.log('👥 Admin requesting all users');
 
     const db = getDb();
-    const users = await db.select('users');
+    const usersSnapshot = await db.collection('users').get();
+    const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     // Remove password fields for security
     const safeUsers = users.map(user => {
@@ -270,15 +295,20 @@ const updateUserRole = async (req, res) => {
     const db = getDb();
 
     // Check if user exists
-    const user = await db.selectOne('users', { id: userId });
-    if (!user) {
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (!userDoc.exists) {
       return res.status(404).json({
         error: 'User not found'
       });
     }
 
+    const user = { id: userDoc.id, ...userDoc.data() };
+
     // Update user role
-    await db.update('users', { role }, { id: userId });
+    await db.collection('users').doc(userId).update({
+      role: role,
+      updated_at: new Date().toISOString()
+    });
 
     console.log(`✅ User ${user.username} role updated to ${role}`);
     res.json({

@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { getDb } = require('../config/database');
+const { getDb, getAuth } = require('../config/firebase');
 
 const SALT_ROUNDS = 10;
 const JWT_SECRET = process.env.JWT_SECRET || 'braille-typing-practice-jwt-secret-2025';
@@ -23,11 +23,13 @@ const signup = async (req, res) => {
     }
 
     const db = getDb();
+    const auth = getAuth();
 
-    // Check if user already exists
-    const existingUser = await db.selectOne('users', { username });
+    // Check if user already exists in Firestore
+    const usersRef = db.collection('users');
+    const existingUserQuery = await usersRef.where('username', '==', username).limit(1).get();
 
-    if (existingUser) {
+    if (!existingUserQuery.empty) {
       return res.status(400).json({
         error: 'Username already exists'
       });
@@ -39,23 +41,46 @@ const signup = async (req, res) => {
     // Check if this is the first user (admin user) or if username is 'maccrey'
     const isAdmin = username === 'maccrey';
 
-    // Create user
-    const result = await db.insert('users', {
+    // Create Firebase Auth user (using username as email)
+    const userEmail = `${username}@braille-typing.local`;
+    let firebaseUser;
+
+    try {
+      firebaseUser = await auth.createUser({
+        email: userEmail,
+        password: password,
+        displayName: username
+      });
+    } catch (authError) {
+      console.error('Firebase Auth error:', authError);
+      return res.status(500).json({
+        error: 'Failed to create authentication user'
+      });
+    }
+
+    // Create user document in Firestore
+    const userDoc = {
+      uid: firebaseUser.uid,
       username,
-      password: hashedPassword,
-      role: isAdmin ? 'admin' : 'user'
-    });
-    const userId = result.lastID;
+      password: hashedPassword, // Store hashed password for backward compatibility
+      role: isAdmin ? 'admin' : 'user',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const userRef = await usersRef.add(userDoc);
+    const userId = userRef.id;
 
     // Store user data in session
     req.session.user = {
       id: userId,
-      username: username
+      username: username,
+      uid: firebaseUser.uid
     };
 
     // Generate JWT token for backward compatibility
     const token = jwt.sign(
-      { userId: userId, username: username, role: isAdmin ? 'admin' : 'user' },
+      { userId: userId, username: username, role: isAdmin ? 'admin' : 'user', uid: firebaseUser.uid },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -66,7 +91,8 @@ const signup = async (req, res) => {
       user: {
         id: userId,
         username: username,
-        role: isAdmin ? 'admin' : 'user'
+        role: isAdmin ? 'admin' : 'user',
+        uid: firebaseUser.uid
       }
     });
 
@@ -91,14 +117,18 @@ const login = async (req, res) => {
 
     const db = getDb();
 
-    // Find user
-    const user = await db.selectOne('users', { username });
+    // Find user in Firestore
+    const usersRef = db.collection('users');
+    const userQuery = await usersRef.where('username', '==', username).limit(1).get();
 
-    if (!user) {
+    if (userQuery.empty) {
       return res.status(401).json({
         error: 'Invalid credentials'
       });
     }
+
+    const userDoc = userQuery.docs[0];
+    const user = { id: userDoc.id, ...userDoc.data() };
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
@@ -111,12 +141,13 @@ const login = async (req, res) => {
     // Store user data in session
     req.session.user = {
       id: user.id,
-      username: user.username
+      username: user.username,
+      uid: user.uid
     };
 
     // Generate JWT token for backward compatibility
     const token = jwt.sign(
-      { userId: user.id, username: user.username, role: user.role || 'user' },
+      { userId: user.id, username: user.username, role: user.role || 'user', uid: user.uid },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -127,7 +158,8 @@ const login = async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
-        role: user.role || 'user'
+        role: user.role || 'user',
+        uid: user.uid
       }
     });
 
@@ -212,15 +244,18 @@ const changePassword = async (req, res) => {
     }
 
     const db = getDb();
+    const auth = getAuth();
 
-    // Get current user
-    const user = await db.selectOne('users', { id: userId });
+    // Get current user from Firestore
+    const userDoc = await db.collection('users').doc(userId).get();
 
-    if (!user) {
+    if (!userDoc.exists) {
       return res.status(404).json({
         error: '사용자를 찾을 수 없습니다'
       });
     }
+
+    const user = userDoc.data();
 
     // Verify current password
     const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
@@ -234,11 +269,23 @@ const changePassword = async (req, res) => {
     // Hash new password
     const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
-    // Update password
-    await db.update('users',
-      { password: hashedNewPassword },
-      { id: userId }
-    );
+    // Update password in Firestore
+    await db.collection('users').doc(userId).update({
+      password: hashedNewPassword,
+      updated_at: new Date().toISOString()
+    });
+
+    // Update Firebase Auth password if uid exists
+    if (user.uid) {
+      try {
+        await auth.updateUser(user.uid, {
+          password: newPassword
+        });
+      } catch (authError) {
+        console.error('Firebase Auth password update error:', authError);
+        // Continue even if Firebase Auth update fails (for backward compatibility)
+      }
+    }
 
     console.log(`✅ Password changed successfully for user ID: ${userId}`);
 
@@ -275,10 +322,11 @@ const checkUsernameAvailability = async (req, res) => {
 
     const db = getDb();
 
-    // Check if username already exists
-    const existingUser = await db.selectOne('users', { username: username.trim() });
+    // Check if username already exists in Firestore
+    const usersRef = db.collection('users');
+    const existingUserQuery = await usersRef.where('username', '==', username.trim()).limit(1).get();
 
-    if (existingUser) {
+    if (!existingUserQuery.empty) {
       console.log(`❌ Username '${username}' is already taken`);
       return res.status(200).json({
         available: false,

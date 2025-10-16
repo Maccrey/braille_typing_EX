@@ -1,4 +1,4 @@
-const { getDb } = require('../config/database');
+const { getDb } = require('../config/firebase');
 
 const logPracticeSession = async (req, res) => {
   try {
@@ -38,26 +38,28 @@ const logPracticeSession = async (req, res) => {
     };
 
     // Insert practice log
-    const insertedLog = await db.insert('practice_logs', practiceLog);
+    const practiceLogRef = await db.collection('practice_logs').add(practiceLog);
+    const insertedLog = { id: practiceLogRef.id, ...practiceLog };
     console.log('✅ Practice log inserted:', insertedLog);
 
     // Check if attendance record exists for this date
-    const existingAttendance = await db.selectOne('attendance', {
-      user_id: userId,
-      date: practiced_at
-    });
+    const existingAttendanceSnapshot = await db.collection('attendance')
+      .where('user_id', '==', userId)
+      .where('date', '==', practiced_at)
+      .limit(1)
+      .get();
 
     let attendanceCreated = false;
 
     // Create attendance record if doesn't exist
-    if (!existingAttendance) {
+    if (existingAttendanceSnapshot.empty) {
       const attendanceData = {
         user_id: userId,
         date: practiced_at,
         created_at: new Date().toISOString()
       };
 
-      await db.insert('attendance', attendanceData);
+      await db.collection('attendance').add(attendanceData);
       attendanceCreated = true;
       console.log('✅ Attendance record created for date:', practiced_at);
     }

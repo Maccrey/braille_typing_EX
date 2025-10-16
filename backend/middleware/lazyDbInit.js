@@ -1,5 +1,5 @@
-// Lazy database initialization middleware
-let dbInitialized = false;
+// Lazy Firebase initialization middleware
+let firebaseInitialized = false;
 
 const lazyDbInit = async (req, res, next) => {
   // Skip initialization for health check and static files
@@ -7,19 +7,20 @@ const lazyDbInit = async (req, res, next) => {
     return next();
   }
 
-  if (!dbInitialized) {
+  if (!firebaseInitialized) {
     try {
-      console.log('🔧 Initializing JSON database on first API request...');
+      console.log('🔧 Initializing Firebase on first API request...');
 
-      const { initDatabase } = require('../config/database');
-      await initDatabase();
-      dbInitialized = true;
-      console.log('✅ JSON Database initialized successfully');
+      const { initializeFirebase } = require('../config/firebase');
+      await initializeFirebase();
+      firebaseInitialized = true;
+      console.log('✅ Firebase initialized successfully');
     } catch (error) {
-      console.error('❌ Failed to initialize database:', error);
+      console.error('❌ Failed to initialize Firebase:', error);
       return res.status(500).json({
-        error: 'Database initialization failed',
-        message: 'Database service temporarily unavailable'
+        error: 'Firebase initialization failed',
+        message: 'Database service temporarily unavailable',
+        details: error.message
       });
     }
   }

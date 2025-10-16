@@ -1,29 +1,40 @@
-const { getDb, initDatabase } = require('../config/database');
+const { getDb, initializeFirebase } = require('../config/firebase');
 
 async function makeUserAdmin(username) {
   try {
-    console.log('🔧 Initializing database...');
-    await initDatabase();
+    console.log('🔧 Initializing Firebase...');
+    await initializeFirebase();
 
     const db = getDb();
 
     console.log(`👤 Looking for user: ${username}`);
-    const user = await db.selectOne('users', { username });
+    const usersSnapshot = await db.collection('users')
+      .where('username', '==', username)
+      .limit(1)
+      .get();
 
-    if (!user) {
+    if (usersSnapshot.empty) {
       console.log(`❌ User ${username} not found!`);
       console.log('Available users:');
-      const allUsers = await db.select('users');
-      console.log(`Found ${allUsers.length} users:`);
-      allUsers.forEach(u => console.log(`  - ${u.username} (ID: ${u.id}, Role: ${u.role || 'user'})`));
 
-      if (allUsers.length === 0) {
+      const allUsersSnapshot = await db.collection('users').get();
+      console.log(`Found ${allUsersSnapshot.size} users:`);
+      allUsersSnapshot.forEach(doc => {
+        const u = doc.data();
+        console.log(`  - ${u.username} (ID: ${doc.id}, Role: ${u.role || 'user'})`);
+      });
+
+      if (allUsersSnapshot.empty) {
         console.log('No users found in database. Please sign up first.');
       }
       return;
     }
 
-    console.log(`✅ Found user: ${user.username} (ID: ${user.id})`);
+    const userDoc = usersSnapshot.docs[0];
+    const user = userDoc.data();
+    const userId = userDoc.id;
+
+    console.log(`✅ Found user: ${user.username} (ID: ${userId})`);
     console.log(`Current role: ${user.role || 'user'}`);
 
     if (user.role === 'admin') {
@@ -32,12 +43,16 @@ async function makeUserAdmin(username) {
     }
 
     console.log('🔧 Updating user role to admin...');
-    await db.update('users', { role: 'admin' }, { id: user.id });
+    await db.collection('users').doc(userId).update({
+      role: 'admin',
+      updated_at: new Date().toISOString()
+    });
 
     console.log(`✅ Successfully made ${username} an admin!`);
 
     // Verify the change
-    const updatedUser = await db.selectOne('users', { id: user.id });
+    const updatedUserDoc = await db.collection('users').doc(userId).get();
+    const updatedUser = updatedUserDoc.data();
     console.log(`Verification - Role is now: ${updatedUser.role}`);
 
   } catch (error) {
@@ -48,4 +63,7 @@ async function makeUserAdmin(username) {
 // Run the script
 const username = process.argv[2] || 'maccrey';
 console.log(`🚀 Making user '${username}' an admin...`);
-makeUserAdmin(username);
+makeUserAdmin(username).then(() => {
+  console.log('✅ Script completed');
+  process.exit(0);
+});

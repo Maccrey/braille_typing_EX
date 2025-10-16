@@ -1,4 +1,4 @@
-const { getDb } = require('../config/database');
+const { getDb } = require('../config/firebase');
 
 const getMyCategoriesWithCount = async (req, res) => {
   try {
@@ -7,34 +7,38 @@ const getMyCategoriesWithCount = async (req, res) => {
 
     console.log('🔍 Getting categories for user:', userId);
 
-    // Get user's categories using JSON database method
-    const categories = await db.select('categories', { created_by: userId });
-    console.log('📋 Found categories:', categories);
+    // Get user's categories from Firestore
+    const categoriesSnapshot = await db.collection('categories')
+      .where('created_by', '==', userId)
+      .get();
 
-    if (categories.length === 0) {
+    if (categoriesSnapshot.empty) {
       return res.status(200).json({
         categories: [],
         total: 0
       });
     }
 
-    // Get ALL braille data in one query and group by category_id for performance
-    const allBrailleData = await db.select('braille_data', {});
-    const brailleCountMap = {};
-
-    // Group braille data by category_id
-    allBrailleData.forEach(braille => {
-      if (!brailleCountMap[braille.category_id]) {
-        brailleCountMap[braille.category_id] = 0;
-      }
-      brailleCountMap[braille.category_id]++;
-    });
-
-    // Add count to each category
-    const categoriesWithCount = categories.map(category => ({
-      ...category,
-      braille_count: brailleCountMap[category.id] || 0
+    const categories = categoriesSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
     }));
+
+    console.log('📋 Found categories:', categories.length);
+
+    // Get braille count for each category
+    const categoriesWithCount = await Promise.all(
+      categories.map(async (category) => {
+        const brailleSnapshot = await db.collection('braille_data')
+          .where('category_id', '==', category.id)
+          .get();
+
+        return {
+          ...category,
+          braille_count: brailleSnapshot.size
+        };
+      })
+    );
 
     // Sort by created_at DESC
     categoriesWithCount.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -65,30 +69,39 @@ const searchPublicCategories = async (req, res) => {
     const db = getDb();
     console.log('🔍 Searching public categories with query:', searchQuery);
 
-    // Get all public categories using JSON database method
-    const allPublicCategories = await db.select('categories', { is_public: 1 });
-    console.log('📋 Found public categories:', allPublicCategories.length);
+    // Get all public categories from Firestore
+    const categoriesSnapshot = await db.collection('categories')
+      .where('is_public', '==', true)
+      .get();
+
+    let categories = categoriesSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    console.log('📋 Found public categories:', categories.length);
 
     // Filter by search query if provided
-    let filteredCategories = allPublicCategories;
     if (searchQuery && searchQuery.trim() !== '') {
       const searchTerm = searchQuery.toLowerCase();
-      filteredCategories = allPublicCategories.filter(category => {
+      categories = categories.filter(category => {
         return category.name.toLowerCase().includes(searchTerm) ||
                (category.description || '').toLowerCase().includes(searchTerm);
       });
-      console.log('🔎 Filtered categories:', filteredCategories.length);
+      console.log('🔎 Filtered categories:', categories.length);
     }
 
     // Add braille data count to each category
     const categoriesWithCount = await Promise.all(
-      filteredCategories.map(async (category) => {
-        const brailleData = await db.select('braille_data', { category_id: category.id });
-        console.log(`📊 Category "${category.name}" has ${brailleData.length} braille entries`);
+      categories.map(async (category) => {
+        const brailleSnapshot = await db.collection('braille_data')
+          .where('category_id', '==', category.id)
+          .get();
+        console.log(`📊 Category "${category.name}" has ${brailleSnapshot.size} braille entries`);
 
         return {
           ...category,
-          braille_count: brailleData.length
+          braille_count: brailleSnapshot.size
         };
       })
     );
@@ -122,27 +135,34 @@ const addToFavorites = async (req, res) => {
     const db = getDb();
 
     // Check if category exists and is public (and not owned by user)
-    const categories = await db.select('categories', { id: parseInt(categoryId), is_public: 1 });
-    const category = categories.find(cat => cat.created_by !== userId);
+    const categoryDoc = await db.collection('categories').doc(categoryId).get();
 
-    if (!category) {
+    if (!categoryDoc.exists) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    const category = categoryDoc.data();
+
+    if (!category.is_public || category.created_by === userId) {
       return res.status(404).json({ error: 'Category not found or not public' });
     }
 
     // Check if already in favorites
-    const existingFavorite = await db.selectOne('favorites', {
-      user_id: userId,
-      category_id: parseInt(categoryId)
-    });
+    const favoritesSnapshot = await db.collection('favorites')
+      .where('user_id', '==', userId)
+      .where('category_id', '==', categoryId)
+      .limit(1)
+      .get();
 
-    if (existingFavorite) {
+    if (!favoritesSnapshot.empty) {
       return res.status(409).json({ error: 'Category already in favorites' });
     }
 
     // Add to favorites
-    await db.insert('favorites', {
+    await db.collection('favorites').add({
       user_id: userId,
-      category_id: parseInt(categoryId)
+      category_id: categoryId,
+      created_at: new Date().toISOString()
     });
 
     res.status(201).json({ message: 'Category added to favorites' });
@@ -160,21 +180,19 @@ const removeFromFavorites = async (req, res) => {
 
     const db = getDb();
 
-    // Check if favorite exists
-    const existingFavorite = await db.selectOne('favorites', {
-      user_id: userId,
-      category_id: parseInt(categoryId)
-    });
+    // Find and delete favorite
+    const favoritesSnapshot = await db.collection('favorites')
+      .where('user_id', '==', userId)
+      .where('category_id', '==', categoryId)
+      .limit(1)
+      .get();
 
-    if (!existingFavorite) {
+    if (favoritesSnapshot.empty) {
       return res.status(404).json({ error: 'Category not in favorites' });
     }
 
-    // Remove from favorites
-    await db.delete('favorites', {
-      user_id: userId,
-      category_id: parseInt(categoryId)
-    });
+    // Delete the favorite
+    await favoritesSnapshot.docs[0].ref.delete();
 
     res.status(200).json({ message: 'Category removed from favorites' });
 
@@ -190,26 +208,43 @@ const getFavorites = async (req, res) => {
     const db = getDb();
 
     // Get user's favorites
-    const userFavorites = await db.select('favorites', { user_id: userId });
+    const favoritesSnapshot = await db.collection('favorites')
+      .where('user_id', '==', userId)
+      .get();
+
+    if (favoritesSnapshot.empty) {
+      return res.status(200).json({
+        categories: [],
+        total: 0
+      });
+    }
 
     // Get category details for each favorite
     const favorites = await Promise.all(
-      userFavorites.map(async (favorite) => {
-        const category = await db.selectOne('categories', { id: favorite.category_id });
+      favoritesSnapshot.docs.map(async (favoriteDoc) => {
+        const favorite = favoriteDoc.data();
+        const categoryDoc = await db.collection('categories').doc(favorite.category_id).get();
+
+        if (!categoryDoc.exists) {
+          return null;
+        }
+
         return {
-          ...category,
+          id: categoryDoc.id,
+          ...categoryDoc.data(),
           braille_count: 0,
           favorited_at: favorite.created_at
         };
       })
     );
 
-    // Sort by favorited_at descending
-    favorites.sort((a, b) => new Date(b.favorited_at) - new Date(a.favorited_at));
+    // Filter out null values and sort by favorited_at descending
+    const validFavorites = favorites.filter(f => f !== null);
+    validFavorites.sort((a, b) => new Date(b.favorited_at) - new Date(a.favorited_at));
 
     res.status(200).json({
-      categories: favorites,
-      total: favorites.length
+      categories: validFavorites,
+      total: validFavorites.length
     });
 
   } catch (error) {
@@ -225,23 +260,27 @@ const getRandomBrailleData = async (req, res) => {
     const userId = req.user.id;
     const db = getDb();
 
-    // First check if user has access to this category
-    const category = await db.selectOne('categories', { id: parseInt(categoryId) });
+    // First check if category exists
+    const categoryDoc = await db.collection('categories').doc(categoryId).get();
 
-    if (!category) {
+    if (!categoryDoc.exists) {
       return res.status(404).json({ error: 'Category not found or access denied' });
     }
 
+    const category = categoryDoc.data();
+
     // Check access: owned by user, public, or in favorites
     let hasAccess = false;
-    if (category.created_by === userId || category.is_public === 1) {
+    if (category.created_by === userId || category.is_public === true) {
       hasAccess = true;
     } else {
-      const favorite = await db.selectOne('favorites', {
-        user_id: userId,
-        category_id: parseInt(categoryId)
-      });
-      if (favorite) {
+      const favoritesSnapshot = await db.collection('favorites')
+        .where('user_id', '==', userId)
+        .where('category_id', '==', categoryId)
+        .limit(1)
+        .get();
+
+      if (!favoritesSnapshot.empty) {
         hasAccess = true;
       }
     }
@@ -250,12 +289,19 @@ const getRandomBrailleData = async (req, res) => {
       return res.status(404).json({ error: 'Category not found or access denied' });
     }
 
-    // Get all braille data from this category and pick random one
-    const allBrailleData = await db.select('braille_data', { category_id: parseInt(categoryId) });
+    // Get all braille data from this category
+    const brailleSnapshot = await db.collection('braille_data')
+      .where('category_id', '==', categoryId)
+      .get();
 
-    if (!allBrailleData || allBrailleData.length === 0) {
+    if (brailleSnapshot.empty) {
       return res.status(404).json({ error: 'No braille data found in this category' });
     }
+
+    const allBrailleData = brailleSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
     // Pick random braille data
     const randomIndex = Math.floor(Math.random() * allBrailleData.length);
@@ -286,23 +332,35 @@ const deleteCategory = async (req, res) => {
     const db = getDb();
 
     // Check if category exists and is owned by user
-    const category = await db.selectOne('categories', {
-      id: parseInt(categoryId),
-      created_by: userId
-    });
+    const categoryDoc = await db.collection('categories').doc(categoryId).get();
 
-    if (!category) {
+    if (!categoryDoc.exists || categoryDoc.data().created_by !== userId) {
       return res.status(404).json({ error: 'Category not found or not owned by user' });
     }
 
     // Delete related braille data first
-    await db.delete('braille_data', { category_id: parseInt(categoryId) });
+    const brailleSnapshot = await db.collection('braille_data')
+      .where('category_id', '==', categoryId)
+      .get();
+
+    const batch = db.batch();
+    brailleSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
 
     // Delete from favorites
-    await db.delete('favorites', { category_id: parseInt(categoryId) });
+    const favoritesSnapshot = await db.collection('favorites')
+      .where('category_id', '==', categoryId)
+      .get();
+
+    favoritesSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
 
     // Delete category
-    await db.delete('categories', { id: parseInt(categoryId) });
+    batch.delete(categoryDoc.ref);
+
+    await batch.commit();
 
     res.status(200).json({ message: 'Category deleted successfully' });
 
@@ -330,34 +388,35 @@ const updateCategory = async (req, res) => {
     }
 
     // Check if category exists and is owned by user
-    const category = await db.selectOne('categories', {
-      id: parseInt(categoryId),
-      created_by: userId
-    });
+    const categoryDoc = await db.collection('categories').doc(categoryId).get();
 
-    if (!category) {
+    if (!categoryDoc.exists || categoryDoc.data().created_by !== userId) {
       return res.status(404).json({ error: 'Category not found or not owned by user' });
     }
 
     // Check if name already exists for this user (excluding current category)
-    const userCategories = await db.select('categories', { created_by: userId });
-    const existingCategory = userCategories.find(cat =>
-      cat.name === name.trim() && cat.id !== parseInt(categoryId)
-    );
+    const existingCategoriesSnapshot = await db.collection('categories')
+      .where('created_by', '==', userId)
+      .where('name', '==', name.trim())
+      .get();
 
-    if (existingCategory) {
+    const nameConflict = existingCategoriesSnapshot.docs.some(doc => doc.id !== categoryId);
+
+    if (nameConflict) {
       return res.status(400).json({ error: 'Category name already exists for this user' });
     }
 
     // Update category
-    await db.update('categories', {
+    await categoryDoc.ref.update({
       name: name.trim(),
       description: description || '',
-      is_public: isPublic ? 1 : 0
-    }, { id: parseInt(categoryId) });
+      is_public: isPublic ? true : false,
+      updated_at: new Date().toISOString()
+    });
 
     // Fetch updated category
-    const updatedCategory = await db.selectOne('categories', { id: parseInt(categoryId) });
+    const updatedCategoryDoc = await db.collection('categories').doc(categoryId).get();
+    const updatedCategory = { id: updatedCategoryDoc.id, ...updatedCategoryDoc.data() };
 
     res.status(200).json({
       message: 'Category updated successfully',
@@ -378,32 +437,31 @@ const getCategoryBrailleData = async (req, res) => {
     const db = getDb();
 
     // Check if category exists and is owned by user
-    const category = await db.selectOne('categories', {
-      id: parseInt(categoryId),
-      created_by: userId
-    });
+    const categoryDoc = await db.collection('categories').doc(categoryId).get();
 
-    if (!category) {
+    if (!categoryDoc.exists || categoryDoc.data().created_by !== userId) {
       return res.status(404).json({ error: 'Category not found or not owned by user' });
     }
 
     // Get braille data
-    const brailleData = await db.select('braille_data', { category_id: parseInt(categoryId) });
+    const brailleSnapshot = await db.collection('braille_data')
+      .where('category_id', '==', categoryId)
+      .get();
 
-    // Sort by id and parse braille patterns from JSON
-    const parsedData = brailleData
-      .sort((a, b) => a.id - b.id)
-      .map(item => ({
-        id: item.id,
-        character: item.character,
-        braille_pattern: typeof item.braille_pattern === 'string' ?
-          JSON.parse(item.braille_pattern) : item.braille_pattern,
-        description: item.description || ''
-      }));
+    const brailleData = brailleSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        character: data.character,
+        braille_pattern: typeof data.braille_pattern === 'string' ?
+          JSON.parse(data.braille_pattern) : data.braille_pattern,
+        description: data.description || ''
+      };
+    });
 
     res.status(200).json({
-      category,
-      brailleData: parsedData
+      category: { id: categoryDoc.id, ...categoryDoc.data() },
+      brailleData: brailleData
     });
 
   } catch (error) {
@@ -421,12 +479,9 @@ const updateCategoryBrailleData = async (req, res) => {
     const db = getDb();
 
     // Check if category exists and is owned by user
-    const category = await db.selectOne('categories', {
-      id: parseInt(categoryId),
-      created_by: userId
-    });
+    const categoryDoc = await db.collection('categories').doc(categoryId).get();
 
-    if (!category) {
+    if (!categoryDoc.exists || categoryDoc.data().created_by !== userId) {
       return res.status(404).json({ error: 'Category not found or not owned by user' });
     }
 
@@ -459,19 +514,31 @@ const updateCategoryBrailleData = async (req, res) => {
     }
 
     // Delete existing braille data
-    await db.delete('braille_data', { category_id: parseInt(categoryId) });
+    const existingBrailleSnapshot = await db.collection('braille_data')
+      .where('category_id', '==', categoryId)
+      .get();
+
+    const batch = db.batch();
+
+    existingBrailleSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
 
     // Insert new braille data
     if (brailleData.length > 0) {
       for (const item of brailleData) {
-        await db.insert('braille_data', {
-          category_id: parseInt(categoryId),
+        const newDocRef = db.collection('braille_data').doc();
+        batch.set(newDocRef, {
+          category_id: categoryId,
           character: item.character.trim(),
           braille_pattern: JSON.stringify(item.braille_pattern),
-          description: (item.description || '').trim()
+          description: (item.description || '').trim(),
+          created_at: new Date().toISOString()
         });
       }
     }
+
+    await batch.commit();
 
     res.status(200).json({
       message: 'Braille data updated successfully',

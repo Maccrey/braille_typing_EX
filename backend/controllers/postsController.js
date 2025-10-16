@@ -1,4 +1,4 @@
-const { getDb } = require('../config/database');
+const { getDb } = require('../config/firebase');
 
 const postsController = {
   // 모든 게시글 조회
@@ -9,10 +9,17 @@ const postsController = {
       const limit = parseInt(req.query.limit) || 10;
       const offset = (page - 1) * limit;
 
-      // Get all posts, users, and comments
-      const allPosts = await db.select('posts', {});
-      const allUsers = await db.select('users', {});
-      const allComments = await db.select('comments', {});
+      // Get all posts
+      const postsSnapshot = await db.collection('posts').get();
+      const allPosts = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Get all users
+      const usersSnapshot = await db.collection('users').get();
+      const allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Get all comments
+      const commentsSnapshot = await db.collection('comments').get();
+      const allComments = commentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       // Create user lookup map
       const userMap = {};
@@ -60,17 +67,20 @@ const postsController = {
   getPostById: async (req, res) => {
     try {
       const db = getDb();
-      const postId = parseInt(req.params.id);
+      const postId = req.params.id;
 
       // 게시글 조회
-      const post = await db.selectOne('posts', { id: postId });
+      const postDoc = await db.collection('posts').doc(postId).get();
 
-      if (!post) {
+      if (!postDoc.exists) {
         return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
       }
 
+      const post = { id: postDoc.id, ...postDoc.data() };
+
       // 작성자 정보 조회
-      const author = await db.selectOne('users', { id: post.author_id });
+      const authorDoc = await db.collection('users').doc(post.author_id).get();
+      const author = authorDoc.exists ? { id: authorDoc.id, ...authorDoc.data() } : null;
 
       // 응답 데이터 구성
       const postWithAuthor = {
@@ -101,24 +111,31 @@ const postsController = {
         return res.status(400).json({ error: '제목은 255자를 초과할 수 없습니다.' });
       }
 
+      const now = new Date().toISOString();
+
       // 게시글 생성
-      const result = await db.insert('posts', {
+      const postData = {
         title,
         content,
-        author_id: authorId
-      });
+        author_id: authorId,
+        created_at: now,
+        updated_at: null
+      };
+
+      const postRef = await db.collection('posts').add(postData);
 
       // 작성자 정보 조회
-      const author = await db.selectOne('users', { id: authorId });
+      const authorDoc = await db.collection('users').doc(authorId).get();
+      const author = authorDoc.exists ? { id: authorDoc.id, ...authorDoc.data() } : null;
 
       // 생성된 게시글 정보 구성
       const createdPost = {
-        id: result.lastID,
+        id: postRef.id,
         title,
         content,
         author_id: authorId,
         author_name: author ? author.username : 'Unknown',
-        created_at: new Date().toISOString(),
+        created_at: now,
         updated_at: null
       };
 
@@ -134,7 +151,7 @@ const postsController = {
   updatePost: async (req, res) => {
     try {
       const db = getDb();
-      const postId = parseInt(req.params.id);
+      const postId = req.params.id;
       const { title, content } = req.body;
       const userId = req.user.id;
 
@@ -143,24 +160,30 @@ const postsController = {
       }
 
       // 게시글 작성자 확인
-      const post = await db.selectOne('posts', { id: postId });
-      if (!post) {
+      const postDoc = await db.collection('posts').doc(postId).get();
+      if (!postDoc.exists) {
         return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
       }
+
+      const post = { id: postDoc.id, ...postDoc.data() };
 
       if (post.author_id !== userId) {
         return res.status(403).json({ error: '게시글을 수정할 권한이 없습니다.' });
       }
 
       // 게시글 수정
-      await db.update('posts',
-        { title, content },
-        { id: postId }
-      );
+      await db.collection('posts').doc(postId).update({
+        title,
+        content,
+        updated_at: new Date().toISOString()
+      });
 
       // 수정된 게시글 정보 조회 (작성자 이름 포함)
-      const updatedPost = await db.selectOne('posts', { id: postId });
-      const author = await db.selectOne('users', { id: updatedPost.author_id });
+      const updatedPostDoc = await db.collection('posts').doc(postId).get();
+      const updatedPost = { id: updatedPostDoc.id, ...updatedPostDoc.data() };
+
+      const authorDoc = await db.collection('users').doc(updatedPost.author_id).get();
+      const author = authorDoc.exists ? { id: authorDoc.id, ...authorDoc.data() } : null;
 
       const responsePost = {
         ...updatedPost,
@@ -178,24 +201,31 @@ const postsController = {
   deletePost: async (req, res) => {
     try {
       const db = getDb();
-      const postId = parseInt(req.params.id);
+      const postId = req.params.id;
       const userId = req.user.id;
 
       // 게시글 작성자 확인
-      const post = await db.selectOne('posts', { id: postId });
-      if (!post) {
+      const postDoc = await db.collection('posts').doc(postId).get();
+      if (!postDoc.exists) {
         return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
       }
+
+      const post = { id: postDoc.id, ...postDoc.data() };
 
       if (post.author_id !== userId) {
         return res.status(403).json({ error: '게시글을 삭제할 권한이 없습니다.' });
       }
 
       // 관련 댓글들도 함께 삭제
-      await db.delete('comments', { post_id: postId });
+      const commentsSnapshot = await db.collection('comments').where('post_id', '==', postId).get();
+      const batch = db.batch();
+      commentsSnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
 
       // 게시글 삭제
-      await db.delete('posts', { id: postId });
+      await db.collection('posts').doc(postId).delete();
 
       res.json({ message: '게시글이 삭제되었습니다.' });
     } catch (err) {

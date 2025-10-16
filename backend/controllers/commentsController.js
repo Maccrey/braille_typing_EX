@@ -1,15 +1,18 @@
-const { getDb } = require('../config/database');
+const { getDb } = require('../config/firebase');
 
 const commentsController = {
   // 특정 게시글의 댓글 조회 (계층구조)
   getCommentsByPostId: async (req, res) => {
     try {
       const db = getDb();
-      const postId = parseInt(req.params.postId);
+      const postId = req.params.postId;
 
       // 댓글과 사용자 정보를 조회
-      const comments = await db.select('comments', { post_id: postId });
-      const users = await db.select('users');
+      const commentsSnapshot = await db.collection('comments').where('post_id', '==', postId).get();
+      const comments = commentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      const usersSnapshot = await db.collection('users').get();
+      const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       // 사용자 정보를 맵으로 변환
       const userMap = new Map();
@@ -59,7 +62,7 @@ const commentsController = {
   createComment: async (req, res) => {
     try {
       const db = getDb();
-      const postId = parseInt(req.params.postId);
+      const postId = req.params.postId;
       const { content, parentCommentId } = req.body;
       const authorId = req.user.id;
 
@@ -68,38 +71,40 @@ const commentsController = {
       }
 
       // 게시글 존재 확인
-      const post = await db.selectOne('posts', { id: postId });
-      if (!post) {
+      const postDoc = await db.collection('posts').doc(postId).get();
+      if (!postDoc.exists) {
         return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
       }
 
       // 부모 댓글이 있는 경우 존재 확인
       if (parentCommentId) {
-        const parentComment = await db.selectOne('comments', {
-          id: parseInt(parentCommentId),
-          post_id: postId
-        });
-        if (!parentComment) {
+        const parentCommentDoc = await db.collection('comments').doc(parentCommentId).get();
+        if (!parentCommentDoc.exists || parentCommentDoc.data().post_id !== postId) {
           return res.status(400).json({ error: '부모 댓글을 찾을 수 없습니다.' });
         }
       }
 
+      const now = new Date().toISOString();
+
       // 댓글 생성
       const commentData = {
         post_id: postId,
-        parent_comment_id: parentCommentId ? parseInt(parentCommentId) : null,
+        parent_comment_id: parentCommentId || null,
         content: content.trim(),
-        author_id: authorId
+        author_id: authorId,
+        created_at: now,
+        updated_at: null
       };
 
-      const result = await db.insert('comments', commentData);
+      const commentRef = await db.collection('comments').add(commentData);
 
       // 생성된 댓글 정보 조회 (작성자 이름 포함)
-      const createdComment = await db.selectOne('comments', { id: result.lastID });
-      const author = await db.selectOne('users', { id: authorId });
+      const authorDoc = await db.collection('users').doc(authorId).get();
+      const author = authorDoc.exists ? { id: authorDoc.id, ...authorDoc.data() } : null;
 
       const responseComment = {
-        ...createdComment,
+        id: commentRef.id,
+        ...commentData,
         author_name: author?.username || 'Unknown',
         children: []
       };
@@ -115,7 +120,7 @@ const commentsController = {
   updateComment: async (req, res) => {
     try {
       const db = getDb();
-      const commentId = parseInt(req.params.id);
+      const commentId = req.params.id;
       const { content } = req.body;
       const userId = req.user.id;
 
@@ -124,24 +129,29 @@ const commentsController = {
       }
 
       // 댓글 작성자 확인
-      const comment = await db.selectOne('comments', { id: commentId });
-      if (!comment) {
+      const commentDoc = await db.collection('comments').doc(commentId).get();
+      if (!commentDoc.exists) {
         return res.status(404).json({ error: '댓글을 찾을 수 없습니다.' });
       }
+
+      const comment = { id: commentDoc.id, ...commentDoc.data() };
 
       if (comment.author_id !== userId) {
         return res.status(403).json({ error: '댓글을 수정할 권한이 없습니다.' });
       }
 
       // 댓글 수정
-      await db.update('comments',
-        { content: content.trim() },
-        { id: commentId }
-      );
+      await db.collection('comments').doc(commentId).update({
+        content: content.trim(),
+        updated_at: new Date().toISOString()
+      });
 
       // 수정된 댓글 정보 조회 (작성자 이름 포함)
-      const updatedComment = await db.selectOne('comments', { id: commentId });
-      const author = await db.selectOne('users', { id: updatedComment.author_id });
+      const updatedCommentDoc = await db.collection('comments').doc(commentId).get();
+      const updatedComment = { id: updatedCommentDoc.id, ...updatedCommentDoc.data() };
+
+      const authorDoc = await db.collection('users').doc(updatedComment.author_id).get();
+      const author = authorDoc.exists ? { id: authorDoc.id, ...authorDoc.data() } : null;
 
       const responseComment = {
         ...updatedComment,
@@ -160,24 +170,31 @@ const commentsController = {
   deleteComment: async (req, res) => {
     try {
       const db = getDb();
-      const commentId = parseInt(req.params.id);
+      const commentId = req.params.id;
       const userId = req.user.id;
 
       // 댓글 작성자 확인
-      const comment = await db.selectOne('comments', { id: commentId });
-      if (!comment) {
+      const commentDoc = await db.collection('comments').doc(commentId).get();
+      if (!commentDoc.exists) {
         return res.status(404).json({ error: '댓글을 찾을 수 없습니다.' });
       }
+
+      const comment = { id: commentDoc.id, ...commentDoc.data() };
 
       if (comment.author_id !== userId) {
         return res.status(403).json({ error: '댓글을 삭제할 권한이 없습니다.' });
       }
 
       // 대댓글들도 함께 삭제
-      await db.delete('comments', { parent_comment_id: commentId });
+      const childCommentsSnapshot = await db.collection('comments').where('parent_comment_id', '==', commentId).get();
+      const batch = db.batch();
+      childCommentsSnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
 
       // 댓글 삭제
-      await db.delete('comments', { id: commentId });
+      await db.collection('comments').doc(commentId).delete();
 
       res.json({ message: '댓글이 삭제되었습니다.' });
     } catch (err) {

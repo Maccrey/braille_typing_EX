@@ -1,4 +1,4 @@
-const { getDb } = require('../config/database');
+const { getDb } = require('../config/firebase');
 
 const getUserStats = async (req, res) => {
   try {
@@ -7,15 +7,31 @@ const getUserStats = async (req, res) => {
     const db = getDb();
 
     // Get total practice time and session count from practice_logs
-    const userPracticeLogs = await db.select('practice_logs', { user_id: userId });
+    const practiceLogsSnapshot = await db.collection('practice_logs')
+      .where('user_id', '==', userId)
+      .get();
+
+    const userPracticeLogs = [];
+    practiceLogsSnapshot.forEach(doc => {
+      userPracticeLogs.push({ id: doc.id, ...doc.data() });
+    });
+
     const practiceStats = {
       total_practice_time: userPracticeLogs.reduce((sum, log) => sum + (log.duration_seconds || 0), 0),
       total_sessions: userPracticeLogs.length
     };
     console.log('📊 Practice stats for user', userId, ':', practiceStats);
 
-    // Get total attendance days from JSON database
-    const attendanceRecords = await db.select('attendance', { user_id: userId });
+    // Get total attendance days from Firestore
+    const attendanceSnapshot = await db.collection('attendance')
+      .where('user_id', '==', userId)
+      .get();
+
+    const attendanceRecords = [];
+    attendanceSnapshot.forEach(doc => {
+      attendanceRecords.push({ id: doc.id, ...doc.data() });
+    });
+
     const totalattendanceDays = attendanceRecords.length;
 
     // Get normal work days count
@@ -110,8 +126,16 @@ const getattendanceData = async (req, res) => {
     // If no month specified, use current month
     const targetMonth = month || new Date().toISOString().slice(0, 7);
 
-    // Get all attendance records for the user from JSON database
-    const allAttendance = await db.select('attendance', { user_id: userId });
+    // Get all attendance records for the user from Firestore
+    const allAttendanceSnapshot = await db.collection('attendance')
+      .where('user_id', '==', userId)
+      .get();
+
+    const allAttendance = [];
+    allAttendanceSnapshot.forEach(doc => {
+      allAttendance.push({ id: doc.id, ...doc.data() });
+    });
+
     console.log(`📊 Found ${allAttendance.length} attendance records for user ${userId}`);
 
     // Filter for the specified month
@@ -157,16 +181,19 @@ const checkIn = async (req, res) => {
     const db = getDb();
 
     // Check if already checked in today
-    const existingRecord = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT * FROM attendance WHERE user_id = ? AND date = ?',
-        [userId, today],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const existingRecordSnapshot = await db.collection('attendance')
+      .where('user_id', '==', userId)
+      .where('date', '==', today)
+      .get();
+
+    let existingRecord = null;
+    let existingDocId = null;
+
+    if (!existingRecordSnapshot.empty) {
+      const doc = existingRecordSnapshot.docs[0];
+      existingRecord = doc.data();
+      existingDocId = doc.id;
+    }
 
     if (existingRecord && existingRecord.check_in_time) {
       return res.status(400).json({
@@ -177,26 +204,16 @@ const checkIn = async (req, res) => {
 
     // Insert or update attendance record
     if (existingRecord) {
-      await new Promise((resolve, reject) => {
-        db.run(
-          'UPDATE attendance SET check_in_time = ?, created_at = CURRENT_TIMESTAMP WHERE id = ?',
-          [currentTime, existingRecord.id],
-          function(err) {
-            if (err) reject(err);
-            else resolve(this.changes);
-          }
-        );
+      await db.collection('attendance').doc(existingDocId).update({
+        check_in_time: currentTime,
+        created_at: now.toISOString()
       });
     } else {
-      await new Promise((resolve, reject) => {
-        db.run(
-          'INSERT INTO attendance (user_id, date, check_in_time, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
-          [userId, today, currentTime],
-          function(err) {
-            if (err) reject(err);
-            else resolve(this.lastID);
-          }
-        );
+      await db.collection('attendance').add({
+        user_id: userId,
+        date: today,
+        check_in_time: currentTime,
+        created_at: now.toISOString()
       });
     }
 
@@ -224,18 +241,22 @@ const checkOut = async (req, res) => {
     const db = getDb();
 
     // Check if already checked in today
-    const existingRecord = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT * FROM attendance WHERE user_id = ? AND date = ?',
-        [userId, today],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const existingRecordSnapshot = await db.collection('attendance')
+      .where('user_id', '==', userId)
+      .where('date', '==', today)
+      .get();
 
-    if (!existingRecord || !existingRecord.check_in_time) {
+    if (existingRecordSnapshot.empty) {
+      return res.status(400).json({
+        error: 'Must check in first'
+      });
+    }
+
+    const doc = existingRecordSnapshot.docs[0];
+    const existingRecord = doc.data();
+    const existingDocId = doc.id;
+
+    if (!existingRecord.check_in_time) {
       return res.status(400).json({
         error: 'Must check in first'
       });
@@ -259,15 +280,9 @@ const checkOut = async (req, res) => {
     const isWorkDay = checkInTime <= workDayStart && checkOutTime >= workDayEnd;
 
     // Update attendance record
-    await new Promise((resolve, reject) => {
-      db.run(
-        'UPDATE attendance SET check_out_time = ?, is_work_day = ? WHERE id = ?',
-        [currentTime, isWorkDay ? 1 : 0, existingRecord.id],
-        function(err) {
-          if (err) reject(err);
-          else resolve(this.changes);
-        }
-      );
+    await db.collection('attendance').doc(existingDocId).update({
+      check_out_time: currentTime,
+      is_work_day: isWorkDay ? 1 : 0
     });
 
     res.status(200).json({
@@ -293,25 +308,29 @@ const getTodayAttendance = async (req, res) => {
 
     const db = getDb();
 
-    const todayRecord = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT * FROM attendance WHERE user_id = ? AND date = ?',
-        [userId, today],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const todayRecordSnapshot = await db.collection('attendance')
+      .where('user_id', '==', userId)
+      .where('date', '==', today)
+      .get();
 
-    // Parse work_details if it exists
-    if (todayRecord && todayRecord.work_details) {
-      try {
-        todayRecord.work_details = JSON.parse(todayRecord.work_details);
-      } catch (e) {
-        todayRecord.work_details = [];
+    let todayRecord = null;
+
+    if (!todayRecordSnapshot.empty) {
+      const doc = todayRecordSnapshot.docs[0];
+      todayRecord = { id: doc.id, ...doc.data() };
+
+      // Parse work_details if it exists (if stored as string)
+      if (todayRecord.work_details) {
+        if (typeof todayRecord.work_details === 'string') {
+          try {
+            todayRecord.work_details = JSON.parse(todayRecord.work_details);
+          } catch (e) {
+            todayRecord.work_details = [];
+          }
+        }
       }
     }
+
     res.status(200).json({
       date: today,
       attendance: todayRecord || null
@@ -340,40 +359,31 @@ const addWorkItem = async (req, res) => {
     const db = getDb();
 
     // Get or create today's attendance record
-    let attendanceRecord = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT * FROM attendance WHERE user_id = ? AND date = ?',
-        [userId, today],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const attendanceRecordSnapshot = await db.collection('attendance')
+      .where('user_id', '==', userId)
+      .where('date', '==', today)
+      .get();
 
+    let attendanceDocId = null;
     let workDetails = [];
 
-    if (attendanceRecord) {
+    if (!attendanceRecordSnapshot.empty) {
+      const doc = attendanceRecordSnapshot.docs[0];
+      attendanceDocId = doc.id;
+      const attendanceRecord = doc.data();
+
       // Parse existing work details
       if (attendanceRecord.work_details) {
-        try {
-          workDetails = JSON.parse(attendanceRecord.work_details);
-        } catch (e) {
-          workDetails = [];
+        if (typeof attendanceRecord.work_details === 'string') {
+          try {
+            workDetails = JSON.parse(attendanceRecord.work_details);
+          } catch (e) {
+            workDetails = [];
+          }
+        } else if (Array.isArray(attendanceRecord.work_details)) {
+          workDetails = attendanceRecord.work_details;
         }
       }
-    } else {
-      // Create new attendance record
-      await new Promise((resolve, reject) => {
-        db.run(
-          'INSERT INTO attendance (user_id, date, work_details, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
-          [userId, today, '[]'],
-          function(err) {
-            if (err) reject(err);
-            else resolve(this.lastID);
-          }
-        );
-      });
     }
 
     // Add new work item
@@ -386,21 +396,19 @@ const addWorkItem = async (req, res) => {
 
     workDetails.push(newWorkItem);
 
-    // Update attendance record
-    await new Promise((resolve, reject) => {
-      db.run(
-        attendanceRecord
-          ? 'UPDATE attendance SET work_details = ? WHERE user_id = ? AND date = ?'
-          : 'INSERT INTO attendance (work_details, user_id, date, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
-        attendanceRecord
-          ? [JSON.stringify(workDetails), userId, today]
-          : [JSON.stringify(workDetails), userId, today],
-        function(err) {
-          if (err) reject(err);
-          else resolve(this.changes || this.lastID);
-        }
-      );
-    });
+    // Update or create attendance record
+    if (attendanceDocId) {
+      await db.collection('attendance').doc(attendanceDocId).update({
+        work_details: workDetails
+      });
+    } else {
+      await db.collection('attendance').add({
+        user_id: userId,
+        date: today,
+        work_details: workDetails,
+        created_at: new Date().toISOString()
+      });
+    }
 
     res.status(201).json({
       message: 'Work item added successfully',
@@ -426,27 +434,39 @@ const updateWorkItem = async (req, res) => {
     const db = getDb();
 
     // Get today's attendance record
-    const attendanceRecord = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT * FROM attendance WHERE user_id = ? AND date = ?',
-        [userId, today],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const attendanceRecordSnapshot = await db.collection('attendance')
+      .where('user_id', '==', userId)
+      .where('date', '==', today)
+      .get();
 
-    if (!attendanceRecord || !attendanceRecord.work_details) {
+    if (attendanceRecordSnapshot.empty) {
+      return res.status(404).json({
+        error: 'No work items found for today'
+      });
+    }
+
+    const doc = attendanceRecordSnapshot.docs[0];
+    const attendanceRecord = doc.data();
+    const attendanceDocId = doc.id;
+
+    if (!attendanceRecord.work_details) {
       return res.status(404).json({
         error: 'No work items found for today'
       });
     }
 
     let workDetails = [];
-    try {
-      workDetails = JSON.parse(attendanceRecord.work_details);
-    } catch (e) {
+    if (typeof attendanceRecord.work_details === 'string') {
+      try {
+        workDetails = JSON.parse(attendanceRecord.work_details);
+      } catch (e) {
+        return res.status(400).json({
+          error: 'Invalid work details format'
+        });
+      }
+    } else if (Array.isArray(attendanceRecord.work_details)) {
+      workDetails = attendanceRecord.work_details;
+    } else {
       return res.status(400).json({
         error: 'Invalid work details format'
       });
@@ -469,15 +489,8 @@ const updateWorkItem = async (req, res) => {
     workDetails[itemIndex].updated_at = new Date().toISOString();
 
     // Update attendance record
-    await new Promise((resolve, reject) => {
-      db.run(
-        'UPDATE attendance SET work_details = ? WHERE user_id = ? AND date = ?',
-        [JSON.stringify(workDetails), userId, today],
-        function(err) {
-          if (err) reject(err);
-          else resolve(this.changes);
-        }
-      );
+    await db.collection('attendance').doc(attendanceDocId).update({
+      work_details: workDetails
     });
 
     res.status(200).json({
@@ -501,9 +514,19 @@ const getDailyRanking = async (req, res) => {
 
     const db = getDb();
 
-    // Get users with practice time for the specified date
-    const users = await db.select('users', {});
-    const practiceLogs = await db.select('practice_logs', {});
+    // Get all users from Firestore
+    const usersSnapshot = await db.collection('users').get();
+    const users = [];
+    usersSnapshot.forEach(doc => {
+      users.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Get all practice logs from Firestore
+    const practiceLogsSnapshot = await db.collection('practice_logs').get();
+    const practiceLogs = [];
+    practiceLogsSnapshot.forEach(doc => {
+      practiceLogs.push({ id: doc.id, ...doc.data() });
+    });
 
     // Filter practice logs for the target date
     const targetDateLogs = practiceLogs.filter(log => {

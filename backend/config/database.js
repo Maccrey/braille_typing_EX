@@ -1,7 +1,8 @@
-const { getDb, closeDb, initDatabase } = require('./jsonDatabase');
+const { getDb, getAuth, closeDb, initializeFirebase } = require('./firebase');
 
 module.exports = {
   getDb,
+  getAuth,
   closeDb,
-  initDatabase
+  initDatabase: initializeFirebase
 };

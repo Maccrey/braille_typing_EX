@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { getDb } = require('../config/database');
+const { getDb } = require('../config/firebase');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'braille-typing-practice-jwt-secret-2025';
 
@@ -13,20 +13,32 @@ const authMiddleware = async (req, res, next) => {
     if (req.session && req.session.user) {
       console.log('✅ Session auth successful');
 
-      // Get user role from database for session-based auth
+      // Get user role from Firestore for session-based auth
       try {
         const db = getDb();
-        const user = await db.selectOne('users', { id: req.session.user.id });
+        const userDoc = await db.collection('users').doc(req.session.user.id).get();
 
-        req.user = {
-          id: req.session.user.id,
-          username: req.session.user.username,
-          role: user?.role || 'user'
-        };
-        console.log('👤 Set req.user from session with role:', req.user);
-        return next();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          req.user = {
+            id: req.session.user.id,
+            username: req.session.user.username,
+            role: userData.role || 'user'
+          };
+          console.log('👤 Set req.user from session with role:', req.user);
+          return next();
+        } else {
+          console.log('⚠️ User document not found in Firestore');
+          req.user = {
+            id: req.session.user.id,
+            username: req.session.user.username,
+            role: 'user'
+          };
+          console.log('👤 Set req.user from session (default role):', req.user);
+          return next();
+        }
       } catch (dbError) {
-        console.log('⚠️ Failed to get user role from database, using default:', dbError.message);
+        console.log('⚠️ Failed to get user role from Firestore, using default:', dbError.message);
         req.user = {
           id: req.session.user.id,
           username: req.session.user.username,

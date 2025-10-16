@@ -3,9 +3,15 @@
 🔤 **시각장애인을 위한 웹 기반 점자 타자 연습 애플리케이션**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![SQLite](https://img.shields.io/badge/Database-SQLite-blue.svg)](https://www.sqlite.org/)
+[![Firebase](https://img.shields.io/badge/Database-Firebase-yellow.svg)](https://firebase.google.com/)
+[![Firestore](https://img.shields.io/badge/Firestore-NoSQL-blue.svg)](https://firebase.google.com/docs/firestore)
+[![CloudType](https://img.shields.io/badge/Deploy-CloudType-black.svg)](https://cloudtype.io/)
 [![Playwright](https://img.shields.io/badge/E2E-Playwright-orange.svg)](https://playwright.dev/)
 [![Jest](https://img.shields.io/badge/Test-Jest-red.svg)](https://jestjs.io/)
+
+## 🚀 빠른 배포
+
+**CloudType에 5분 안에 배포하기** → [📖 배포 가이드 보기](./CLOUDTYPE_DEPLOY_GUIDE.md)
 
 ## 📋 목차
 
