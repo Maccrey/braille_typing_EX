@@ -359,6 +359,40 @@
 - **완료 조건**: 스크립트 실행 시 데이터 이전
 - **커밋**: `feat: Create data migration script from JSON to Firestore`
 
+---
+
+## Phase 8: Firebase 데이터베이스 변경 테스트 계획 🔄
+
+### Task 8.1: 인증/대시보드 회귀 테스트 추가 ⏳
+- **목표**: Firebase Authentication + Firestore 전환 후에도 로그인/회원가입/메인 대시보드가 기존 UX를 유지함을 Playwright로 보장
+- **구현**:
+  - Firebase 호출을 테스트에서 주입 가능한 mock으로 추상화 (예: `window.__createMockApiClient`)
+  - 로그인/회원가입 성공·실패 시나리오, 자동 리다이렉트, 토큰 저장/삭제 절차 검증
+  - 메인 페이지가 Firestore 데이터를 불러와 통계 카드 및 카테고리를 정상 렌더링하는지 확인
+- **테스트**: `cd frontend && npm test`
+- **완료 조건**: 신규 테스트가 deterministic 하게 통과하고, Firebase 의존성 없이도 CI에서 실행 가능
+- **커밋**: `test: cover firebase auth/dashboard flows`
+
+### Task 8.2: 연습(Practice) Firebase 데이터 경로 검증 🔄
+- **목표**: `/practice.html`이 Firestore 점자 데이터 + 연습 로그를 사용해도 기존 키보드 UX를 유지함을 자동화 테스트로 검증
+- **구현**:
+  - `window.apiClient.getRandomBrailleCharacter` / `recordPracticeSession` mock 으로 다양한 패턴 및 세션 시나리오 테스트
+  - 다중 블록, 힌트, 백스페이스, 세션 종료시 로그 기록 등 핵심 동작 검증
+  - 기본 카테고리 ID 전달/미전달 케이스 커버
+- **테스트**: Playwright practice spec 실행 (`npm test`)
+- **완료 조건**: 최소 3개의 핵심 사용자 여정(문제 로딩 → 입력 → 로그 기록)이 자동화로 커버되고, Firebase 전환 이후에도 회귀 가능
+- **커밋**: `test: add firebase practice regression`
+
+### Task 8.3: 통계/출석 Firestore 집계 테스트 ⏳
+- **목표**: Firestore 기반 통계/출석 계산 로직이 기존 REST 응답과 동일한 포맷을 제공하는지 검증
+- **구현**:
+  - mock 데이터로 다양한 `practice_logs`/`attendance` 케이스 구성 (주간 합계, 세션 수, 중복 날짜 등)
+  - `statistics.html`이 mock 응답으로 카드, 차트, 최근 세션 리스트를 정확히 렌더링하는지 검사
+  - 주간 목표 달성률, 평균 세션 시간 계산 공식 회귀 테스트 포함
+- **테스트**: Playwright statistics spec 실행 (`npm test`)
+- **완료 조건**: Firestore 집계 포맷 변경 시 테스트가 즉시 실패하도록 커버리지 확보
+- **커밋**: `test: ensure firestore stats rendering`
+
 ### Task 7.2: 사용자 데이터 마이그레이션 ⏳
 - **목표**: users 컬렉션 데이터 이전
 - **구현**:
