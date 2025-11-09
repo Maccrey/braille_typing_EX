@@ -63,8 +63,7 @@
 
         // 강제로 로그인 페이지 표시
         if (window.location.pathname !== '/login.html') {
-            alert('무한 루프가 감지되어 로그인 페이지로 이동합니다.');
-            window.location.href = '/login.html';
+            window.location.href = 'frontend/login.html';
         }
         return;
     }
@@ -107,8 +106,8 @@
             const token = localStorage.getItem('authToken');
             if (!token) {
                 console.log('🔧 No auth token, forcing redirect to login');
-                window.trackRedirect('main.html', 'login.html');
-                window.location.href = '/login.html';
+                window.trackRedirect('main.html', 'frontend/login.html');
+                window.location.href = 'frontend/login.html';
             }
         }, 3000);
     }

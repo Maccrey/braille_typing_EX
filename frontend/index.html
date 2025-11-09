@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app https://*.firebaseapp.com https://*.cloudfunctions.net https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>점자 타자 연습기</title>
     <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
@@ -246,110 +247,42 @@
         </div>
     </div>
 
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <!-- Your web app's Firebase configuration -->
+    <script src="js/firebase-config.js"></script>
+
     <script>
-        // 로그인 상태 체크 및 자동 리다이렉트 (무한 루프 방지 강화)
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🏠 Index page loaded');
-            const token = localStorage.getItem('authToken');
+        document.addEventListener('DOMContentLoaded', () => {
             const appStatus = document.getElementById('app-status');
             const pageContent = document.getElementById('page-content');
 
-            // 무한 루프 방지를 위한 타이머 설정
-            const redirectTimer = setTimeout(() => {
-                console.log('🚨 Redirect timeout reached, showing login options');
-                showLoginOptions();
-            }, 5000);
+            firebase.auth().onAuthStateChanged(user => {
+                if (user) {
+                    // User is signed in.
+                    appStatus.innerHTML = `
+                        <div class="loading-spinner"></div>
+                        ✅ 로그인 상태입니다. 메인 페이지로 이동합니다...
+                    `;
+                    appStatus.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%)';
+                    appStatus.style.borderColor = 'rgba(76, 175, 80, 0.3)';
+                    appStatus.style.color = '#4CAF50';
 
-            function showLoginOptions() {
-                clearTimeout(redirectTimer);
-                appStatus.innerHTML = '🎉 애플리케이션이 정상적으로 로드되었습니다!';
-                pageContent.style.display = 'block';
-
-                // 페이드인 애니메이션
-                pageContent.style.opacity = '0';
-                pageContent.style.transform = 'translateY(20px)';
-                pageContent.style.transition = 'all 0.5s ease';
-
-                setTimeout(() => {
-                    pageContent.style.opacity = '1';
-                    pageContent.style.transform = 'translateY(0)';
-                }, 100);
-            }
-
-            // 애니메이션 효과를 위한 딜레이
-            setTimeout(async () => {
-                console.log('🔍 Checking authentication token:', token ? 'Present' : 'None');
-
-                // JWT 토큰이 있는지 확인
-                if (token && token.includes('.')) {
-                    try {
-                        const payload = JSON.parse(atob(token.split('.')[1]));
-                        const currentTime = Math.floor(Date.now() / 1000);
-
-                        console.log('🕐 Token expiry check:', payload.exp, 'vs', currentTime);
-
-                        if (payload.exp && payload.exp > currentTime) {
-                            console.log('✅ Token appears valid, checking with server...');
-
-                            try {
-                                const authResponse = await fetch('/api/auth/user', {
-                                    headers: {
-                                        'Authorization': `Bearer ${token}`,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    credentials: 'include',
-                                    timeout: 3000 // 3초 타임아웃
-                                });
-
-                                if (authResponse.ok) {
-                                    const userData = await authResponse.json();
-                                    console.log('✅ Server authentication successful:', userData.user?.username);
-
-                                    clearTimeout(redirectTimer);
-
-                                    appStatus.innerHTML = `
-                                        <div class="loading-spinner"></div>
-                                        ✅ 로그인 상태입니다. 메인 페이지로 이동합니다...
-                                    `;
-                                    appStatus.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%)';
-                                    appStatus.style.borderColor = 'rgba(76, 175, 80, 0.3)';
-                                    appStatus.style.color = '#4CAF50';
-
-                                    setTimeout(() => {
-                                        console.log('🔄 Redirecting to main.html');
-                                        if (window.trackRedirect) {
-                                            window.trackRedirect('index.html', 'main.html');
-                                        }
-                                        window.location.href = 'main.html';
-                                    }, 1500);
-                                    return;
-                                } else {
-                                    console.log('❌ Server authentication failed:', authResponse.status);
-                                    localStorage.removeItem('authToken');
-                                    localStorage.removeItem('userData');
-                                }
-                            } catch (serverError) {
-                                console.log('🚨 Server auth check failed:', serverError.message);
-                                localStorage.removeItem('authToken');
-                                localStorage.removeItem('userData');
-                            }
-                        } else {
-                            console.log('⏰ Token expired, removing');
-                            localStorage.removeItem('authToken');
-                            localStorage.removeItem('userData');
-                        }
-                    } catch (error) {
-                        console.log('❌ Invalid token format, removing:', error.message);
-                        localStorage.removeItem('authToken');
-                        localStorage.removeItem('userData');
-                    }
+                    setTimeout(() => {
+                        window.location.href = 'main.html';
+                    }, 1500);
                 } else {
-                    console.log('ℹ️ No valid token found');
+                    // User is signed out.
+                    appStatus.innerHTML = '🎉 애플리케이션이 정상적으로 로드되었습니다!';
+                    pageContent.style.display = 'block';
                 }
-
-                // 로그인하지 않은 상태라면 로그인/회원가입 옵션 표시
-                showLoginOptions();
-            }, 800);
+            });
         });
     </script>
     <script src="js/storage-cleaner.js"></script>

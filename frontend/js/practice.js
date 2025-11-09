@@ -28,17 +28,20 @@ class BraillePractice {
         this.inactivityTimer = null;
         this.inactivityTimeout = 30000; // 30 seconds
 
-        this.init();
+        this.readyPromise = this.init();
     }
 
-    init() {
+    async init() {
         this.bindEvents();
-        this.checkAuthentication();
         this.setupResponsiveLayout();
 
-        // Get category ID from URL params or use default
+        const isAuthenticated = await this.checkAuthentication();
+        if (!isAuthenticated) {
+            return;
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
-        this.categoryId = urlParams.get('categoryId') || 5; // Default to public category 5
+        this.categoryId = urlParams.get('categoryId') || null;
     }
 
     setupResponsiveLayout() {
@@ -174,33 +177,66 @@ class BraillePractice {
         this.startInactivityTimer();
     }
 
-    checkAuthentication() {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
+    async checkAuthentication() {
+        try {
+            const user = await window.apiClient.getCurrentUser();
+            if (!user) {
+                throw new Error('로그인이 필요합니다.');
+            }
+            this.currentUser = user;
+            return true;
+        } catch (error) {
+            console.warn('Authentication check failed:', error.message || error);
             this.showError('로그인이 필요합니다.');
             setTimeout(() => {
                 window.location.href = 'login.html';
-            }, 2000);
+            }, 1500);
             return false;
         }
-        return true;
     }
 
     async startPractice(categoryId) {
+        if (this.readyPromise) {
+            await this.readyPromise;
+        }
+
         if (categoryId) {
             this.categoryId = categoryId;
         }
 
-        // Start practice session tracking
+        if (!this.categoryId) {
+            this.categoryId = await this.findFallbackCategoryId();
+        }
+
+        if (!this.categoryId) {
+            this.updateProgress('연습 가능한 카테고리가 없습니다. 먼저 카테고리를 만들어주세요.');
+            return;
+        }
+
         this.sessionStartTime = Date.now();
-        this.lastRecordedTime = this.sessionStartTime; // Initialize last recorded time
+        this.lastRecordedTime = this.sessionStartTime;
         this.practiceSessionData.startTime = this.sessionStartTime;
         console.log('📊 Practice session started at:', new Date(this.sessionStartTime));
 
-        // Start UI update timer
         this.startUIUpdates();
-
         await this.loadNextCharacter();
+    }
+
+    async findFallbackCategoryId() {
+        try {
+            const myCategories = await window.apiClient.getMyCategories();
+            if (Array.isArray(myCategories) && myCategories.length > 0) {
+                return myCategories[0].id;
+            }
+
+            const publicCategories = await window.apiClient.getPublicCategories();
+            if (Array.isArray(publicCategories) && publicCategories.length > 0) {
+                return publicCategories[0].id;
+            }
+        } catch (error) {
+            console.error('Failed to resolve fallback category:', error);
+        }
+        return null;
     }
 
     async loadNextCharacter() {
@@ -209,63 +245,22 @@ class BraillePractice {
 
             // Reset validation state first
             this.resetValidationState();
-
-            const token = localStorage.getItem('authToken');
-
-            if (!token) {
-                console.error('❌ No auth token found');
-                this.updateProgress('로그인이 필요합니다.');
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
-                return;
+            if (!this.categoryId) {
+                this.categoryId = await this.findFallbackCategoryId();
+                if (!this.categoryId) {
+                    this.updateProgress('연습 가능한 카테고리가 없습니다.');
+                    return;
+                }
             }
 
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-
-            const response = await fetch(`/api/protected/braille/${this.categoryId}/random`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                signal: controller.signal
-            });
-
-            clearTimeout(timeoutId);
-
-            if (response.status === 401) {
-                console.error('❌ Unauthorized - invalid token');
-                localStorage.removeItem('authToken');
-                this.updateProgress('인증이 만료되었습니다. 로그인 페이지로 이동합니다.');
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
-                return;
-            }
-
-            if (response.status === 404) {
-                console.error('❌ Category not found or no braille data');
-                this.updateProgress('카테고리가 존재하지 않거나 점자 데이터가 없습니다.');
-                setTimeout(() => {
-                    window.location.href = 'main.html';
-                }, 3000);
-                return;
-            }
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `Server error: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('📦 Received data:', data);
+            const data = await window.apiClient.getRandomBrailleCharacter(this.categoryId);
+            console.log('📦 Received braille data:', data);
             this.currentChar = data.character;
             this.currentCharDescription = data.description;
-            this.currentBraillePattern = JSON.parse(data.braille_pattern);
-            console.log('🎯 Parsed braille pattern:', this.currentBraillePattern);
+            this.currentBraillePattern = data.braille_pattern;
             this.currentBlockIndex = 0;
             this.pressedDots.clear();
+            this.dotInputOrder = [];
 
             this.displayCharacter();
             this.displayCharacterDescription();
@@ -275,17 +270,12 @@ class BraillePractice {
 
         } catch (error) {
             console.error('Error loading character:', error);
-
-            if (error.name === 'AbortError') {
-                this.updateProgress('서버 응답이 지연되고 있습니다. 네트워크 연결을 확인해주세요.');
-            } else if (error.message.includes('fetch')) {
-                this.updateProgress('네트워크 연결 오류입니다. 잠시 후 다시 시도해주세요.');
-            } else {
-                this.updateProgress('문제를 불러오는데 실패했습니다. 메인 페이지로 돌아갑니다.');
-                setTimeout(() => {
-                    window.location.href = 'main.html';
-                }, 3000);
-            }
+            const message = error.message || '문제를 불러오는데 실패했습니다. 메인 페이지로 돌아갑니다.';
+            this.updateProgress(message);
+            this.showError(message);
+            setTimeout(() => {
+                window.location.href = 'main.html';
+            }, 3000);
         }
     }
 
@@ -812,36 +802,19 @@ class BraillePractice {
                 return;
             }
 
-            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-            const token = localStorage.getItem('authToken');
-
             console.log('📝 Recording practice session:', {
                 totalDuration: duration,
                 characters: this.practiceSessionData.charactersCompleted,
-                date: today
+                categoryId: this.categoryId
             });
 
-            const baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3001' : window.location.origin;
-            const response = await fetch(baseUrl + '/api/protected/practice/log', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    duration_seconds: duration,
-                    practiced_at: today
-                })
+            await window.apiClient.recordPracticeSession({
+                categoryId: this.categoryId,
+                durationSeconds: duration,
+                charactersCompleted: this.practiceSessionData.charactersCompleted
             });
 
-            if (response.ok) {
-                const result = await response.json();
-                console.log('✅ Practice session recorded successfully:', result);
-                this.practiceSessionData.totalTime = duration;
-            } else {
-                const error = await response.json();
-                console.error('❌ Failed to record practice session:', error);
-            }
+            this.practiceSessionData.totalTime = duration;
 
         } catch (error) {
             console.error('❌ Error recording practice session:', error);
@@ -1037,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Auto-start practice (either with provided category or default)
     const urlParams = new URLSearchParams(window.location.search);
-    const categoryId = urlParams.get('category');
+    const categoryId = urlParams.get('categoryId');
     // Always start practice, using either URL param or default category
     window.braillePractice.startPractice(categoryId);
 });

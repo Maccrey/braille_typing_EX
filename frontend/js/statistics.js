@@ -9,26 +9,22 @@ class StatisticsManager {
         this.checkAuthenticationAndLoad();
     }
 
-    checkAuthenticationAndLoad() {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            console.warn('⚠️ No auth token found, showing default state');
+    async checkAuthenticationAndLoad() {
+        try {
+            const user = await window.apiClient.getCurrentUser();
+            if (!user) {
+                throw new Error('로그인이 필요합니다.');
+            }
+            await this.loadStatistics();
+            return true;
+        } catch (error) {
+            console.warn('⚠️ Failed to load user session:', error.message || error);
             this.showDefaultState();
-            // Don't redirect immediately - give a chance for token to be set
             setTimeout(() => {
-                const tokenNow = localStorage.getItem('authToken');
-                if (!tokenNow) {
-                    console.warn('⚠️ Still no token after delay, redirecting to login');
-                    window.location.href = 'login.html';
-                } else {
-                    console.log('🔄 Token found after delay, loading statistics');
-                    this.loadStatistics();
-                }
-            }, 1000);
+                window.location.href = 'login.html';
+            }, 1500);
             return false;
         }
-        this.loadStatistics();
-        return true;
     }
 
     showDefaultState() {
@@ -39,80 +35,28 @@ class StatisticsManager {
         console.log('📊 Showing default statistics state');
     }
 
-    checkAuthentication() {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            window.location.href = 'login.html';
-            return false;
-        }
-        return true;
-    }
-
     bindEvents() {
         // Logout button
         document.getElementById('logout-btn').addEventListener('click', () => {
-            localStorage.removeItem('authToken');
-            window.location.href = 'login.html';
+            window.apiClient.logout();
         });
     }
 
     // Method to reload statistics (can be called after token is set)
     reloadStatistics() {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            console.log('🔄 Reloading statistics with token');
-            this.loadStatistics();
-        } else {
-            console.warn('⚠️ Cannot reload statistics: no auth token');
-            this.showDefaultState();
-        }
+        console.log('🔄 Reloading statistics');
+        this.loadStatistics();
     }
 
     async loadStatistics() {
         try {
             this.showLoading();
-
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                throw new Error('로그인이 필요합니다.');
-            }
-
-            console.log('🔄 Loading statistics from API...');
-            // Use the same API as main.js for consistency
-            // Construct API URL dynamically based on environment
-            const baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                ? 'http://localhost:3001'
-                : (window.location.protocol === 'file:')
-                    ? 'https://typing.maccrey.com'
-                    : window.location.origin;
-            const apiUrl = baseUrl + '/api/profile/stats';
-            console.log('🔗 Using API URL:', apiUrl);
-
-            const response = await fetch(apiUrl, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`API 요청 실패: ${response.status} - ${errorText}`);
-            }
-
-            const stats = await response.json();
-            console.log('📊 Statistics API response:', stats);
-
-            // Validate response format
-            if (typeof stats !== 'object' || stats === null) {
-                throw new Error('잘못된 통계 응답 형식입니다.');
-            }
-
+            const stats = await window.apiClient.getUserStats({ recentLimit: 10, maxLogs: 500 });
             this.displayStatistics(stats);
-
+            await this.loadRecentSessions(stats.recent_sessions);
         } catch (error) {
             console.error('Error loading statistics:', error);
-            this.showError('통계를 불러오는 중 오류가 발생했습니다: ' + error.message);
+            this.showError('통계를 불러오는 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'));
         }
     }
 
@@ -128,9 +72,6 @@ class StatisticsManager {
 
         // Update progress charts
         this.updateProgressCharts(stats);
-
-        // Load recent practice sessions
-        this.loadRecentSessions();
     }
 
     updateMainStats(stats) {
@@ -196,30 +137,12 @@ class StatisticsManager {
         document.getElementById('daily-progress-bar').style.width = `${dailyProgress}%`;
     }
 
-    async loadRecentSessions() {
+    async loadRecentSessions(preloadedSessions = null) {
         try {
-            const token = localStorage.getItem('authToken');
-            // Construct API URL dynamically based on environment
-            const baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3001' : window.location.origin;
-            const apiUrl = baseUrl + '/api/protected/practice-logs?limit=10';
-
-            const response = await fetch(apiUrl, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to load recent sessions');
-            }
-
-            const sessions = await response.json();
+            const sessions = preloadedSessions || await window.apiClient.getRecentPracticeSessions(10);
             this.displayRecentSessions(sessions);
-
         } catch (error) {
             console.error('Error loading recent sessions:', error);
-            // Show empty state if no sessions
             document.getElementById('sessions-empty').style.display = 'block';
         }
     }
@@ -245,7 +168,8 @@ class StatisticsManager {
                 weekday: 'short'
             });
 
-            const duration = Math.round(session.duration / 60);
+            const durationSeconds = session.duration_seconds ?? session.duration ?? 0;
+            const duration = Math.round(durationSeconds / 60);
             const formattedDuration = duration >= 60 ?
                 `${Math.floor(duration / 60)}시간 ${duration % 60}분` :
                 `${duration}분`;
@@ -260,6 +184,10 @@ class StatisticsManager {
                 </div>
             `;
         }).join('');
+
+        if (window.__TEST_MODE__) {
+            window.__lastRenderedSessions = sessions.map(s => ({ ...s }));
+        }
     }
 
     showLoading() {

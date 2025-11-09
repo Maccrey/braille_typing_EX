@@ -1,5 +1,16 @@
 const { defineConfig, devices } = require('@playwright/test');
 
+const useFileMode = process.env.PLAYWRIGHT_FILE_MODE === '1';
+const httpPort = 4173;
+const defaultBaseURL = `http://127.0.0.1:${httpPort}`;
+
+if (!useFileMode) {
+  process.env.PLAYWRIGHT_BASE_URL = defaultBaseURL;
+  process.env.PLAYWRIGHT_FILE_MODE = '0';
+} else {
+  process.env.PLAYWRIGHT_BASE_URL = '';
+}
+
 module.exports = defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -8,7 +19,7 @@ module.exports = defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:8080',
+    baseURL: useFileMode ? undefined : defaultBaseURL,
     trace: 'on-first-retry',
   },
 
@@ -19,9 +30,13 @@ module.exports = defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'npx http-server -p 8080',
-    port: 8080,
-    reuseExistingServer: !process.env.CI,
-  },
+  ...(useFileMode
+    ? {}
+    : {
+        webServer: {
+          command: `npx http-server -a 127.0.0.1 -p ${httpPort}`,
+          port: httpPort,
+          reuseExistingServer: !process.env.CI,
+        },
+      }),
 });

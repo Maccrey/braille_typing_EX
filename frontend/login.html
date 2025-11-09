@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app https://*.firebaseapp.com https://*.cloudfunctions.net https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>점자 타자 연습기 - 로그인</title>
     <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
@@ -174,16 +175,17 @@
             <p>점자 타자 연습기에 오신 것을 환영합니다</p>
         </div>
 
-        <form id="login-form">
+        <form id="login-form" novalidate>
             <div class="error-message" id="error-message"></div>
 
             <div class="form-group">
-                <label for="username">사용자명</label>
+                <label for="email">이메일</label>
                 <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    placeholder="사용자명을 입력하세요"
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="이메일을 입력하세요"
+                    required
                 >
             </div>
 
@@ -215,6 +217,17 @@
             <p>아직 계정이 없으신가요? <a href="signup.html">회원가입</a></p>
         </div>
     </div>
+
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <!-- Your web app's Firebase configuration -->
+    <script src="js/firebase-config.js"></script>
 
     <script src="js/storage-cleaner.js"></script>
     <script src="js/anti-loop.js"></script>
