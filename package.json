@@ -1,45 +1,14 @@
 {
-  "name": "braille-typing-practice",
+  "name": "braille-typing-ex",
   "version": "1.0.0",
-  "description": "점자 타이핑 연습 웹 애플리케이션",
-  "main": "backend/server.js",
+  "description": "점자 타자 연습기를 위한 정적 사이트 빌드 도구",
+  "private": true,
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js",
-    "test": "cd backend && npm test",
-    "build": "npm install",
-    "db:init": "echo 'Database initialization skipped - will be done at runtime'",
-    "postinstall": "echo 'Installation complete'"
+    "dev": "npm run serve --prefix frontend",
+    "test": "npm test --prefix frontend",
+    "build:pages": "node scripts/build-docs.js"
   },
-  "keywords": [
-    "braille",
-    "typing",
-    "practice",
-    "accessibility"
-  ],
-  "author": "maccrey",
-  "license": "MIT",
   "engines": {
-    "node": ">=16.0.0"
-  },
-  "dependencies": {
-    "axios": "^1.12.2",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.6.1",
-    "express": "^4.18.2",
-    "express-session": "^1.18.2",
-    "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.4",
-    "node-fetch": "^3.3.2",
-    "xlsx": "^0.18.5"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.1",
-    "supertest": "^6.3.3"
-  },
-  "jest": {
-    "testEnvironment": "node"
+    "node": ">=18.0.0"
   }
 }
