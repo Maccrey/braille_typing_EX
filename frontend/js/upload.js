@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `${API_BASE_URL}/protected/download-example`,
         `${API_BASE_URL}/protected/download-template`
     ];
+    const LOCAL_TEMPLATE_PATH = 'assets/examples/braille-example.xlsx';
 
     async function fetchExampleFile(token) {
         let lastError = null;
@@ -90,6 +91,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    async function fetchLocalTemplate() {
+        try {
+            const response = await fetch(LOCAL_TEMPLATE_PATH, { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error(`로컬 예제 파일을 가져오지 못했습니다. (HTTP ${response.status})`);
+            }
+            return response;
+        } catch (error) {
+            console.error('Local template fetch failed:', error);
+            throw new Error('예제 파일을 다운로드할 수 없습니다. 관리자에게 문의해주세요.');
+        }
+    }
+
     // Download example file functionality
     downloadExampleBtn.addEventListener('click', async function() {
         try {
@@ -103,7 +117,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const response = await fetchExampleFile(token);
+            let response;
+            try {
+                response = await fetchExampleFile(token);
+            } catch (apiError) {
+                console.warn('API 예제 파일 다운로드 실패, 로컬 템플릿 사용 시도:', apiError);
+                response = await fetchLocalTemplate();
+            }
 
             // Create blob and download link
             const blob = await response.blob();
