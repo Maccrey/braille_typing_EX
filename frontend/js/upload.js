@@ -60,7 +60,13 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (!response.ok) {
-                throw new Error('파일 다운로드에 실패했습니다.');
+                let extra = '';
+                try {
+                    extra = ` ${await response.text()}`;
+                } catch (_) {
+                    // no-op: body already consumed or not text
+                }
+                throw new Error(`파일 다운로드에 실패했습니다. (HTTP ${response.status})${extra}`);
             }
 
             // Create blob and download link
@@ -224,46 +230,61 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('📡 Response status:', response.status);
             console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
 
-            let data;
+            let rawResponse = '';
             try {
-                data = await response.json();
-                console.log('📄 Response data:', data);
-            } catch (jsonError) {
-                console.error('❌ JSON parsing error:', jsonError);
-                const responseText = await response.text();
-                console.error('📄 Raw response:', responseText);
-                throw new Error('서버 응답을 파싱할 수 없습니다: ' + responseText.substring(0, 100));
+                rawResponse = await response.text();
+            } catch (bodyError) {
+                console.error('❌ Failed to read response body:', bodyError);
             }
 
-            if (response.ok) {
-                showSuccess(`업로드가 완료되었습니다! ${data.brailleDataCount}개의 점자 데이터가 추가되었습니다.`);
+            let data = null;
+            if (rawResponse) {
+                try {
+                    data = JSON.parse(rawResponse);
+                    console.log('📄 Response data:', data);
+                } catch (jsonError) {
+                    console.warn('⚠️ Response is not valid JSON. Raw:', rawResponse);
+                }
+            }
 
-                // Reset form
-                resetForm();
-
-                // Redirect after delay
-                setTimeout(() => {
-                    window.location.href = 'main.html';
-                }, 1000);
-            } else {
+            if (!response.ok) {
                 // Handle specific error messages
-                let errorMsg = '업로드에 실패했습니다.';
-
-                if (response.status === 400) {
-                    errorMsg = data.error || errorMsg;
-                } else if (response.status === 401) {
+                if (response.status === 401) {
                     console.log('🔓 Authentication failed, forcing logout...');
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('userData');
                     sessionStorage.clear();
                     window.location.href = 'login.html';
                     return;
+                }
+
+                let errorMsg = data?.error || `업로드에 실패했습니다. (HTTP ${response.status})`;
+
+                if (response.status === 400 && data?.error) {
+                    errorMsg = data.error;
                 } else if (response.status === 413) {
                     errorMsg = '파일 크기가 너무 큽니다.';
+                } else if (!data && rawResponse) {
+                    errorMsg += `: ${rawResponse.substring(0, 100)}`;
                 }
 
                 showError(errorMsg);
+                return;
             }
+
+            if (!data) {
+                throw new Error('서버 응답을 파싱할 수 없습니다.');
+            }
+
+            showSuccess(`업로드가 완료되었습니다! ${data.brailleDataCount}개의 점자 데이터가 추가되었습니다.`);
+
+            // Reset form
+            resetForm();
+
+            // Redirect after delay
+            setTimeout(() => {
+                window.location.href = 'main.html';
+            }, 1000);
 
         } catch (error) {
             console.error('Upload error:', error);
