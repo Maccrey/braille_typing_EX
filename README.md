@@ -100,42 +100,66 @@ cd braille-typing-ex
 
 1. [Firebase Console](https://console.firebase.google.com/)에서 새 프로젝트를 생성합니다.
 2. **Authentication**, **Firestore**, **Storage** 서비스를 활성화합니다.
-3. 프로젝트 설정에서 웹 앱을 추가하고 `firebaseConfig` 객체를 복사합니다.
-4. `frontend/js/firebase-config.js` 파일을 생성하고 복사한 `firebaseConfig` 객체를 붙여넣습니다.
+3. 프로젝트 설정에서 웹 앱을 추가하고 `firebaseConfig` 객체에 포함된 값을 확인합니다.
+4. 루트에 `.env.firebase` (또는 `.env`) 파일을 만들고 아래 키를 채웁니다. 이 파일은 `.gitignore`에 의해 자동으로 무시됩니다.
 
-**`firebase-config.js` 예시:**
-```javascript
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-
-firebase.initializeApp(firebaseConfig);
-
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
+```bash
+FIREBASE_API_KEY=...
+FIREBASE_AUTH_DOMAIN=...
+FIREBASE_PROJECT_ID=...
+FIREBASE_STORAGE_BUCKET=...
+FIREBASE_MESSAGING_SENDER_ID=...
+FIREBASE_APP_ID=...
+# (선택) FIREBASE_MEASUREMENT_ID=...
+# (선택) FIREBASE_DATABASE_URL=...
 ```
+
+`npm run build:pages` 실행 시 위 키들을 읽어 `docs/js/firebase-config.js`를 자동으로 생성합니다. 필요한 경우 다른 환경 파일(.env, GitHub Actions secret 등)로 동일한 키를 제공해도 됩니다.
 
 ### 3. 프론트엔드 실행
 
 ```bash
+# 프로젝트 루트에서 실행
+npm run dev
+
+# 또는 frontend 디렉터리에서 수동 실행
 cd frontend
-
-# 의존성 설치
 npm install
-
-# 개발 서버 시작 (http-server 등)
-npx http-server -p 8080
+npm run serve
 ```
 
 ### 4. 애플리케이션 접속
 
 - 브라우저에서 `http://localhost:8080`으로 접속합니다.
+
+### 5. 배포 (GitHub Pages)
+
+1. **환경 변수 준비**
+   - 로컬에서는 `.env.firebase` 또는 `.env`에 Firebase 키를 채워둡니다.
+   - CI/CD나 GitHub Actions를 사용한다면 같은 키 이름으로 Repository Secrets를 저장한 뒤 빌드 단계에서 `.env.firebase` 파일을 생성하세요.
+
+2. **정적 파일 생성**
+   ```bash
+   npm run build:pages
+   ```
+   `docs/js/firebase-config.js`가 환경 변수 값을 이용해 자동으로 생성됩니다.
+
+3. **커밋 및 푸시**
+   ```bash
+   git add docs js scripts package.json README.md
+   git commit -m "chore: update docs for pages"
+   git push origin <branch>
+   ```
+
+4. **GitHub Pages 설정**
+   - 저장소 → **Settings → Pages**로 이동합니다.
+   - **Deploy from a branch**를 선택하고, **Branch: main**, **Folder: /docs** 조합을 지정합니다.
+   - 저장하면 몇 분 안에 `https://<사용자명>.github.io/<저장소명>/` 주소로 배포됩니다.
+
+5. **배포 갱신 루틴**
+   - 코드가 바뀔 때마다 `npm run build:pages` 후 `docs`를 커밋/푸시하면 자동으로 최신 버전이 재배포됩니다.
+   - 커스텀 도메인을 사용한다면 GitHub Pages 설정의 **Custom domain**과 DNS CNAME 레코드를 같이 업데이트하세요.
+   - ⚠️ Firebase 클라이언트 키는 프론트엔드 자바스크립트에 포함될 수밖에 없으니, Firestore/Storage 보안 규칙을 반드시 설정해 두세요.
 
 ## 📖 사용법
 

@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app https://*.firebaseapp.com https://*.cloudfunctions.net https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>점자 타자 연습기 - 메인 메뉴</title>
     <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
@@ -642,7 +643,7 @@
         }
 
         .date-cell.attended {
-            background: #667eea;
+            background: #dc3545;
             color: white;
             font-weight: bold;
             position: relative;
@@ -1140,6 +1141,231 @@
             color: #6c757d;
             font-style: italic;
             padding: 30px;
+        }
+
+        /* Password Modal Styles */
+        .password-input-container {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: #333;
+        }
+
+        .password-input-container .form-input {
+            padding-right: 45px;
+        }
+
+        /* Admin Panel Styles */
+        .admin-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+
+        .admin-section h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .admin-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #download-backup-btn {
+            background: #28a745;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-self: flex-start;
+        }
+
+        #download-backup-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .stat-item .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-item .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .users-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .users-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .role-badge.admin {
+            background: #dc3545;
+            color: white;
+        }
+
+        .role-badge.user {
+            background: #6c757d;
+            color: white;
+        }
+
+        /* File Upload Styles */
+        .backup-restore-section {
+            border-top: 2px solid #e74c3c;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .file-upload-area {
+            margin-top: 15px;
+        }
+
+        .file-drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .file-drop-zone:hover,
+        .file-drop-zone.dragover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .file-drop-zone.has-file {
+            border-color: #28a745;
+            background: #f8fff8;
+        }
+
+        .drop-zone-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            color: #666;
+        }
+
+        .upload-text {
+            color: #666;
+        }
+
+        .upload-text strong {
+            color: #333;
+        }
+
+        #selected-file-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         /* Community Styles */
@@ -1691,6 +1917,17 @@
     </style>
 </head>
 <body>
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <!-- Your web app's Firebase configuration -->
+    <script src="js/firebase-config.js"></script>
+
     <div class="container">
         <div class="header">
             <h1>점자 타자 연습기</h1>
@@ -1703,6 +1940,8 @@
                 </div>
                 <a href="statistics.html" class="btn btn-primary" id="statistics-btn">학습통계</a>
                 <a href="upload.html" class="btn btn-primary" id="upload-btn">카테고리 업로드</a>
+                <button class="btn btn-secondary" id="change-password-btn">패스워드 변경</button>
+                <button class="btn btn-secondary" id="admin-btn" style="display: none;">관리자</button>
                 <button class="btn btn-secondary" id="logout-btn">로그아웃</button>
             </div>
         </div>
@@ -2001,47 +2240,229 @@
         </div>
     </div>
 
+    <!-- Admin Panel Modal -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">관리자 패널</h2>
+                <span class="close" id="admin-modal-close">&times;</span>
+            </div>
+            <div id="admin-content">
+                <div class="admin-section">
+                    <h3>시스템 통계</h3>
+                    <div id="system-stats">
+                        <div class="loading-indicator">
+                            <div class="loading-spinner"></div>
+                            <p>통계를 불러오는 중...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>데이터베이스 관리</h3>
+                    <div class="admin-actions">
+                        <button class="btn btn-primary" id="download-backup-btn">
+                            📥 데이터베이스 백업 다운로드
+                        </button>
+                        <small style="color: #666; display: block; margin-top: 5px; margin-bottom: 20px;">
+                            모든 데이터를 JSON 파일로 다운로드합니다.
+                        </small>
+
+                        <div class="backup-restore-section">
+                            <h4 style="margin: 0 0 10px 0; color: #e74c3c;">데이터베이스 복구</h4>
+                            <div class="file-upload-area">
+                                <input type="file" id="backup-file-input" accept=".json" style="display: none;">
+                                <div class="file-drop-zone" id="file-drop-zone">
+                                    <div class="drop-zone-content">
+                                        <div class="upload-icon">📁</div>
+                                        <div class="upload-text">
+                                            <strong>백업 파일을 드래그하거나 클릭하여 선택</strong>
+                                            <br>
+                                            <small>JSON 파일만 업로드 가능 (최대 50MB)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="selected-file-info" style="display: none; margin-top: 10px;">
+                                    <span id="selected-file-name"></span>
+                                    <button type="button" id="remove-file-btn" style="margin-left: 10px; background: none; border: none; color: #e74c3c; cursor: pointer;">✕</button>
+                                </div>
+                                <button class="btn btn-danger" id="restore-backup-btn" style="display: none; margin-top: 15px;">
+                                    🔄 데이터베이스 복구 실행
+                                </button>
+                            </div>
+                            <div class="warning-message" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 10px; margin-top: 15px;">
+                                <strong>⚠️ 주의사항:</strong> 데이터베이스 복구는 기존 모든 데이터를 덮어씁니다. 복구 전에 현재 데이터를 백업하는 것을 권장합니다.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>사용자 관리</h3>
+                    <div id="users-list">
+                        <div class="loading-indicator">
+                            <div class="loading-spinner"></div>
+                            <p>사용자 목록을 불러오는 중...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" id="admin-close-btn">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Change Modal -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">패스워드 변경</h2>
+                <span class="close" id="password-modal-close">&times;</span>
+            </div>
+            <form id="password-change-form">
+                <div class="form-group">
+                    <label for="current-password" class="form-label">현재 패스워드 *</label>
+                    <div class="password-input-container">
+                        <input type="password" id="current-password" class="form-input" required>
+                        <button type="button" class="password-toggle" id="current-password-toggle" title="비밀번호 보기/숨기기">
+                            👁️
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="new-password" class="form-label">새 패스워드 *</label>
+                    <div class="password-input-container">
+                        <input type="password" id="new-password" class="form-input" minlength="6" required>
+                        <button type="button" class="password-toggle" id="new-password-toggle" title="비밀번호 보기/숨기기">
+                            👁️
+                        </button>
+                    </div>
+                    <small style="color: #666; font-size: 0.8rem;">최소 6자 이상 입력해주세요</small>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password" class="form-label">새 패스워드 확인 *</label>
+                    <div class="password-input-container">
+                        <input type="password" id="confirm-password" class="form-input" minlength="6" required>
+                        <button type="button" class="password-toggle" id="confirm-password-toggle" title="비밀번호 보기/숨기기">
+                            👁️
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancel" id="password-cancel-btn">취소</button>
+                    <button type="submit" class="btn btn-primary" id="password-submit-btn">변경</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/storage-cleaner.js"></script>
+    <script src="js/anti-loop.js"></script>
     <script src="js/dark-mode.js"></script>
     <script src="js/utils/apiClient.js"></script>
     <script src="js/config.js"></script>
     <script>
-        // Emergency auth check bypass for deployment issues
-        document.addEventListener('DOMContentLoaded', () => {
+        // Enhanced auth check to prevent infinite loops (최강화 버전)
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🏛️ Main page loaded');
             const token = localStorage.getItem('authToken');
 
-            // Simple token validation like index.html
-            if (!token) {
-                console.log('No token found, redirecting to login');
-                window.location.href = 'login.html';
+            // 무한 루프 방지를 위한 즉시 실행 체크
+            const startTime = Date.now();
+            const MAX_AUTH_TIME = 5000; // 5초 제한
+
+            // 인증 실패시 로그인으로 리디렉션하는 함수
+            function redirectToLogin(reason) {
+                console.log('🔄 Redirecting to login:', reason);
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userData');
+
+                // 무한 루프 방지를 위한 딜레이
+                setTimeout(() => {
+                    if (window.trackRedirect) {
+                        window.trackRedirect('main.html', 'login.html');
+                    }
+                    window.location.href = 'login.html';
+                }, 100);
+            }
+
+            // 타임아웃 설정
+            const authTimeout = setTimeout(() => {
+                console.log('🚨 Authentication timeout, redirecting to login');
+                redirectToLogin('Authentication timeout');
+            }, MAX_AUTH_TIME);
+
+            // No token - redirect to login
+            if (!token || !token.includes('.')) {
+                clearTimeout(authTimeout);
+                redirectToLogin('No valid token found');
                 return;
             }
 
             try {
+                console.log('🔍 Validating token...');
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 const currentTime = Math.floor(Date.now() / 1000);
 
+                console.log('🕐 Token expiry check:', payload.exp, 'vs', currentTime);
+
+                // Check token expiration
                 if (payload.exp && payload.exp <= currentTime) {
-                    console.log('Token expired, redirecting to login');
-                    localStorage.removeItem('authToken');
-                    window.location.href = 'login.html';
+                    clearTimeout(authTimeout);
+                    redirectToLogin('Token expired');
                     return;
                 }
 
-                console.log('✅ Authentication successful:', payload.username);
+                console.log('✅ Token appears valid, verifying with server...');
 
-                // Show basic content
-                document.querySelector('.header h1').textContent = `점자 타자 연습기 - ${payload.username}님`;
+                // Verify with server to ensure token is still valid
+                try {
+                    const authResponse = await fetch('/api/auth/user', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        timeout: 3000 // 3초 타임아웃
+                    });
 
-                // Load main functionality only after auth is confirmed
-                const script = document.createElement('script');
-                script.src = 'js/main.js?cachebust=' + Date.now();
-                script.onload = () => console.log('Main functionality loaded');
-                document.head.appendChild(script);
+                    if (!authResponse.ok) {
+                        clearTimeout(authTimeout);
+                        console.log('❌ Server auth failed:', authResponse.status);
+                        redirectToLogin('Server authentication failed');
+                        return;
+                    }
+
+                    const userData = await authResponse.json();
+                    console.log('✅ Authentication successful:', userData.user?.username || payload.username);
+
+                    clearTimeout(authTimeout);
+
+                    // Show basic content
+                    const headerTitle = document.querySelector('.header h1');
+                    if (headerTitle) {
+                        headerTitle.textContent = `점자 타자 연습기 - ${userData.user?.username || payload.username}님`;
+                    }
+
+                    // Load main functionality only after auth is confirmed
+                    const script = document.createElement('script');
+                    script.src = 'js/main.js';
+                    script.onload = () => console.log('✅ Main functionality loaded');
+                    script.onerror = () => console.error('❌ Failed to load main.js');
+                    document.head.appendChild(script);
+
+                } catch (serverError) {
+                    clearTimeout(authTimeout);
+                    console.log('🚨 Server auth check failed:', serverError.message);
+                    redirectToLogin('Server connection failed');
+                    return;
+                }
 
             } catch (error) {
-                console.log('Invalid token, redirecting to login');
-                localStorage.removeItem('authToken');
-                window.location.href = 'login.html';
+                clearTimeout(authTimeout);
+                console.log('❌ Invalid token format:', error.message);
+                redirectToLogin('Invalid token format');
             }
 
             // Dark mode toggle
