@@ -39,6 +39,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let selectedFile = null;
 
+    const downloadExampleEndpoints = [
+        `${API_BASE_URL}/protected/download-example`,
+        `${API_BASE_URL}/protected/download-template`
+    ];
+
+    async function fetchExampleFile(token) {
+        let lastError = null;
+
+        for (const url of downloadExampleEndpoints) {
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    return response;
+                }
+
+                const body = await safeReadText(response);
+                lastError = { status: response.status, body, url };
+
+                // Only try fallback for 404 (endpoint not found)
+                if (response.status !== 404) {
+                    break;
+                }
+            } catch (networkError) {
+                lastError = { status: 0, body: networkError.message, url };
+                break;
+            }
+        }
+
+        const statusInfo = lastError
+            ? ` (HTTP ${lastError.status}${lastError.body ? `: ${lastError.body.substring(0, 80)}` : ''})`
+            : '';
+        const error = new Error('파일 다운로드에 실패했습니다.' + statusInfo);
+        error.status = lastError?.status || null;
+        throw error;
+    }
+
+    async function safeReadText(response) {
+        try {
+            return await response.text();
+        } catch (err) {
+            console.warn('⚠️ Failed to read response text:', err);
+            return '';
+        }
+    }
+
     // Download example file functionality
     downloadExampleBtn.addEventListener('click', async function() {
         try {
@@ -52,22 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const response = await fetch(`${API_BASE_URL}/protected/download-example`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                let extra = '';
-                try {
-                    extra = ` ${await response.text()}`;
-                } catch (_) {
-                    // no-op: body already consumed or not text
-                }
-                throw new Error(`파일 다운로드에 실패했습니다. (HTTP ${response.status})${extra}`);
-            }
+            const response = await fetchExampleFile(token);
 
             // Create blob and download link
             const blob = await response.blob();
@@ -84,6 +120,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('Download error:', error);
+
+            if (error.status === 401) {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userData');
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+                return;
+            }
+
             showError('파일 다운로드 중 오류가 발생했습니다: ' + error.message);
         } finally {
             // Reset button state
