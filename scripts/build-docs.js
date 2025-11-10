@@ -8,6 +8,8 @@ const ROOT = path.resolve(__dirname, '..');
 const SOURCE_DIR = path.join(ROOT, 'frontend');
 const TARGET_DIR = path.join(ROOT, 'docs');
 const FIREBASE_RELATIVE_PATH = path.join('js', 'firebase-config.js');
+const CNAME_FILE = 'CNAME';
+const ROOT_CNAME_PATH = path.join(ROOT, CNAME_FILE);
 const ENV_CANDIDATES = ['.env.firebase', '.env'];
 
 const FIREBASE_ENV_MAP = [
@@ -93,6 +95,26 @@ async function ensurePlaceholderFirebaseConfig() {
   await writeFirebaseConfig(placeholder);
 }
 
+async function readExistingCname() {
+  const cnamePath = path.join(TARGET_DIR, CNAME_FILE);
+  if (await pathExists(cnamePath)) {
+    return fsp.readFile(cnamePath, 'utf8');
+  }
+  return null;
+}
+
+async function resolveCnameSource() {
+  if (await pathExists(ROOT_CNAME_PATH)) {
+    return fsp.readFile(ROOT_CNAME_PATH, 'utf8');
+  }
+  return readExistingCname();
+}
+
+async function writeCname(contents) {
+  const targetPath = path.join(TARGET_DIR, CNAME_FILE);
+  await fsp.writeFile(targetPath, contents, 'utf8');
+}
+
 function parseEnv(raw) {
   const result = {};
   raw.split(/\r?\n/).forEach(line => {
@@ -164,6 +186,7 @@ async function main() {
     console.log('⚠️ firebase-config.js 생성을 위한 .env 파일을 찾지 못했습니다.');
   }
   const preservedFirebaseConfig = envSource ? null : await readExistingFirebaseConfig();
+  const cnameContent = await resolveCnameSource();
 
   await fsp.rm(TARGET_DIR, { recursive: true, force: true });
   await fsp.mkdir(TARGET_DIR, { recursive: true });
@@ -189,6 +212,11 @@ async function main() {
       await ensurePlaceholderFirebaseConfig();
       console.warn('firebase-config.js placeholder가 유지되었습니다. 환경 변수를 채워주세요.');
     }
+  }
+
+  if (cnameContent) {
+    await writeCname(cnameContent);
+    console.log('🌐 CNAME 파일을 포함했습니다.');
   }
 
   console.log('✅ docs 폴더가 GitHub Pages 배포용으로 준비되었습니다.');
