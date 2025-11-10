@@ -15,6 +15,8 @@ function getApiBaseUrl() {
 }
 
 const API_BASE_URL = getApiBaseUrl() + '/api';
+const MAX_BRAILLE_ENTRIES = 1000;
+const HEADER_CELL_REGEX = /문자|character/i;
 
 document.addEventListener('DOMContentLoaded', function() {
     // Check authentication
@@ -193,12 +195,26 @@ document.addEventListener('DOMContentLoaded', function() {
         await handleUpload();
     });
 
-    function checkAuth() {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            window.location.href = 'login.html';
-            return;
+    async function checkAuth() {
+        try {
+            if (!window.apiClient) {
+                throw new Error('API 클라이언트가 초기화되지 않았습니다.');
+            }
+            const user = await window.apiClient.getCurrentUser();
+            if (!user) {
+                redirectToLogin();
+            }
+        } catch (error) {
+            console.warn('Auth verification failed:', error);
+            redirectToLogin();
         }
+    }
+
+    function redirectToLogin() {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        sessionStorage.clear();
+        window.location.href = 'login.html';
     }
 
     function handleFileSelection(file) {
@@ -241,107 +257,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function handleUpload() {
+        const categoryName = categoryNameInput.value.trim();
+        const description = descriptionInput.value.trim();
+
+        if (!categoryName) {
+            showError('카테고리 이름을 입력해주세요.');
+            return;
+        }
+
+        if (!selectedFile) {
+            showError('업로드할 파일을 선택해주세요.');
+            return;
+        }
+
+        if (!window.apiClient || typeof window.apiClient.createCategoryWithBrailleData !== 'function') {
+            showError('Firebase 클라이언트를 초기화할 수 없습니다. 페이지를 새로고침한 뒤 다시 시도해주세요.');
+            return;
+        }
+
         try {
-            // Validate form
-            const categoryName = categoryNameInput.value.trim();
-            const description = descriptionInput.value.trim();
-
-            if (!categoryName) {
-                showError('카테고리 이름을 입력해주세요.');
-                return;
-            }
-
-            if (!selectedFile) {
-                showError('업로드할 파일을 선택해주세요.');
-                return;
-            }
-
-            // Show loading state
             setLoadingState(true);
+            hideMessages();
 
-            // Prepare form data
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-            formData.append('categoryName', categoryName);
-            formData.append('description', description);
-            formData.append('isPublic', isPublicCheckbox.checked);
+            console.log('📥 Parsing Excel file:', selectedFile.name);
+            const brailleEntries = await parseExcelFile(selectedFile);
+            console.log('🧮 Parsed braille entries:', brailleEntries.length);
 
-            // Get auth token
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            // Upload file
-            console.log('🔄 Starting upload to:', `${API_BASE_URL}/protected/upload`);
-            console.log('📋 Form data:', {
-                categoryName,
+            const result = await window.apiClient.createCategoryWithBrailleData({
+                name: categoryName,
                 description,
                 isPublic: isPublicCheckbox.checked,
-                fileName: selectedFile.name,
-                fileSize: selectedFile.size
+                brailleEntries
             });
 
-            const response = await fetch(`${API_BASE_URL}/protected/upload`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                    // Don't set Content-Type for FormData - browser will set it automatically with boundary
-                },
-                body: formData
-            });
-
-            console.log('📡 Response status:', response.status);
-            console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
-
-            let rawResponse = '';
-            try {
-                rawResponse = await response.text();
-            } catch (bodyError) {
-                console.error('❌ Failed to read response body:', bodyError);
-            }
-
-            let data = null;
-            if (rawResponse) {
-                try {
-                    data = JSON.parse(rawResponse);
-                    console.log('📄 Response data:', data);
-                } catch (jsonError) {
-                    console.warn('⚠️ Response is not valid JSON. Raw:', rawResponse);
-                }
-            }
-
-            if (!response.ok) {
-                // Handle specific error messages
-                if (response.status === 401) {
-                    console.log('🔓 Authentication failed, forcing logout...');
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('userData');
-                    sessionStorage.clear();
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                let errorMsg = data?.error || `업로드에 실패했습니다. (HTTP ${response.status})`;
-
-                if (response.status === 400 && data?.error) {
-                    errorMsg = data.error;
-                } else if (response.status === 413) {
-                    errorMsg = '파일 크기가 너무 큽니다.';
-                } else if (!data && rawResponse) {
-                    errorMsg += `: ${rawResponse.substring(0, 100)}`;
-                }
-
-                showError(errorMsg);
-                return;
-            }
-
-            if (!data) {
-                throw new Error('서버 응답을 파싱할 수 없습니다.');
-            }
-
-            showSuccess(`업로드가 완료되었습니다! ${data.brailleDataCount}개의 점자 데이터가 추가되었습니다.`);
+            showSuccess(`업로드가 완료되었습니다! ${result.brailleCount}개의 점자 데이터가 추가되었습니다.`);
 
             // Reset form
             resetForm();
@@ -349,11 +298,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Redirect after delay
             setTimeout(() => {
                 window.location.href = 'main.html';
-            }, 1000);
-
+            }, 1200);
         } catch (error) {
             console.error('Upload error:', error);
-            showError('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+            showError(error.message || '업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
         } finally {
             setLoadingState(false);
         }
@@ -418,6 +366,105 @@ document.addEventListener('DOMContentLoaded', function() {
                 delete uploadButton.dataset.progressInterval;
             }
         }
+    }
+
+    async function parseExcelFile(file) {
+        if (typeof XLSX === 'undefined') {
+            throw new Error('Excel 파서가 로드되지 않았습니다. 페이지를 새로고침해 주세요.');
+        }
+
+        let workbook;
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        } catch (error) {
+            console.error('Failed to read Excel file:', error);
+            throw new Error('Excel 파일을 읽는 중 오류가 발생했습니다.');
+        }
+
+        const sheetName = workbook.SheetNames && workbook.SheetNames[0];
+        if (!sheetName) {
+            throw new Error('Excel 파일에 시트를 찾을 수 없습니다.');
+        }
+
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
+
+        if (!rows || rows.length === 0) {
+            throw new Error('Excel 파일이 비어있습니다.');
+        }
+
+        const entries = [];
+        rows.forEach((row, index) => {
+            if (!Array.isArray(row) || row.length === 0) {
+                return;
+            }
+
+            const characterCell = row[0];
+            const character = (characterCell ?? '').toString().trim();
+            const isHeaderRow = index === 0 && HEADER_CELL_REGEX.test(character);
+
+            if (!character || isHeaderRow) {
+                return;
+            }
+
+            const brailleBlocks = extractBrailleBlocksFromRow(row);
+            if (brailleBlocks.length === 0) {
+                console.warn(`Row ${index + 1} skipped: no valid braille dots.`);
+                return;
+            }
+
+            entries.push({
+                character,
+                braille_pattern: brailleBlocks,
+                order: entries.length
+            });
+        });
+
+        if (entries.length === 0) {
+            throw new Error('점자 데이터를 찾을 수 없습니다. 예제 파일 형식을 참고해주세요.');
+        }
+
+        if (entries.length > MAX_BRAILLE_ENTRIES) {
+            throw new Error(`점자 데이터는 최대 ${MAX_BRAILLE_ENTRIES}개까지만 업로드할 수 있습니다.`);
+        }
+
+        return entries;
+    }
+
+    function extractBrailleBlocksFromRow(row) {
+        const blocks = [];
+        for (let colIndex = 1; colIndex < row.length; colIndex++) {
+            const cellValue = row[colIndex];
+            if (cellValue === undefined || cellValue === null || cellValue === '') {
+                continue;
+            }
+
+            const dots = cellValue
+                .toString()
+                .split(/[,，\s]+/)
+                .map(part => parseInt(part.trim(), 10))
+                .filter(num => Number.isInteger(num) && num >= 1 && num <= 6);
+
+            if (dots.length === 0) {
+                continue;
+            }
+
+            blocks.push(normalizeDotValues(dots));
+        }
+        return blocks;
+    }
+
+    function normalizeDotValues(dots) {
+        const seen = new Set();
+        const uniqueDots = [];
+        dots.forEach(dot => {
+            if (!seen.has(dot)) {
+                seen.add(dot);
+                uniqueDots.push(dot);
+            }
+        });
+        return uniqueDots.sort((a, b) => a - b);
     }
 
     function formatFileSize(bytes) {

@@ -208,6 +208,83 @@ class FirebaseApiClient {
         return this.publicCategoryCache;
     }
 
+    async createCategoryWithBrailleData({ name, description = '', isPublic = false, brailleEntries = [] } = {}) {
+        if (!name || !name.trim()) {
+            throw new Error('카테고리 이름을 입력해주세요.');
+        }
+        if (!Array.isArray(brailleEntries) || brailleEntries.length === 0) {
+            throw new Error('추가할 점자 데이터가 없습니다.');
+        }
+
+        const userProfile = await this.ensureUserProfile();
+        const now = FirestoreTimestamp.now();
+
+        // Sanitize entries
+        const sanitizedEntries = brailleEntries
+            .map((entry, index) => ({
+                character: (entry.character || '').trim(),
+                description: (entry.description || '').trim(),
+                braille_pattern: Array.isArray(entry.braille_pattern) ? entry.braille_pattern : [],
+                order: typeof entry.order === 'number' ? entry.order : index
+            }))
+            .filter(entry => entry.character && entry.braille_pattern.length > 0);
+
+        if (sanitizedEntries.length === 0) {
+            throw new Error('유효한 점자 데이터를 찾을 수 없습니다.');
+        }
+
+        const categoryRef = this.db.collection('categories').doc();
+        const brailleCollection = this.db.collection('braille_data');
+        const createdBrailleDocIds = [];
+        const chunkSize = 400;
+
+        try {
+            let globalOrderOffset = 0;
+            for (const chunk of this.chunkArray(sanitizedEntries, chunkSize)) {
+                const batch = this.db.batch();
+                chunk.forEach((entry, indexInChunk) => {
+                    const docRef = brailleCollection.doc();
+                    createdBrailleDocIds.push(docRef.id);
+                    batch.set(docRef, {
+                        category_id: categoryRef.id,
+                        character: entry.character,
+                        description: entry.description,
+                        braille_pattern: entry.braille_pattern,
+                        created_at: now,
+                        order: entry.order ?? (globalOrderOffset + indexInChunk)
+                    });
+                });
+                await batch.commit();
+                globalOrderOffset += chunk.length;
+            }
+
+            await categoryRef.set({
+                name: name.trim(),
+                description: description ? description.trim() : '',
+                is_public: !!isPublic,
+                created_by: userProfile.uid,
+                created_by_email: userProfile.email || '',
+                created_by_username: userProfile.username || '',
+                created_at: now,
+                updated_at: now,
+                braille_count: sanitizedEntries.length,
+                last_imported_at: now
+            });
+
+            this.publicCategoryCache = [];
+            this.brailleCache.delete(categoryRef.id);
+
+            return {
+                categoryId: categoryRef.id,
+                brailleCount: sanitizedEntries.length
+            };
+        } catch (error) {
+            // Clean up partially created documents
+            await this.deleteDocumentsByIds('braille_data', createdBrailleDocIds).catch(() => {});
+            throw error;
+        }
+    }
+
     async getUserStats(options = {}) {
         const { recentLimit = 10, maxLogs = 500 } = options;
         const firebaseUser = await this.ensureFirebaseUser(true);
@@ -403,6 +480,20 @@ class FirebaseApiClient {
     async delete(collection, docId) {
         await this.db.collection(collection).doc(docId).delete();
         return { id: docId };
+    }
+
+    async deleteDocumentsByIds(collectionName, ids = []) {
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return;
+        }
+        const chunkSize = 400;
+        for (const chunk of this.chunkArray(ids, chunkSize)) {
+            const batch = this.db.batch();
+            chunk.forEach(id => {
+                batch.delete(this.db.collection(collectionName).doc(id));
+            });
+            await batch.commit();
+        }
     }
 
     normalizeBraillePattern(pattern) {
