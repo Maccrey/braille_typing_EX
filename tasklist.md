@@ -1,565 +1,610 @@
-# 점자 타자 연습기 개발 Task List
+# Firebase 마이그레이션 Task List
 
-본 문서는 TDD(Test-Driven Development) 방식으로 점자 타자 연습기를 개발하기 위한 최소 단위 작업 목록입니다.
+본 문서는 Node.js/Express 백엔드를 Firebase로 마이그레이션하기 위한 작업 목록입니다.
 
 ## 진행 상태 표시
 - ✅ **완료**: 구현 및 테스트 완료
 - 🔄 **진행중**: 현재 작업 중
 - ⏳ **대기**: 구현 예정
-- ❌ **블록**: 의존성 문제로 대기
 
-## 개발 원칙
+## 현재 백엔드 구조 분석
 
-- **RED-GREEN-REFACTOR**: 실패하는 테스트 작성 → 최소 구현 → 리팩토링
-- **최소 단위 구현**: 각 작업은 30분 이내 완료 가능한 최소 기능 단위
-- **테스트 우선**: 모든 기능은 테스트 코드부터 작성
-- **버전 관리**: 각 작업 완료 후 즉시 커밋
+### 데이터베이스 (JSON Database)
+- **테이블**: users, categories, braille_data, practice_logs, attendance, favorites, posts, comments
+- **인증**: JWT + bcrypt 패스워드 해싱
+- **세션**: express-session 사용
 
-## 진행 상태 관리 방법
+### API 엔드포인트
+- 인증: `/api/auth/*` (signup, login, logout, getUser, changePassword)
+- 보호된 라우트: `/api/protected/*` (카테고리, 즐겨찾기)
+- 연습: `/api/practice/*` (로그 기록)
+- 프로필: `/api/profile/*` (통계, 출석)
+- 게시물: `/api/posts/*` (커뮤니티 게시글)
+- 댓글: `/api/comments/*` (게시글 댓글)
+- 관리자: `/api/admin/*`
 
-### 상태 업데이트 규칙
-1. **작업 시작 시**: `⏳ 대기` → `🔄 진행중`으로 변경
-2. **작업 완료 시**: `🔄 진행중` → `✅ 완료`로 변경
-3. **의존성 문제 발생**: `⏳ 대기` → `❌ 블록`으로 변경
-4. **완료 시 추가 정보**: 완료 날짜와 커밋 해시 추가 권장
+### 주요 컨트롤러
+- authController (인증)
+- practiceController (연습 로그)
+- profileController (통계, 출석, 랭킹)
+- postsController (게시글 CRUD)
+- commentsController (댓글 CRUD)
+- dataController (카테고리, 점자 데이터, 즐겨찾기)
+- uploadController (Excel 업로드)
+- adminController (관리자 기능)
 
-### 완료 마킹 예시
-```
-### Task 1.1: 백엔드 기본 구조 설정 ✅
-- **완료일**: 2024-09-21
-- **커밋**: feat: Setup basic Express server structure (abc1234)
-```
+---
 
-### 현재 진행 상황 요약
-- **전체 태스크**: 30개 + 추가 개선사항
-- **완료**: 30개 (100%) + 실제 사용자 문제 해결
-- **진행중**: 0개
-- **대기**: 0개
-- **블록**: 0개
+## Phase 1: Firebase 프로젝트 설정 ⏳
 
-### 실제 구현 및 사용자 이슈 해결 (2025-09-22)
-#### 추가 완료 작업들:
-- ✅ **키보드 입력 디버깅**: CSS 클래스 충돌 해결, 점자 점 시각적 피드백 수정
-- ✅ **점자 도트 레이아웃 확인**: 14/25/36 배치 올바르게 구현됨 확인
-- ✅ **500 에러 해결**: API 엔드포인트 및 데이터베이스 테이블 누락 문제 해결
-- ✅ **연습 시간 기록**: 실시간 세션 추적 및 백엔드 저장 기능 구현
-- ✅ **연습 페이지 UI 개선**: 현재 세션 시간 및 완성한 문자 수 실시간 표시
-- ✅ **API 엔드포인트 통합**: 중복 라우트 정리 및 올바른 엔드포인트 설정
-- ✅ **세션 리셋 버그 수정**: `sessionStartTime` 리셋 로직 개선으로 연속적인 세션 추적 구현
-
-## Phase 1: 프로젝트 초기 설정
-
-### Task 1.1: 백엔드 기본 구조 설정 ✅
-- **목표**: Express 서버 기본 구조 생성
+### Task 1.1: Firebase 프로젝트 생성 및 초기 설정 ⏳
+- **목표**: Firebase 프로젝트 생성 및 필요한 서비스 활성화
 - **구현**:
-  - `backend/package.json` 생성 (express, jest, supertest, sqlite3, bcrypt, jsonwebtoken 의존성)
-  - `backend/app.js` 기본 Express 앱 설정
-  - `backend/config/database.js` SQLite 연결 설정
-- **테스트**: `backend/__tests__/app.test.js` - 서버 기본 응답 테스트
-- **완료 조건**: `npm test` 실행 시 기본 테스트 통과
-- **커밋**: `feat: Setup basic Express server structure`
-- **완료일**: 2025-09-21
-- **커밋 해시**: 465f050
+  - Firebase Console에서 새 프로젝트 생성
+  - Firestore Database 활성화
+  - Firebase Authentication 활성화 (Email/Password)
+  - Firebase Storage 활성화 (Excel 파일 업로드용)
+  - Firebase 프로젝트 설정 다운로드 (serviceAccountKey.json)
+- **완료 조건**: Firebase 프로젝트가 생성되고 모든 서비스 활성화
+- **커밋**: `feat: Initialize Firebase project and enable services`
 
-### Task 1.2: 프론트엔드 기본 구조 설정 ✅
-- **목표**: 프론트엔드 테스트 환경 구축
+### Task 1.2: Firebase SDK 설치 및 초기화 ⏳
+- **목표**: 프론트엔드/백엔드에 Firebase SDK 설치
 - **구현**:
-  - `frontend/package.json` 생성 (playwright, http-server 의존성)
-  - `frontend/playwright.config.js` 설정
-  - `frontend/index.html` 기본 페이지
-- **테스트**: `frontend/tests/basic.spec.js` - 페이지 로드 테스트
-- **완료 조건**: `npm test` 실행 시 E2E 테스트 통과
-- **커밋**: `feat: Setup frontend test environment with Playwright`
-- **완료일**: 2025-09-21
-- **커밋 해시**: 465f050
+  - `npm install firebase firebase-admin --save` (백엔드)
+  - `backend/config/firebase.js` - Firebase Admin SDK 초기화
+  - `frontend/js/firebase-config.js` - Firebase Client SDK 초기화
+  - 환경변수 설정 (.env 파일에 Firebase credentials)
+- **완료 조건**: Firebase SDK가 정상 초기화
+- **커밋**: `feat: Install and configure Firebase SDK`
 
-### Task 1.3: 데이터베이스 스키마 초기화 ✅
-- **목표**: SQLite 데이터베이스 테이블 생성
+### Task 1.3: Firestore 데이터 모델 설계 ⏳
+- **목표**: JSON Database 스키마를 Firestore 컬렉션으로 변환
 - **구현**:
-  - `backend/init-db.js` 스키마 생성 스크립트
-  - Users, Categories, BrailleData, PracticeLogs, Attendance, Favorites 테이블
-- **테스트**: `backend/__tests__/database.test.js` - 테이블 생성 및 구조 검증
-- **완료 조건**: 모든 테이블이 정상 생성되고 테스트 통과
-- **커밋**: `feat: Initialize database schema with all required tables`
-- **완료일**: 2025-09-21
-- **커밋 해시**: 465f050
+  - Firestore 컬렉션 구조 설계
+    - `users` 컬렉션: { username, role, created_at }
+    - `categories` 컬렉션: { name, description, is_public, created_by, created_at }
+    - `braille_data` 컬렉션: { category_id, character, braille_pattern, description }
+    - `practice_logs` 컬렉션: { user_id, duration_seconds, practiced_at, created_at }
+    - `attendance` 컬렉션: { user_id, date, check_in_time, check_out_time, is_work_day, work_details }
+    - `favorites` 컬렉션: { user_id, category_id, created_at }
+    - `posts` 컬렉션: { title, content, author_id, created_at, updated_at }
+    - `comments` 컬렉션: { post_id, author_id, content, created_at, updated_at }
+  - Firestore 인덱스 설계 문서 작성
+- **완료 조건**: 데이터 모델 설계 문서 작성 완료
+- **커밋**: `docs: Design Firestore data model for migration`
 
-## Phase 2: 사용자 인증 시스템
+---
 
-### Task 2.1: 회원가입 API (RED) ✅
-- **목표**: 회원가입 테스트 케이스 작성
-- **구현**: `backend/__tests__/auth.test.js`
-  - POST /api/auth/signup 성공 케이스
-  - 중복 사용자명 실패 케이스
-  - 비밀번호 해싱 검증
-- **테스트**: 실패하는 테스트 작성 (API 미구현)
-- **완료 조건**: 테스트 실행 시 예상된 실패 발생
-- **커밋**: `test: Add failing tests for user signup API`
-- **완료일**: 2025-09-21
-- **커밋 해시**: e90b92b
+## Phase 2: Firebase Authentication 마이그레이션 ⏳
 
-### Task 2.2: 회원가입 API (GREEN) ✅
-- **목표**: 회원가입 API 최소 구현
+### Task 2.1: Firebase Authentication 기본 설정 ⏳
+- **목표**: Firebase Auth로 인증 시스템 전환
 - **구현**:
-  - `backend/controllers/authController.js` - signup 함수
-  - `backend/routes/authRoutes.js` - 라우트 설정
-  - bcrypt 비밀번호 해싱
-- **테스트**: 기존 테스트가 통과하도록 구현
-- **완료 조건**: `npm test` 실행 시 회원가입 테스트 통과
-- **커밋**: `feat: Implement user signup API with password hashing`
-- **완료일**: 2025-09-21
-- **커밋 해시**: e90b92b
+  - `backend/config/firebase.js`에 Firebase Admin Auth 초기화
+  - `frontend/js/firebase-auth.js` 생성 - Firebase Client Auth 래퍼
+  - Firebase Auth Email/Password 프로바이더 활성화
+- **완료 조건**: Firebase Auth 초기화 완료
+- **커밋**: `feat: Setup Firebase Authentication`
 
-### Task 2.3: 로그인 API (RED) ✅
-- **목표**: 로그인 테스트 케이스 작성
-- **구현**: `backend/__tests__/auth.test.js`에 추가
-  - POST /api/auth/login 성공 케이스
-  - 잘못된 비밀번호 실패 케이스
-  - JWT 토큰 발급 검증
-- **테스트**: 실패하는 테스트 작성
-- **완료 조건**: 로그인 관련 테스트가 예상대로 실패
-- **커밋**: `test: Add failing tests for user login API`
-- **완료일**: 2025-09-21
-- **커밋 해시**: e90b92b
-
-### Task 2.4: 로그인 API (GREEN) ✅
-- **목표**: 로그인 API 구현
+### Task 2.2: 회원가입 Firebase 마이그레이션 ⏳
+- **목표**: authController signup을 Firebase로 전환
 - **구현**:
-  - `authController.js`에 login 함수 추가
-  - JWT 토큰 생성 및 반환
-  - 비밀번호 검증 로직
-- **테스트**: 로그인 테스트 통과
-- **완료 조건**: 모든 인증 테스트 통과
-- **커밋**: `feat: Implement user login API with JWT tokens`
-- **완료일**: 2025-09-21
-- **커밋 해시**: e90b92b
+  - `backend/controllers/authController.js` 수정
+    - Firebase Admin SDK createUser 사용
+    - bcrypt 제거 (Firebase가 자동 처리)
+    - Firestore `users` 컬렉션에 추가 정보 저장 (role 등)
+  - `frontend/js/firebase-auth.js`에 signup 함수 추가
+    - Firebase Client SDK createUserWithEmailAndPassword 사용
+- **테스트**: Firebase 콘솔에서 사용자 생성 확인
+- **완료 조건**: Firebase Auth로 회원가입 동작
+- **커밋**: `feat: Migrate signup to Firebase Authentication`
 
-### Task 2.5: 인증 미들웨어 (RED) ✅
-- **목표**: JWT 토큰 검증 미들웨어 테스트
-- **구현**: `backend/__tests__/auth.test.js`에 추가
-  - 유효한 토큰으로 보호된 경로 접근 성공
-  - 무효한 토큰으로 접근 실패
-  - 토큰 없이 접근 실패
-- **테스트**: 실패하는 테스트 작성
-- **완료 조건**: 미들웨어 테스트가 예상대로 실패
-- **커밋**: `test: Add failing tests for JWT authentication middleware`
-- **완료일**: 2025-09-21
-
-### Task 2.6: 인증 미들웨어 (GREEN) ✅
-- **목표**: JWT 인증 미들웨어 구현
+### Task 2.3: 로그인 Firebase 마이그레이션 ⏳
+- **목표**: authController login을 Firebase로 전환
 - **구현**:
-  - `backend/middleware/authMiddleware.js` 생성
-  - JWT 토큰 검증 로직
-  - 사용자 정보 req.user에 추가
-- **테스트**: 미들웨어 테스트 통과
-- **완료 조건**: 모든 인증 관련 테스트 통과
-- **커밋**: `feat: Implement JWT authentication middleware`
-- **완료일**: 2025-09-21
+  - `backend/controllers/authController.js` 수정
+    - Firebase Admin SDK verifyIdToken 사용
+    - JWT 생성 제거 (Firebase ID Token 사용)
+  - `frontend/js/firebase-auth.js`에 login 함수 추가
+    - Firebase Client SDK signInWithEmailAndPassword 사용
+    - ID Token을 localStorage에 저장
+- **테스트**: 로그인 후 Firebase 콘솔에서 사용자 확인
+- **완료 조건**: Firebase Auth로 로그인 동작
+- **커밋**: `feat: Migrate login to Firebase Authentication`
 
-## Phase 3: 프론트엔드 인증 UI
-
-### Task 3.1: 로그인 페이지 UI (RED) ✅
-- **목표**: 로그인 페이지 E2E 테스트 작성
-- **구현**: `frontend/tests/login.spec.js`
-  - 로그인 폼 존재 확인
-  - 사용자명/비밀번호 입력 테스트
-  - 로그인 버튼 클릭 테스트
-- **테스트**: UI 미구현으로 실패하는 테스트
-- **완료 조건**: E2E 테스트가 예상대로 실패
-- **커밋**: `test: Add failing E2E tests for login page`
-- **완료일**: 2025-09-21
-
-### Task 3.2: 로그인 페이지 UI (GREEN) ✅
-- **목표**: 기본 로그인 페이지 구현
+### Task 2.4: 인증 미들웨어 Firebase 전환 ⏳
+- **목표**: authMiddleware를 Firebase ID Token 검증으로 전환
 - **구현**:
-  - `frontend/login.html` 로그인 폼
-  - `frontend/js/auth.js` 로그인 API 호출 로직
-  - localStorage에 JWT 토큰 저장
-- **테스트**: 로그인 E2E 테스트 통과
-- **완료 조건**: 로그인 플로우 E2E 테스트 통과
-- **커밋**: `feat: Implement basic login page with API integration`
-- **완료일**: 2025-09-21
+  - `backend/middleware/authMiddleware.js` 수정
+    - JWT verify 제거
+    - Firebase Admin SDK verifyIdToken 사용
+    - req.user에 Firebase UID와 custom claims 저장
+  - express-session 제거
+- **테스트**: 보호된 API 엔드포인트 접근 테스트
+- **완료 조건**: Firebase ID Token으로 인증 동작
+- **커밋**: `feat: Migrate auth middleware to Firebase ID Token verification`
 
-### Task 3.3: 회원가입 페이지 (RED→GREEN) ✅
-- **목표**: 회원가입 페이지 구현
+### Task 2.5: 로그아웃 Firebase 마이그레이션 ⏳
+- **목표**: Firebase signOut으로 로그아웃 전환
 - **구현**:
-  - E2E 테스트 작성: `frontend/tests/signup.spec.js`
-  - `frontend/signup.html` 회원가입 폼
-  - 회원가입 API 연동
-- **테스트**: 회원가입 E2E 테스트 통과
-- **완료 조건**: 전체 인증 플로우 동작
-- **커밋**: `feat: Implement signup page with form validation`
-- **완료일**: 2025-09-21
+  - `backend/controllers/authController.js` 수정
+    - session destroy 제거
+    - 클라이언트에서 처리하도록 변경
+  - `frontend/js/firebase-auth.js`에 logout 함수 추가
+    - Firebase Client SDK signOut 사용
+    - localStorage 토큰 제거
+- **완료 조건**: 로그아웃 후 인증 상태 해제
+- **커밋**: `feat: Migrate logout to Firebase signOut`
 
-## Phase 4: 데이터 업로드 시스템
-
-### Task 4.1: 카테고리 생성 API (RED) ✅
-- **목표**: 카테고리 생성 테스트 작성
-- **구현**: `backend/__tests__/upload.test.js`
-  - POST /api/protected/upload 성공 케이스
-  - 파일 업로드 및 파싱 테스트
-  - 공개/비공개 설정 테스트
-- **테스트**: 실패하는 테스트 작성 (16개 포괄적 테스트)
-- **완료 조건**: 업로드 API 테스트가 예상대로 실패
-- **커밋**: `test: Add failing tests for category upload API`
-- **완료일**: 2025-09-21
-
-### Task 4.2: Excel 파일 업로드 API (GREEN) ✅
-- **목표**: Excel 업로드 기능 구현
+### Task 2.6: 패스워드 변경 Firebase 마이그레이션 ⏳
+- **목표**: changePassword를 Firebase로 전환
 - **구현**:
-  - `backend/controllers/uploadController.js`
-  - multer 파일 업로드 설정
-  - xlsx 라이브러리로 Excel 파싱
-  - Categories, BrailleData 테이블에 저장
-- **테스트**: 업로드 API 테스트 통과 (8/16 핵심 기능 동작)
-- **완료 조건**: Excel 파일이 정상적으로 파싱되고 저장됨
-- **커밋**: `feat: Implement Excel file upload and parsing`
-- **완료일**: 2025-09-21
+  - `backend/controllers/authController.js` 수정
+    - Firebase Admin SDK updateUser 사용
+    - 또는 클라이언트에서 updatePassword 사용
+  - `frontend/js/firebase-auth.js`에 changePassword 함수 추가
+    - Firebase Client SDK updatePassword 사용
+    - reauthenticate 구현
+- **완료 조건**: Firebase Auth로 패스워드 변경 동작
+- **커밋**: `feat: Migrate password change to Firebase Auth`
 
-### Task 4.3: 업로드 UI (RED→GREEN) ✅
-- **목표**: 파일 업로드 인터페이스 구현
+---
+
+## Phase 3: Firestore 데이터 마이그레이션 ⏳
+
+### Task 3.1: Firestore 유틸리티 함수 작성 ⏳
+- **목표**: Firestore CRUD 래퍼 함수 작성
 - **구현**:
-  - E2E 테스트: `frontend/tests/upload.spec.js` (13개 테스트)
-  - `frontend/upload.html` 업로드 폼
-  - 파일 선택, 카테고리명, 공개설정 UI
-  - 드래그&드롭, 진행률 표시, 유효성 검사
-- **테스트**: 업로드 플로우 E2E 테스트 통과 (13/13 모든 테스트 통과)
-- **완료 조건**: 파일 업로드가 UI에서 정상 동작
-- **커밋**: `feat: Implement file upload UI with public/private toggle`
-- **완료일**: 2025-09-21
+  - `backend/config/firestore.js` 생성
+    - `createDocument(collection, data)` - 문서 생성
+    - `getDocument(collection, docId)` - 문서 조회
+    - `updateDocument(collection, docId, data)` - 문서 수정
+    - `deleteDocument(collection, docId)` - 문서 삭제
+    - `queryDocuments(collection, conditions)` - 쿼리 조회
+  - 타임스탬프 자동 추가 (created_at, updated_at)
+- **완료 조건**: Firestore 유틸리티 함수 동작
+- **커밋**: `feat: Create Firestore utility functions`
 
-## Phase 5: 카테고리 조회 및 검색
-
-### Task 5.1: 내 카테고리 조회 API (RED→GREEN) ✅
-- **목표**: 사용자별 카테고리 목록 API
+### Task 3.2: 카테고리 관리 Firestore 전환 ⏳
+- **목표**: dataController 카테고리 관련 함수 Firestore 전환
 - **구현**:
-  - 테스트: `backend/__tests__/data.test.js`
-  - GET /api/protected/categories/my API
-  - 사용자별 필터링 로직
-- **테스트**: 카테고리 조회 테스트 통과
-- **완료 조건**: 사용자별 카테고리만 반환
-- **커밋**: `feat: Implement user categories listing API`
-- **완료일**: 2025-09-21
+  - `backend/controllers/dataController.js` 수정
+    - `getMyCategoriesWithCount`: Firestore 쿼리 사용 (where created_by == userId)
+    - `searchPublicCategories`: Firestore 쿼리 사용 (where is_public == true)
+    - `deleteCategory`: Firestore batch delete 사용
+    - `updateCategory`: Firestore updateDocument 사용
+  - JSON Database 관련 코드 제거
+- **테스트**: 카테고리 CRUD API 테스트
+- **완료 조건**: Firestore로 카테고리 관리 동작
+- **커밋**: `feat: Migrate category management to Firestore`
 
-### Task 5.2: 공개 카테고리 검색 API (RED→GREEN) ✅
-- **목표**: 키워드 기반 카테고리 검색
+### Task 3.3: 점자 데이터 Firestore 전환 ⏳
+- **목표**: braille_data 관련 함수 Firestore 전환
 - **구현**:
-  - 테스트: `backend/__tests__/data.test.js`에 추가
-  - GET /api/protected/categories/search?q={keyword} API
-  - LIKE 쿼리로 이름/설명 검색, 대소문자 무관 검색
-- **테스트**: 검색 API 테스트 통과 (9/10 테스트)
-- **완료 조건**: 키워드 매칭 카테고리 반환
-- **커밋**: `feat: Implement public category search API with case-insensitive search`
-- **완료일**: 2025-09-21
+  - `backend/controllers/dataController.js` 수정
+    - `getRandomBrailleData`: Firestore 쿼리 사용
+    - `getCategoryBrailleData`: Firestore 쿼리 사용 (where category_id == categoryId)
+    - `updateCategoryBrailleData`: Firestore batch write 사용
+  - `backend/controllers/uploadController.js` 수정
+    - Excel 업로드 후 Firestore에 저장
+- **테스트**: 점자 데이터 API 테스트
+- **완료 조건**: Firestore로 점자 데이터 관리 동작
+- **커밋**: `feat: Migrate braille data to Firestore`
 
-### Task 5.3: 즐겨찾기 API (RED→GREEN) ✅
-- **목표**: 즐겨찾기 추가/제거 기능
+### Task 3.4: 즐겨찾기 Firestore 전환 ⏳
+- **목표**: favorites 관련 함수 Firestore 전환
 - **구현**:
-  - 테스트: `backend/__tests__/data.test.js`에 추가
-  - POST /api/protected/favorites, DELETE /api/protected/favorites/:id API
-  - GET /api/protected/favorites API
-- **테스트**: 즐겨찾기 CRUD 테스트 통과 (14/15 테스트)
-- **완료 조건**: 즐겨찾기 기능 완전 동작
-- **커밋**: `feat: Implement favorites add/remove functionality`
-- **완료일**: 2025-09-21
+  - `backend/controllers/dataController.js` 수정
+    - `addToFavorites`: Firestore createDocument 사용
+    - `removeFromFavorites`: Firestore deleteDocument 사용
+    - `getFavorites`: Firestore 쿼리 사용 (where user_id == userId)
+  - 중복 체크 로직 추가 (Firestore unique constraint는 없음)
+- **테스트**: 즐겨찾기 추가/제거 API 테스트
+- **완료 조건**: Firestore로 즐겨찾기 동작
+- **커밋**: `feat: Migrate favorites to Firestore`
 
-## Phase 6: 메인 메뉴 UI
-
-### Task 6.1: 카테고리 목록 UI (RED→GREEN) ✅
-- **목표**: 메인 메뉴 카테고리 표시
+### Task 3.5: 연습 로그 Firestore 전환 ⏳
+- **목표**: practice_logs 관련 함수 Firestore 전환
 - **구현**:
-  - E2E 테스트: `frontend/tests/main-menu-basic.spec.js` (7/8 테스트 통과)
-  - `frontend/main.html` 메인 페이지 - 완전한 메뉴 UI 구조
-  - `frontend/js/main.js` - 탭 전환, API 연동, 상태 관리
-  - 내 항목/즐겨찾기/검색 탭 UI 완성
-- **테스트**: 메인 메뉴 E2E 테스트 통과
-- **완료 조건**: 카테고리 목록이 탭별로 표시
-- **커밋**: `feat: Implement main menu with category tabs and JavaScript functionality`
-- **완료일**: 2025-09-21
+  - `backend/controllers/practiceController.js` 수정
+    - `logPracticeSession`: Firestore createDocument 사용
+    - practice_logs 컬렉션에 저장
+    - attendance 자동 생성 로직 유지
+- **테스트**: 연습 로그 API 테스트
+- **완료 조건**: Firestore로 연습 로그 저장 동작
+- **커밋**: `feat: Migrate practice logs to Firestore`
 
-### Task 6.2: 검색 기능 UI (RED→GREEN) ✅
-- **목표**: 카테고리 검색 인터페이스
+### Task 3.6: 출석 및 통계 Firestore 전환 ⏳
+- **목표**: attendance 및 통계 관련 함수 Firestore 전환
 - **구현**:
-  - E2E 테스트: `frontend/tests/search-favorites.spec.js` (9/12 테스트 통과)
-  - 검색창, 검색 결과 표시 UI
-  - 즐겨찾기 추가/제거 버튼 구조
-  - 실시간 검색 기능 (300ms 디바운스)
-  - 탭별 콘텐츠 전환 기능
-- **테스트**: 검색 UI E2E 테스트 통과
-- **완료 조건**: 검색 및 즐겨찾기 UI 동작
-- **커밋**: `feat: Implement category search UI with favorites functionality`
-- **완료일**: 2025-09-21
+  - `backend/controllers/profileController.js` 수정
+    - `getUserStats`: Firestore 집계 쿼리 사용
+    - `getAttendanceData`: Firestore 쿼리 사용 (where user_id == userId and date startsWith month)
+    - `checkIn/checkOut`: Firestore 문서 생성/수정
+    - `getDailyRanking`: Firestore 쿼리 + 집계 로직
+  - 복잡한 집계는 클라이언트에서 처리 고려
+- **테스트**: 통계 및 출석 API 테스트
+- **완료 조건**: Firestore로 출석 및 통계 동작
+- **커밋**: `feat: Migrate attendance and stats to Firestore`
 
-## Phase 7: 점자 연습 시스템
-
-### Task 7.1: 점자 데이터 조회 API (RED→GREEN) ✅
-- **목표**: 카테고리별 랜덤 문제 제공
+### Task 3.7: 게시물 및 댓글 Firestore 전환 ⏳
+- **목표**: posts 및 comments 관련 함수 Firestore 전환
 - **구현**:
-  - 테스트: `backend/__tests__/data.test.js`에 추가 (7개 테스트)
-  - GET /api/protected/braille/:categoryId/random API
-  - 권한 기반 랜덤 문자 반환, 공개/비공개 카테고리 접근 제어
-- **테스트**: 랜덤 문제 API 테스트 통과 (7/7 테스트)
-- **완료 조건**: 점자 데이터가 정상 반환, 권한 검증
-- **커밋**: `feat: Implement random braille character API with access control`
-- **완료일**: 2025-09-21
+  - `backend/controllers/postsController.js` 수정
+    - `getAllPosts`: Firestore 쿼리 사용 (pagination 포함)
+    - `getPostById`: Firestore getDocument 사용
+    - `createPost`: Firestore createDocument 사용
+    - `updatePost`: Firestore updateDocument 사용
+    - `deletePost`: Firestore batch delete (댓글 포함)
+  - `backend/controllers/commentsController.js` 수정
+    - comments 컬렉션 Firestore 전환
+- **테스트**: 게시물 및 댓글 CRUD API 테스트
+- **완료 조건**: Firestore로 커뮤니티 기능 동작
+- **커밋**: `feat: Migrate posts and comments to Firestore`
 
-### Task 7.2: 점자 입력 UI - 기본 구조 (RED→GREEN) ✅
-- **목표**: sample.md 기반 점자 입력 인터페이스
+---
+
+## Phase 4: Firebase Storage 마이그레이션 ⏳
+
+### Task 4.1: Firebase Storage 설정 ⏳
+- **목표**: Excel 파일 업로드를 Firebase Storage로 전환
 - **구현**:
-  - E2E 테스트: `frontend/tests/practice-basic.spec.js` (13개 테스트)
-  - `frontend/practice.html` 연습 페이지 - 완전한 점자 연습 UI
-  - `frontend/js/practice.js` - 점자 그리드 동적 생성, API 연동
-  - 반응형 디자인, 에러 처리, 진행 상황 표시
-- **테스트**: 기본 UI 구조 E2E 테스트 통과 (13/13 테스트)
-- **완료 조건**: 점자 블록이 화면에 표시, API 연동 완료
-- **커밋**: `feat: Implement complete braille practice UI with API integration`
-- **완료일**: 2025-09-21
+  - Firebase Storage 규칙 설정
+  - `backend/config/storage.js` 생성 - Firebase Storage 초기화
+  - multer 제거 고려 (Firebase Storage는 클라이언트 직접 업로드 가능)
+- **완료 조건**: Firebase Storage 초기화 완료
+- **커밋**: `feat: Setup Firebase Storage for file uploads`
 
-### Task 7.3: 키보드 입력 처리 (RED→GREEN) ✅
-- **목표**: F,D,S,J,K,L 키 입력 처리
+### Task 4.2: Excel 업로드 Firebase Storage 전환 ⏳
+- **목표**: uploadController를 Firebase Storage로 전환
 - **구현**:
-  - E2E 테스트: `frontend/tests/practice-keyboard.spec.js` (15개 테스트)
-  - keyToDot 매핑 구현 (F=1, D=2, S=3, J=4, K=5, L=6)
-  - pressedDots Set 관리, 점자 블록 토글, Escape 키로 초기화
-  - 멀티블록 문자 지원, 시각적 피드백
-- **테스트**: 키보드 입력 E2E 테스트 통과 (15/15 테스트)
-- **완료 조건**: 키 입력 시 점자 활성화, 모든 매핑 동작
-- **커밋**: `feat: Implement complete keyboard input handling for braille practice`
-- **완료일**: 2025-09-21
+  - `backend/controllers/uploadController.js` 수정
+    - Firebase Storage uploadBytes 사용
+    - 또는 클라이언트에서 직접 업로드 후 백엔드에서 다운로드 URL로 처리
+  - `frontend/js/upload.js` 수정
+    - Firebase Storage SDK 사용하여 파일 업로드
+    - 업로드 진행률 표시 유지
+- **테스트**: Excel 파일 업로드 및 파싱 테스트
+- **완료 조건**: Firebase Storage로 파일 업로드 동작
+- **커밋**: `feat: Migrate Excel upload to Firebase Storage`
 
-### Task 7.4: 점자 검증 시스템 (RED→GREEN) ✅
-- **목표**: 입력 검증 및 블록 진행
+---
+
+## Phase 5: 프론트엔드 API 연동 수정 ⏳
+
+### Task 5.1: API 호출 함수 Firebase 전환 ⏳
+- **목표**: 프론트엔드 API 호출을 Firebase Client SDK로 전환
 - **구현**:
-  - E2E 테스트: `frontend/tests/practice-validation.spec.js` (12개 테스트)
-  - validateCurrentBlock, checkCurrentBlock 함수 구현
-  - 자동 검증 시스템, 시각적 피드백 (.correct, .wrong 클래스)
-  - 멀티블록 진행, 완료 시 자동 다음 문제
-- **테스트**: 검증 로직 E2E 테스트 통과 (12/12 테스트)
-- **완료 조건**: 정답 시 다음 블록 진행, 오답 시 피드백
-- **커밋**: `feat: Implement comprehensive braille validation system`
-- **완료일**: 2025-09-21
+  - `frontend/js/firebase-api.js` 생성
+    - Firestore 클라이언트 CRUD 함수
+    - Firebase Auth 상태 리스너
+  - 기존 fetch API 호출을 Firebase SDK 호출로 변경
+    - `frontend/js/auth.js` 수정
+    - `frontend/js/main.js` 수정
+    - `frontend/js/practice.js` 수정
+    - `frontend/js/statistics.js` 수정
+    - `frontend/js/community.js` 수정
+- **완료 조건**: 프론트엔드가 Firebase SDK로 데이터 조회
+- **커밋**: `feat: Migrate frontend API calls to Firebase SDK`
 
-### Task 7.5: 힌트 기능 (RED→GREEN) ✅
-- **목표**: 힌트 표시/숨김 기능
+### Task 5.2: 실시간 데이터 리스너 구현 (선택) ⏳
+- **목표**: Firestore 실시간 리스너로 UI 자동 업데이트
 - **구현**:
-  - E2E 테스트: `frontend/tests/practice-hints.spec.js` (11개 테스트)
-  - toggleHint, updateHintDisplay, updateHintHighlighting 함수
-  - Space 키 바인딩, 현재 블록 힌트 하이라이팅
-  - .hint-active 클래스, 힌트 번호 오버레이
-- **테스트**: 힌트 기능 E2E 테스트 통과 (11/11 테스트)
-- **완료 조건**: 힌트가 정상 표시/숨김, 현재 블록만 하이라이트
-- **커밋**: `feat: Implement comprehensive hint system with highlighting`
-- **완료일**: 2025-09-21
+  - 게시물 목록 실시간 업데이트 (onSnapshot)
+  - 댓글 실시간 업데이트
+  - 통계 실시간 업데이트
+- **완료 조건**: 데이터 변경 시 UI 자동 반영
+- **커밋**: `feat: Implement Firestore real-time listeners`
 
-### Task 7.6: Backspace 처리 (RED→GREEN) ✅
-- **목표**: 마지막 점 제거 기능
+---
+
+## Phase 6: 보안 규칙 및 인덱스 설정 ⏳
+
+### Task 6.1: Firestore Security Rules 작성 ⏳
+- **목표**: Firestore 보안 규칙 설정
 - **구현**:
-  - E2E 테스트: `frontend/tests/practice-backspace.spec.js` (9개 테스트)
-  - removeLastDot 함수, dotInputOrder 배열로 입력 순서 추적
-  - Backspace 키 바인딩, 역순 제거, correct/wrong 상태 보호
-  - 멀티블록 지원, 힌트와 상호작용
-- **테스트**: Backspace E2E 테스트 통과 (9/9 테스트)
-- **완료 조건**: 마지막 입력 점만 제거, 입력 순서 추적
-- **커밋**: `feat: Implement backspace with input order tracking`
-- **완료일**: 2025-09-21
+  - `firestore.rules` 파일 작성
+    - users: 본인만 읽기/쓰기
+    - categories: 공개는 모두 읽기, 본인만 쓰기
+    - braille_data: 카테고리 권한에 따라
+    - practice_logs: 본인만 읽기/쓰기
+    - attendance: 본인만 읽기/쓰기
+    - favorites: 본인만 읽기/쓰기
+    - posts: 모두 읽기, 인증된 사용자만 쓰기, 본인만 수정/삭제
+    - comments: 모두 읽기, 인증된 사용자만 쓰기, 본인만 수정/삭제
+  - Firebase 콘솔에서 규칙 배포
+- **완료 조건**: Firestore 보안 규칙 적용
+- **커밋**: `feat: Configure Firestore security rules`
 
-## Phase 8: 학습 기록 시스템
-
-### Task 8.1: 연습 기록 API (RED→GREEN) ✅
-- **목표**: 연습 시간 및 출석 기록
+### Task 6.2: Firestore 인덱스 생성 ⏳
+- **목표**: Firestore 복합 쿼리 인덱스 생성
 - **구현**:
-  - 테스트: `backend/__tests__/profile.test.js` (7개 테스트)
-  - POST /api/practice/log API - 연습 세션 기록
-  - PracticeLogs, Attendance 테이블 활용
-  - 자동 출석 체크 (일일 기준)
-- **테스트**: 기록 API 테스트 통과 (7/7 테스트)
-- **완료 조건**: 연습 시간과 출석이 DB에 저장
-- **커밋**: `feat: Implement practice session logging with automatic attendance`
-- **완료일**: 2025-09-21
+  - `firestore.indexes.json` 파일 작성
+    - categories: created_by + created_at
+    - braille_data: category_id + id
+    - practice_logs: user_id + practiced_at
+    - attendance: user_id + date
+    - favorites: user_id + category_id
+    - posts: created_at (descending)
+    - comments: post_id + created_at
+  - Firebase CLI로 인덱스 배포
+- **완료 조건**: 모든 쿼리가 인덱스 사용
+- **커밋**: `feat: Create Firestore composite indexes`
 
-### Task 8.2: 통계 조회 API (RED→GREEN) ✅
-- **목표**: 사용자 통계 제공
+### Task 6.3: Storage Security Rules 작성 ⏳
+- **목표**: Firebase Storage 보안 규칙 설정
 - **구현**:
-  - 테스트: `backend/__tests__/profile.test.js`에 추가 (5개 테스트)
-  - GET /api/profile/stats API - 개인 통계 조회
-  - GET /api/profile/attendance API - 월별 출석 데이터
-  - 총 연습시간, 출석일수, 평균 연습시간, 최장 세션 계산
-- **테스트**: 통계 API 테스트 통과 (5/5 테스트)
-- **완료 조건**: 정확한 통계 데이터 반환
-- **커밋**: `feat: Implement user statistics and attendance APIs`
-- **완료일**: 2025-09-21
+  - `storage.rules` 파일 작성
+    - Excel 파일: 인증된 사용자만 업로드
+    - 파일 크기 제한 (10MB)
+    - 파일 타입 제한 (.xlsx, .xls)
+  - Firebase 콘솔에서 규칙 배포
+- **완료 조건**: Storage 보안 규칙 적용
+- **커밋**: `feat: Configure Firebase Storage security rules`
 
-### Task 8.3: 출석 달력 UI (RED→GREEN) ✅
-- **목표**: 출석 현황 시각화
+---
+
+## Phase 7: 기존 데이터 마이그레이션 ⏳
+
+### Task 7.1: 데이터 마이그레이션 스크립트 작성 ⏳
+- **목표**: JSON Database → Firestore 데이터 이전 스크립트
 - **구현**:
-  - E2E 테스트: `frontend/tests/attendance-calendar.spec.js` (10개 테스트)
-  - 메인 페이지에 '출석 달력' 탭 추가
-  - CSS Grid 기반 달력 UI, 통계 요약 카드
-  - 출석일 하이라이트, 현재 날짜 표시, 월 간 이동
-  - 연속 출석 계산, 반응형 디자인, 로딩 상태
-- **테스트**: 달력 UI E2E 테스트 통과 (8/10 테스트)
-- **완료 조건**: 출석일이 달력에 표시, 통계 정보 제공
-- **커밋**: `feat: Implement comprehensive attendance calendar with statistics dashboard`
-- **완료일**: 2025-09-21
+  - `backend/scripts/migrate-to-firebase.js` 생성
+    - JSON 파일에서 데이터 읽기
+    - Firestore batch write로 데이터 저장
+    - 각 컬렉션별 마이그레이션 함수
+  - Firebase Admin SDK 사용
+  - 진행률 표시
+- **완료 조건**: 스크립트 실행 시 데이터 이전
+- **커밋**: `feat: Create data migration script from JSON to Firestore`
 
-## Phase 9: 통합 테스트 및 최적화
+---
 
-### Task 9.1: 전체 플로우 E2E 테스트 ✅
-- **목표**: 사용자 전체 여정 테스트
+## Phase 8: Firebase 데이터베이스 변경 테스트 계획 🔄
+
+### Task 8.1: 인증/대시보드 회귀 테스트 추가 ⏳
+- **목표**: Firebase Authentication + Firestore 전환 후에도 로그인/회원가입/메인 대시보드가 기존 UX를 유지함을 Playwright로 보장
 - **구현**:
-  - `frontend/tests/full-flow.spec.js` - 인증 플로우, 파일 업로드, 연습 기능 테스트
-  - 에러 처리, 보호된 라우트, 세션 지속성 테스트
-  - 분리된 테스트 케이스로 안정적인 E2E 테스트 구조
-- **테스트**: 핵심 플로우 E2E 테스트 통과 (5/7 테스트)
-- **완료 조건**: 모든 기능이 연결되어 동작
-- **커밋**: `test: Add comprehensive end-to-end user flow test`
-- **완료일**: 2025-09-21
+  - Firebase 호출을 테스트에서 주입 가능한 mock으로 추상화 (예: `window.__createMockApiClient`)
+  - 로그인/회원가입 성공·실패 시나리오, 자동 리다이렉트, 토큰 저장/삭제 절차 검증
+  - 메인 페이지가 Firestore 데이터를 불러와 통계 카드 및 카테고리를 정상 렌더링하는지 확인
+- **테스트**: `cd frontend && npm test`
+- **완료 조건**: 신규 테스트가 deterministic 하게 통과하고, Firebase 의존성 없이도 CI에서 실행 가능
+- **커밋**: `test: cover firebase auth/dashboard flows`
 
-### Task 9.2: 에러 처리 및 검증 강화 ✅
-- **목표**: 예외 상황 처리 개선
+### Task 8.2: 연습(Practice) Firebase 데이터 경로 검증 🔄
+- **목표**: `/practice.html`이 Firestore 점자 데이터 + 연습 로그를 사용해도 기존 키보드 UX를 유지함을 자동화 테스트로 검증
 - **구현**:
-  - `backend/middleware/errorHandler.js` - 글로벌 에러 핸들링 미들웨어
-  - `backend/middleware/validation.js` - 입력 데이터 검증 미들웨어
-  - `frontend/js/utils/errorHandler.js` - 프론트엔드 에러 처리 유틸리티
-  - API 에러 응답 표준화 (success, error, details, timestamp 포함)
-  - 프론트엔드 에러 메시지 표시 개선
-- **테스트**: 에러 케이스 테스트 추가 (10/13 테스트 통과)
-- **완료 조건**: 모든 에러가 적절히 처리되고 사용자 친화적 메시지 제공
-- **커밋**: `feat: Improve error handling and input validation`
-- **완료일**: 2025-09-21
+  - `window.apiClient.getRandomBrailleCharacter` / `recordPracticeSession` mock 으로 다양한 패턴 및 세션 시나리오 테스트
+  - 다중 블록, 힌트, 백스페이스, 세션 종료시 로그 기록 등 핵심 동작 검증
+  - 기본 카테고리 ID 전달/미전달 케이스 커버
+- **테스트**: Playwright practice spec 실행 (`npm test`)
+- **완료 조건**: 최소 3개의 핵심 사용자 여정(문제 로딩 → 입력 → 로그 기록)이 자동화로 커버되고, Firebase 전환 이후에도 회귀 가능
+- **커밋**: `test: add firebase practice regression`
 
-### Task 9.3: 성능 최적화 ✅
-- **목표**: 응답 속도 및 UI 개선
+### Task 8.3: 통계/출석 Firestore 집계 테스트 ⏳
+- **목표**: Firestore 기반 통계/출석 계산 로직이 기존 REST 응답과 동일한 포맷을 제공하는지 검증
 - **구현**:
-  - `backend/scripts/optimize-database.js` - 데이터베이스 인덱스 자동 추가
-  - `backend/middleware/cache.js` - API 응답 캐싱 미들웨어
-  - `frontend/js/utils/loadingManager.js` - 로딩 상태 관리 유틸리티
-  - 14개 데이터베이스 인덱스 추가 (사용자, 카테고리, 연습 기록 등)
-  - 5분 캐시 TTL, 캐시 무효화 기능
-  - 스켈레톤 로더, 버튼 로딩 상태, 글로벌 로딩 오버레이
-- **테스트**: 성능 테스트 추가 (10/11 테스트 통과)
-- **완료 조건**: API 응답 시간 대부분 100ms 이내, UI 로딩 상태 제공
-- **커밋**: `perf: Optimize database queries and UI responsiveness`
-- **완료일**: 2025-09-21
+  - mock 데이터로 다양한 `practice_logs`/`attendance` 케이스 구성 (주간 합계, 세션 수, 중복 날짜 등)
+  - `statistics.html`이 mock 응답으로 카드, 차트, 최근 세션 리스트를 정확히 렌더링하는지 검사
+  - 주간 목표 달성률, 평균 세션 시간 계산 공식 회귀 테스트 포함
+- **테스트**: Playwright statistics spec 실행 (`npm test`)
+- **완료 조건**: Firestore 집계 포맷 변경 시 테스트가 즉시 실패하도록 커버리지 확보
+- **커밋**: `test: ensure firestore stats rendering`
+
+### Task 7.2: 사용자 데이터 마이그레이션 ⏳
+- **목표**: users 컬렉션 데이터 이전
+- **구현**:
+  - `backend/data/users.json` 데이터 읽기
+  - Firebase Auth에 사용자 생성 (password는 재설정 필요)
+  - Firestore users 컬렉션에 추가 정보 저장
+  - 마이그레이션 로그 기록
+- **테스트**: Firebase 콘솔에서 사용자 확인
+- **완료 조건**: 모든 사용자 데이터 이전
+- **커밋**: `feat: Migrate user data to Firebase Auth and Firestore`
+
+### Task 7.3: 카테고리 및 점자 데이터 마이그레이션 ⏳
+- **목표**: categories 및 braille_data 컬렉션 데이터 이전
+- **구현**:
+  - `backend/data/categories.json` 및 `braille_data.json` 데이터 읽기
+  - Firestore batch write로 저장
+  - category_id 참조 무결성 확인
+- **테스트**: Firestore 콘솔에서 데이터 확인
+- **완료 조건**: 모든 카테고리 및 점자 데이터 이전
+- **커밋**: `feat: Migrate categories and braille data to Firestore`
+
+### Task 7.4: 연습 로그 및 출석 데이터 마이그레이션 ⏳
+- **목표**: practice_logs 및 attendance 컬렉션 데이터 이전
+- **구현**:
+  - `backend/data/practice_logs.json` 및 `attendance.json` 데이터 읽기
+  - Firestore batch write로 저장
+  - user_id 참조 무결성 확인
+- **테스트**: Firestore 콘솔에서 데이터 확인
+- **완료 조건**: 모든 연습 로그 및 출석 데이터 이전
+- **커밋**: `feat: Migrate practice logs and attendance to Firestore`
+
+### Task 7.5: 게시물 및 댓글 데이터 마이그레이션 ⏳
+- **목표**: posts 및 comments 컬렉션 데이터 이전
+- **구현**:
+  - `backend/data/posts.json` 및 `comments.json` 데이터 읽기
+  - Firestore batch write로 저장
+  - author_id, post_id 참조 무결성 확인
+- **테스트**: Firestore 콘솔에서 데이터 확인
+- **완료 조건**: 모든 게시물 및 댓글 데이터 이전
+- **커밋**: `feat: Migrate posts and comments to Firestore`
+
+---
+
+## Phase 8: 테스트 및 검증 ⏳
+
+### Task 8.1: 통합 테스트 실행 ⏳
+- **목표**: 모든 기능 동작 확인
+- **구현**:
+  - 회원가입/로그인 테스트
+  - 카테고리 생성/조회/검색 테스트
+  - 점자 연습 테스트
+  - 통계 조회 테스트
+  - 게시물/댓글 CRUD 테스트
+  - 즐겨찾기 추가/제거 테스트
+- **완료 조건**: 모든 핵심 기능 정상 동작
+- **커밋**: `test: Verify all features after Firebase migration`
+
+### Task 8.2: 성능 테스트 ⏳
+- **목표**: Firestore 쿼리 성능 확인
+- **구현**:
+  - 대량 데이터 조회 테스트
+  - 복합 쿼리 성능 측정
+  - 인덱스 최적화
+  - Firestore 읽기/쓰기 비용 분석
+- **완료 조건**: 성능 이슈 없음
+- **커밋**: `test: Performance testing and optimization`
+
+### Task 8.3: 보안 테스트 ⏳
+- **목표**: Firestore Security Rules 검증
+- **구현**:
+  - 권한 없는 접근 시도 테스트
+  - 다른 사용자 데이터 접근 차단 확인
+  - Storage 규칙 테스트 (파일 타입, 크기 제한)
+  - Firebase Console Simulator 사용
+- **완료 조건**: 모든 보안 규칙 정상 동작
+- **커밋**: `test: Verify Firestore and Storage security rules`
+
+---
+
+## Phase 9: 배포 및 정리 ⏳
+
+### Task 9.1: 환경 변수 및 설정 정리 ⏳
+- **목표**: Firebase 프로덕션 설정
+- **구현**:
+  - `.env.production` 파일 생성
+  - Firebase 프로젝트 ID, API Key 등 설정
+  - 민감 정보 .gitignore 추가
+  - `backend/config/firebase.js` 환경별 설정 분리
+- **완료 조건**: 프로덕션 환경 설정 완료
+- **커밋**: `feat: Configure Firebase for production environment`
+
+### Task 9.2: 기존 Node.js 백엔드 코드 제거 ⏳
+- **목표**: 사용하지 않는 코드 정리
+- **구현**:
+  - `backend/config/jsonDatabase.js` 삭제
+  - `backend/config/database.js` 수정 (Firebase만 남김)
+  - `backend/data/*.json` 파일 삭제 (백업 후)
+  - express-session, bcrypt, jsonwebtoken 의존성 제거
+  - multer 제거 (Firebase Storage 사용)
+  - 사용하지 않는 미들웨어 제거
+- **테스트**: 빌드 및 실행 테스트
+- **완료 조건**: 불필요한 코드 모두 제거
+- **커밋**: `refactor: Remove legacy JSON database code`
+
+### Task 9.3: 테스트 파일 정리 및 삭제 ⏳
+- **목표**: 마이그레이션 테스트 파일 삭제
+- **구현**:
+  - `backend/__tests__/` 디렉토리 내 테스트 파일 삭제
+    - `auth.test.js`, `data.test.js`, `profile.test.js`, `upload.test.js`, `database.test.js` 삭제
+  - `frontend/tests/` 디렉토리 내 불필요한 테스트 파일 삭제
+  - Jest 의존성 제거 (선택)
+- **완료 조건**: 테스트 파일 정리 완료
+- **커밋**: `chore: Remove test files after migration`
+
+### Task 9.4: README 및 문서 업데이트 ⏳
+- **목표**: Firebase 마이그레이션 문서화
+- **구현**:
+  - `README.md` 업데이트
+    - Firebase 프로젝트 설정 가이드
+    - 환경 변수 설정 방법
+    - 데이터 마이그레이션 가이드
+  - `CLAUDE.md` 업데이트
+    - Firebase 아키텍처 설명
+    - Firestore 데이터 모델
+    - 개발 가이드라인
+- **완료 조건**: 문서 업데이트 완료
+- **커밋**: `docs: Update documentation for Firebase migration`
+
+### Task 9.5: 최종 커밋 및 브랜치 병합 ⏳
+- **목표**: firebase 브랜치 작업 완료
+- **구현**:
+  - 모든 변경사항 커밋
+  - firebase 브랜치에 최종 커밋
+  - 커밋 메시지: `feat: Complete Firebase migration from Node.js backend`
+- **완료 조건**: firebase 브랜치에 모든 작업 커밋
+- **커밋**: `feat: Complete Firebase migration from Node.js backend`
+
+---
 
 ## 개발 가이드라인
 
 ### 각 작업 수행 시 체크리스트
 
-1. **테스트 먼저 작성** (RED)
-   - 기능 요구사항을 명확히 정의
-   - 실패하는 테스트 케이스 작성
-   - 테스트 실행하여 실패 확인
+1. **작업 시작**
+   - tasklist.md에서 상태를 `⏳ 대기` → `🔄 진행중`으로 변경
+   - 작업 브랜치 확인 (firebase 브랜치)
 
-2. **최소 구현** (GREEN)
-   - 테스트를 통과시키는 최소한의 코드 작성
-   - 과도한 기능 추가 금지
-   - 테스트 실행하여 통과 확인
+2. **구현 중**
+   - Firebase 콘솔에서 실시간 확인
+   - 에러 로그 확인
+   - 기존 기능과 동일하게 동작하는지 확인
 
-3. **리팩토링** (REFACTOR)
-   - 코드 품질 개선
-   - 중복 제거 및 구조 개선
-   - 테스트가 계속 통과하는지 확인
+3. **테스트**
+   - Firebase Emulator Suite 사용 (선택)
+   - 실제 Firebase 프로젝트에서 테스트
+   - Firestore 콘솔에서 데이터 확인
+   - Storage 콘솔에서 파일 확인
 
-4. **커밋 및 푸시**
+4. **작업 완료**
+   - tasklist.md에서 상태를 `🔄 진행중` → `✅ 완료`로 변경
+   - 테스트 파일 삭제 (Phase 9.3에서 명시된 경우)
+   - firebase 브랜치에 커밋
    ```bash
-   npm test  # 모든 테스트 통과 확인
    git add .
    git commit -m "커밋 메시지"
-   git push origin main
+   git push origin firebase
    ```
 
-### 트러블슈팅 가이드
+### 주의사항
 
-- **테스트 실패 시**: 최소 구현부터 다시 시작
-- **API 연동 실패**: Postman 등으로 API 개별 테스트
-- **E2E 테스트 불안정**: 대기 시간 추가 및 선택자 확인
-- **데이터베이스 이슈**: init-db.js 재실행
+- **테스트 파일**: 각 Phase 완료 후 해당 Phase에서 사용한 테스트 파일은 Phase 9.3에서 일괄 삭제
+- **데이터 백업**: 마이그레이션 전 기존 JSON 파일 백업 필수
+- **점진적 마이그레이션**: 한 번에 모든 기능을 전환하지 말고 Phase별로 진행
+- **Firebase 비용**: Firestore 읽기/쓰기 비용 모니터링
+- **Security Rules**: 반드시 테스트 후 프로덕션 적용
+- **ID Token 갱신**: Firebase ID Token은 1시간마다 갱신 필요 (자동 처리)
 
-### 우선순위 원칙
+### Firebase vs Node.js 비교
 
-1. **핵심 기능 우선**: 인증 → 데이터 관리 → 연습 기능 → 부가 기능
-2. **백엔드 API 먼저, UI 나중**: 안정적인 API 기반 위에 UI 구축
-3. **단순함 유지**: 복잡한 기능보다 안정적인 기본 기능
-4. **사용자 경험**: 실제 사용 시나리오를 고려한 구현
+| 기능 | Node.js/Express | Firebase |
+|------|----------------|----------|
+| 인증 | JWT + bcrypt | Firebase Authentication |
+| 데이터베이스 | JSON Database (SQLite 대체) | Firestore |
+| 파일 업로드 | multer | Firebase Storage |
+| 세션 관리 | express-session | Firebase ID Token |
+| 보안 | 미들웨어 기반 | Security Rules |
+| 실시간 | 없음 | onSnapshot |
 
-이 tasklist를 순서대로 진행하면 안정적이고 테스트 커버리지가 높은 점자 타자 연습기를 구축할 수 있습니다.
+### 우선순위
+
+1. **Phase 1-2**: Firebase 설정 및 인증 (가장 중요)
+2. **Phase 3**: Firestore 데이터 마이그레이션 (핵심 기능)
+3. **Phase 4-5**: Storage 및 프론트엔드 연동
+4. **Phase 6-7**: 보안 및 데이터 이전
+5. **Phase 8-9**: 테스트 및 정리
 
 ---
 
-## 빠른 참조 (Quick Reference)
+## 진행 상황 요약
 
-### 상태 이모지 복사용
-- ✅ (완료)
-- 🔄 (진행중)
-- ⏳ (대기)
-- ❌ (블록)
+- **전체 태스크**: 30개
+- **완료**: 0개 (0%)
+- **진행중**: 0개
+- **대기**: 30개
 
-### 진행 상태 업데이트 명령어
-```bash
-# 현재 진행 상황 확인
-grep -E "###.*Task.*[✅🔄⏳❌]" tasklist.md
-
-# 완료된 작업 수 확인
-grep -c "✅" tasklist.md
-
-# 진행중인 작업 확인
-grep "🔄" tasklist.md
-```
-
-### 프로젝트 현재 진행률
-- **전체 태스크**: 30개 (Phase 1~9)
-- **완료된 태스크**: 30개 ✅
-- **진행률**: 100% (30/30)
-- **완료된 Phase**: 9개 (Phase 1~9)
-- **남은 Phase**: 0개
-
-### 마지막 업데이트
-- **업데이트 일시**: 2025-09-21
-- **상태**: Phase 1~9 완료 - 점자 타자 연습기 통합 테스트 및 최적화 포함 완전 구현
-- **완료된 태스크**: Task 1.1~1.3, 2.1~2.6, 3.1~3.3, 4.1~4.3, 5.1~5.3, 6.1~6.2, 7.1~7.6, 8.1~8.3, 9.1~9.3
-
-### Phase별 완료 현황
-- ✅ **Phase 1**: 프로젝트 초기 설정 (3/3 태스크)
-- ✅ **Phase 2**: 사용자 인증 시스템 (6/6 태스크)
-- ✅ **Phase 3**: 프론트엔드 인증 UI (3/3 태스크)
-- ✅ **Phase 4**: 데이터 업로드 시스템 (3/3 태스크)
-- ✅ **Phase 5**: 카테고리 조회 및 검색 (3/3 태스크)
-- ✅ **Phase 6**: 메인 메뉴 UI (2/2 태스크)
-- ✅ **Phase 7**: 점자 연습 시스템 (6/6 태스크)
-- ✅ **Phase 8**: 학습 기록 시스템 (3/3 태스크)
-- ✅ **Phase 9**: 통합 테스트 및 최적화 (3/3 태스크)
-
-### Phase 7 주요 성과
-- **완전한 점자 연습 시스템** 구현 (67개 테스트 통과)
-- **F,D,S,J,K,L 키보드 매핑** - 점자 1,2,3,4,5,6 대응
-- **실시간 자동 검증** - 정답/오답 즉시 피드백
-- **힌트 시스템** - Space키로 정답 힌트 표시/숨김
-- **Backspace 지원** - 입력 순서 추적하여 역순 제거
-- **멀티블록 문자 지원** - 복잡한 문자도 블록별 입력
-- **반응형 UI** - 모바일/데스크톱 모두 지원
-
-### Phase 8 주요 성과
-- **연습 기록 시스템** 구현 (22개 테스트 통과)
-- **자동 출석 체크** - 연습 시 자동으로 출석 기록
-- **종합 통계 API** - 총 연습시간, 출석일수, 평균 연습시간, 최장 세션
-- **출석 달력 UI** - CSS Grid 기반 시각적 달력 인터페이스
-- **연속 출석 계산** - 현재 연속 출석, 최장 연속 출석 표시
-- **월간 이동 기능** - 이전/다음 달 출석 기록 조회
-- **통계 대시보드** - 카드 형태의 시각적 통계 정보 제공
-
-### Phase 9 주요 성과
-- **통합 테스트 시스템** 구현 (5/7 E2E 테스트 통과)
-- **포괄적 에러 처리** - 글로벌 에러 핸들러, 입력 검증, 사용자 친화적 메시지
-- **성능 최적화** - 14개 DB 인덱스, API 캐싱, 로딩 상태 관리
-- **API 응답 표준화** - success, error, details, timestamp 구조
-- **프론트엔드 UX 개선** - 스켈레톤 로더, 로딩 오버레이, 버튼 상태
-- **데이터베이스 최적화** - 쿼리 성능 향상, 인덱스 분석
-
-### 프로젝트 완료
-**점자 타자 연습기 프로젝트가 성공적으로 완료되었습니다!**
-
-✅ **모든 9개 Phase 완료** (30/30 태스크)
-✅ **완전한 기능** - 인증, 업로드, 연습, 기록, 검색, 즐겨찾기
-✅ **안정적인 시스템** - 에러 처리, 성능 최적화, 테스트 커버리지
-✅ **사용자 친화적 UI** - 반응형 디자인, 로딩 상태, 힌트 시스템
+### Phase별 태스크 수
+- Phase 1: 3개 (Firebase 설정)
+- Phase 2: 6개 (Authentication)
+- Phase 3: 7개 (Firestore 마이그레이션)
+- Phase 4: 2개 (Storage)
+- Phase 5: 2개 (프론트엔드)
+- Phase 6: 3개 (보안)
+- Phase 7: 5개 (데이터 이전)
+- Phase 8: 3개 (테스트)
+- Phase 9: 5개 (배포 및 정리)

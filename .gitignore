@@ -16,6 +16,10 @@ backend/sessions.db
 .env.test.local
 .env.production.local
 
+# Firebase
+backend/config/serviceAccountKey.json
+frontend/js/firebase-config.js
+
 # Logs
 logs
 *.log

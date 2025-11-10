@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "description": "Frontend for Braille Typing Practice Application",
   "scripts": {
-    "test": "playwright test",
+    "test": "npx playwright test",
     "serve": "npx http-server -p 8080"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.0",
+    "@playwright/test": "^1.56.1",
     "http-server": "^14.1.1"
+  },
+  "dependencies": {
+    "firebase": "^12.4.0"
   }
 }
