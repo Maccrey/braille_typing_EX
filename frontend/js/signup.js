@@ -37,7 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
         hideError();
 
         try {
-            const username = email.split('@')[0];
+            const username = email
+                .trim()
+                .replace(/[^\u3131-\u318E\uAC00-\uD7AFa-zA-Z0-9_-]/g, '_'); // keep only allowed chars
             await window.apiClient.signup(email, password, username);
             if (window.__TEST_MODE__) {
                 window.__lastNavigationTarget = 'main.html';
