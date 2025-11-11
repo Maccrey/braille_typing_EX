@@ -362,7 +362,19 @@ class MainMenu {
     }
 
     async logout() {
-        await window.apiClient.logout();
+        try {
+            if (window.apiClient && typeof window.apiClient.logout === 'function') {
+                await window.apiClient.logout();
+                return;
+            }
+            throw new Error('Logout API not available');
+        } catch (error) {
+            console.error('Logout failed, clearing session manually:', error);
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
     }
 
     updateAdminButtonVisibility() {
