@@ -95,17 +95,20 @@ service cloud.firestore {
 
     // PracticeLogs 컬렉션
     match /practice_logs/{logId} {
-      allow read, write: if isOwner(resource.data.user_id);
+      allow create: if isOwner(request.resource.data.user_id);
+      allow read, update, delete: if isOwner(resource.data.user_id);
     }
 
     // Attendance 컬렉션
     match /attendance/{attendanceId} {
-      allow read, write: if isOwner(resource.data.user_id);
+      allow create: if isOwner(request.resource.data.user_id);
+      allow read, update, delete: if isOwner(resource.data.user_id);
     }
 
     // Favorites 컬렉션
     match /favorites/{favoriteId} {
-      allow read, write: if isOwner(resource.data.user_id);
+      allow create: if isOwner(request.resource.data.user_id);
+      allow read, update, delete: if isOwner(resource.data.user_id);
     }
 
     // Posts 컬렉션

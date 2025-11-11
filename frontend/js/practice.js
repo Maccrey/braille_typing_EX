@@ -799,12 +799,6 @@ class BraillePractice {
     // Record practice session to backend
     async recordPracticeSession(duration) {
         try {
-            // Only record if there's meaningful practice time (at least 10 seconds)
-            if (duration < 10) {
-                console.log('⏱️ Session too short to record:', duration, 'seconds');
-                return;
-            }
-
             console.log('📝 Recording practice session:', {
                 totalDuration: duration,
                 characters: this.practiceSessionData.charactersCompleted,
@@ -836,18 +830,18 @@ class BraillePractice {
             const currentTime = Date.now();
             const totalSessionDuration = Math.floor((currentTime - this.sessionStartTime) / 1000);
 
+            if (totalSessionDuration <= 0) {
+                console.log('⏱️ Session duration is zero, skipping record.');
+                return;
+            }
+
             console.log('🏁 Ending practice session. Total duration:', totalSessionDuration, 'seconds');
             console.log('📊 Characters completed:', this.practiceSessionData.charactersCompleted);
 
             // Stop UI updates
             this.stopUIUpdates();
 
-            // Record total session time only if there's meaningful practice time (at least 10 seconds)
-            if (totalSessionDuration >= 10) {
-                await this.recordPracticeSession(totalSessionDuration);
-            } else {
-                console.log('⏱️ Session too short to record:', totalSessionDuration, 'seconds');
-            }
+            await this.recordPracticeSession(totalSessionDuration);
         } finally {
             // Reset session data regardless of recording outcome
             this.sessionStartTime = null;
@@ -1022,7 +1016,7 @@ class BraillePractice {
         } finally {
             if (backBtn) {
                 backBtn.disabled = false;
-                backBtn.textContent = originalText || '메인으로';
+                backBtn.textContent = originalText || '연습종료';
             }
             window.location.href = 'main.html';
         }
