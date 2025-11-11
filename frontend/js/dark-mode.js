@@ -89,6 +89,13 @@ class DarkModeManager {
             } else {
                 toggle.classList.remove('active');
             }
+
+            if (!toggle.dataset.darkModeBound) {
+                toggle.addEventListener('click', () => {
+                    this.toggle();
+                });
+                toggle.dataset.darkModeBound = 'true';
+            }
         });
 
         const toggleLabels = document.querySelectorAll('.toggle-label');
