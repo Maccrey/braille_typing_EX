@@ -101,6 +101,26 @@ class DarkModeManager {
         const toggleLabels = document.querySelectorAll('.toggle-label');
         toggleLabels.forEach(label => {
             label.textContent = this.isDark() ? '다크모드' : '라이트모드';
+            if (!label.dataset.darkModeBound) {
+                label.addEventListener('click', () => {
+                    this.toggle();
+                });
+                label.dataset.darkModeBound = 'true';
+            }
+        });
+
+        const toggleContainers = document.querySelectorAll('.dark-mode-toggle');
+        toggleContainers.forEach(container => {
+            if (!container.dataset.darkModeBound) {
+                container.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        this.toggle();
+                    }
+                });
+                container.setAttribute('tabindex', '0');
+                container.dataset.darkModeBound = 'true';
+            }
         });
     }
 
