@@ -52,6 +52,7 @@ class MainMenu {
         }
         document.getElementById('prev-month').addEventListener('click', () => this.navigateMonth('prev'));
         document.getElementById('next-month').addEventListener('click', () => this.navigateMonth('next'));
+        this.setupPasswordModalEvents();
     }
 
     async loadInitialData() {
@@ -343,6 +344,125 @@ class MainMenu {
         const div = document.createElement('div');
         div.textContent = text ?? '';
         return div.innerHTML;
+    }
+
+    setupPasswordModalEvents() {
+        const openBtn = document.getElementById('change-password-btn');
+        if (openBtn) {
+            openBtn.addEventListener('click', () => this.openPasswordModal());
+        }
+
+        const closeBtn = document.getElementById('password-modal-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.closePasswordModal());
+        }
+
+        const cancelBtn = document.getElementById('password-cancel-btn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => this.closePasswordModal());
+        }
+
+        const modal = document.getElementById('password-modal');
+        if (modal) {
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    this.closePasswordModal();
+                }
+            });
+        }
+
+        const form = document.getElementById('password-change-form');
+        if (form) {
+            form.addEventListener('submit', (event) => this.handlePasswordChange(event));
+        }
+
+        document.querySelectorAll('.password-toggle').forEach(toggleBtn => {
+            toggleBtn.addEventListener('click', () => this.togglePasswordVisibility(toggleBtn));
+        });
+    }
+
+    openPasswordModal() {
+        const modal = document.getElementById('password-modal');
+        if (!modal) return;
+        this.resetPasswordForm();
+        modal.style.display = 'block';
+    }
+
+    closePasswordModal() {
+        const modal = document.getElementById('password-modal');
+        if (!modal) return;
+        modal.style.display = 'none';
+        this.resetPasswordForm();
+    }
+
+    resetPasswordForm() {
+        const form = document.getElementById('password-change-form');
+        if (form) {
+            form.reset();
+            form.querySelectorAll('input[type="text"]').forEach(input => {
+                input.type = 'password';
+            });
+        }
+    }
+
+    async handlePasswordChange(event) {
+        event.preventDefault();
+
+        const currentPasswordInput = document.getElementById('current-password');
+        const newPasswordInput = document.getElementById('new-password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const submitBtn = document.getElementById('password-submit-btn');
+
+        if (!currentPasswordInput || !newPasswordInput || !confirmPasswordInput || !submitBtn) {
+            return;
+        }
+
+        const currentPassword = currentPasswordInput.value.trim();
+        const newPassword = newPasswordInput.value.trim();
+        const confirmPassword = confirmPasswordInput.value.trim();
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            alert('모든 필드를 입력해주세요.');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            alert('새 패스워드는 6자 이상이어야 합니다.');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            alert('새 패스워드가 일치하지 않습니다.');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = '변경 중...';
+
+        try {
+            await window.apiClient.changePassword(currentPassword, newPassword);
+            alert('패스워드가 변경되었습니다.');
+            this.closePasswordModal();
+        } catch (error) {
+            console.error('Password change failed:', error);
+            alert(error.message || '패스워드 변경에 실패했습니다.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    }
+
+    togglePasswordVisibility(button) {
+        if (!button) return;
+        const container = button.closest('.password-input-container');
+        if (!container) return;
+        const input = container.querySelector('input');
+        if (!input) return;
+
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        button.setAttribute('aria-pressed', String(isPassword));
     }
 
     startPractice(categoryId) {

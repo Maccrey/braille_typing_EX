@@ -154,6 +154,40 @@ class FirebaseApiClient {
         }
     }
 
+    async changePassword(currentPassword, newPassword) {
+        if (!currentPassword || !newPassword) {
+            throw new Error('현재 패스워드와 새 패스워드를 모두 입력해주세요.');
+        }
+
+        try {
+            const firebaseUser = await this.ensureFirebaseUser(true);
+            if (!firebaseUser.email) {
+                throw new Error('계정 이메일 정보를 찾을 수 없습니다.');
+            }
+
+            const credential = firebase.auth.EmailAuthProvider.credential(
+                firebaseUser.email,
+                currentPassword
+            );
+
+            await firebaseUser.reauthenticateWithCredential(credential);
+            await firebaseUser.updatePassword(newPassword);
+            return true;
+        } catch (error) {
+            console.error('Password change failed:', error);
+            switch (error.code) {
+                case 'auth/wrong-password':
+                    throw new Error('현재 패스워드가 올바르지 않습니다.');
+                case 'auth/weak-password':
+                    throw new Error('새 패스워드는 6자 이상이어야 합니다.');
+                case 'auth/too-many-requests':
+                    throw new Error('시도가 너무 많습니다. 잠시 후 다시 시도해주세요.');
+                default:
+                    throw new Error(error.message || '패스워드 변경에 실패했습니다.');
+            }
+        }
+    }
+
     async getCurrentUser() {
         if (this.currentUser) {
             return this.currentUser;

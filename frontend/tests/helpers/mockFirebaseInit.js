@@ -134,11 +134,12 @@
       },
       getPosts: async () => config.posts || [],
       getComments: async () => config.comments || [],
+      changePassword: async () => true,
       get: async (collection, docId) => {
         const dataList = config[collection] || [];
         const found = dataList.find(item => item.id === docId);
         if (!found) {
-          throw new Error('Mock document not found');
+            throw new Error('Mock document not found');
         }
         return found;
       }
