@@ -249,7 +249,7 @@ class FirebaseApiClient {
                         category_id: categoryRef.id,
                         character: entry.character,
                         description: entry.description,
-                        braille_pattern: entry.braille_pattern,
+                        braille_pattern: JSON.stringify(entry.braille_pattern),
                         created_at: now,
                         order: entry.order ?? (globalOrderOffset + indexInChunk)
                     });
