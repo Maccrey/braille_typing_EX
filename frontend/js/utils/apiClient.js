@@ -530,6 +530,15 @@ class FirebaseApiClient {
         return { id: docRef.id, ...data };
     }
 
+    async get(collection, docId) {
+        const docRef = this.db.collection(collection).doc(docId);
+        const snapshot = await docRef.get();
+        if (!snapshot.exists) {
+            throw new Error('문서를 찾을 수 없습니다.');
+        }
+        return { id: snapshot.id, ...snapshot.data() };
+    }
+
     async put(collection, docId, data) {
         await this.db.collection(collection).doc(docId).update({
             ...data,
