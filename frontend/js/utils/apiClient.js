@@ -28,6 +28,12 @@ class FirebaseApiClient {
         });
     }
 
+    getLocalDateKey(date = new Date()) {
+        const timezoneOffsetMs = date.getTimezoneOffset() * 60000;
+        const localDate = new Date(date.getTime() - timezoneOffsetMs);
+        return localDate.toISOString().split('T')[0];
+    }
+
     async loadUserProfile(firebaseUser) {
         if (!firebaseUser) {
             return null;
@@ -357,9 +363,7 @@ class FirebaseApiClient {
     }
 
     async getDailyRanking(limit = 5, maxLogsPerDay = 500) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const dateKey = today.toISOString().split('T')[0];
+        const dateKey = this.getLocalDateKey();
 
         const query = this.db
             .collection('practice_logs')
@@ -495,7 +499,7 @@ class FirebaseApiClient {
         const firebaseUser = await this.ensureFirebaseUser(true);
         const profile = await this.ensureUserProfile();
         const now = FirestoreTimestamp.now();
-        const dateKey = new Date().toISOString().split('T')[0];
+        const dateKey = this.getLocalDateKey();
 
         const logData = {
             user_id: firebaseUser.uid,
