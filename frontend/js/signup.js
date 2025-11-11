@@ -62,4 +62,22 @@ document.addEventListener('DOMContentLoaded', () => {
             handleSignup(email, password, confirmPassword);
         });
     }
+
+    const passwordToggle = document.getElementById('password-toggle');
+    if (passwordToggle && passwordInput) {
+        passwordToggle.addEventListener('click', () => {
+            const isPassword = passwordInput.getAttribute('type') === 'password';
+            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+            passwordToggle.textContent = isPassword ? '🙈' : '👁️';
+        });
+    }
+
+    const confirmPasswordToggle = document.getElementById('confirm-password-toggle');
+    if (confirmPasswordToggle && confirmPasswordInput) {
+        confirmPasswordToggle.addEventListener('click', () => {
+            const isPassword = confirmPasswordInput.getAttribute('type') === 'password';
+            confirmPasswordInput.setAttribute('type', isPassword ? 'text' : 'password');
+            confirmPasswordToggle.textContent = isPassword ? '🙈' : '👁️';
+        });
+    }
 });
