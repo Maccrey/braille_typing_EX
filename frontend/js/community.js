@@ -127,6 +127,7 @@ class CommunityManager {
                         ` : ''}
                     </div>
                     <div class="post-content collapsed" data-full-content="${this.escapeHtml(post.content)}">${this.escapeHtmlWithLineBreaks(post.content)}</div>
+                    <button type="button" class="post-toggle-btn" aria-expanded="false">더보기</button>
                     <div class="post-actions">
                         <div class="post-stats">
                             <div class="post-stat">
@@ -140,10 +141,17 @@ class CommunityManager {
 
         postsList.querySelectorAll('.post-item').forEach(item => {
             const postContent = item.querySelector('.post-content');
+            const toggleBtn = item.querySelector('.post-toggle-btn');
             if (postContent) {
                 postContent.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    this.togglePostContent(postContent);
+                    this.togglePostContent(postContent, toggleBtn);
+                });
+            }
+            if (toggleBtn && postContent) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.togglePostContent(postContent, toggleBtn);
                 });
             }
 
@@ -443,16 +451,23 @@ class CommunityManager {
         div.textContent = text;
         return div.innerHTML.replace(/\n/g, '<br>');
     }
-    togglePostContent(postContent) {
+    togglePostContent(postContent, toggleBtn) {
         const isCollapsed = postContent.classList.contains('collapsed');
 
         if (isCollapsed) {
             postContent.classList.remove('collapsed');
             postContent.classList.add('expanded');
+            this.updateToggleButton(toggleBtn, true);
         } else {
             postContent.classList.remove('expanded');
             postContent.classList.add('collapsed');
+            this.updateToggleButton(toggleBtn, false);
         }
+    }
+    updateToggleButton(toggleBtn, isExpanded) {
+        if (!toggleBtn) return;
+        toggleBtn.textContent = isExpanded ? '접기' : '더보기';
+        toggleBtn.setAttribute('aria-expanded', String(isExpanded));
     }
     showError(message) {
         const errorDiv = document.getElementById('error-message');
