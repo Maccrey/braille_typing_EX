@@ -96,7 +96,8 @@ service cloud.firestore {
     // PracticeLogs 컬렉션
     match /practice_logs/{logId} {
       allow create: if isOwner(request.resource.data.user_id);
-      allow read, update, delete: if isOwner(resource.data.user_id);
+      allow read: if isAuthenticated();
+      allow update, delete: if isOwner(resource.data.user_id);
     }
 
     // Attendance 컬렉션
