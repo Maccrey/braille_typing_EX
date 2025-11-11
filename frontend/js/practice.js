@@ -11,6 +11,7 @@ class BraillePractice {
         this.categoryId = null;
         this.showHints = false;
         this.ttsEnabled = false;
+        this.isEndingSession = false;
 
         // Practice session tracking
         this.sessionStartTime = null;
@@ -139,8 +140,8 @@ class BraillePractice {
         document.getElementById('next-btn').addEventListener('click', () => this.loadNextCharacter());
         document.getElementById('hint-btn').addEventListener('click', () => this.toggleHint());
         document.getElementById('tts-toggle').addEventListener('change', (e) => this.toggleTTS(e.target.checked));
-        document.getElementById('back-btn').addEventListener('click', () => {
-            window.location.href = 'main.html';
+        document.getElementById('back-btn').addEventListener('click', async () => {
+            await this.handleExitToMain();
         });
 
         // Keyboard events will be handled in Task 7.3
@@ -161,15 +162,17 @@ class BraillePractice {
 
         // Add page unload handler to save practice session
         window.addEventListener('beforeunload', () => {
-            this.clearInactivityTimer();
-            this.endPracticeSession();
+            this.handleSessionEndOnUnload();
+        });
+
+        window.addEventListener('pagehide', () => {
+            this.handleSessionEndOnUnload();
         });
 
         // Add page visibility change handler for better session tracking
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden' && this.sessionStartTime) {
-                // Note: Practice session will be recorded only when explicitly ended
-                console.log('Page hidden, but session recording deferred to session end');
+            if (document.visibilityState === 'hidden') {
+                this.resetInactivityTimer();
             }
         });
 
@@ -823,7 +826,13 @@ class BraillePractice {
 
     // End practice session and record total session time
     async endPracticeSession() {
-        if (this.sessionStartTime) {
+        if (!this.sessionStartTime || this.isEndingSession) {
+            return;
+        }
+
+        this.isEndingSession = true;
+
+        try {
             const currentTime = Date.now();
             const totalSessionDuration = Math.floor((currentTime - this.sessionStartTime) / 1000);
 
@@ -839,8 +848,8 @@ class BraillePractice {
             } else {
                 console.log('⏱️ Session too short to record:', totalSessionDuration, 'seconds');
             }
-
-            // Reset session data
+        } finally {
+            // Reset session data regardless of recording outcome
             this.sessionStartTime = null;
             this.lastRecordedTime = null;
             this.practiceSessionData = {
@@ -848,6 +857,7 @@ class BraillePractice {
                 charactersCompleted: 0,
                 totalTime: 0
             };
+            this.isEndingSession = false;
         }
     }
 
@@ -979,14 +989,14 @@ class BraillePractice {
         }
     }
 
-    handleInactivityTimeout() {
+    async handleInactivityTimeout() {
         console.log('⏰ Inactivity timeout reached - returning to main page');
 
         // Clear the timer
         this.clearInactivityTimer();
 
         // End practice session
-        this.endPracticeSession();
+        await this.endPracticeSession();
 
         // Show a message and redirect to main page
         this.updateProgress('30초 동안 입력이 없어 메인 페이지로 이동합니다...');
@@ -994,6 +1004,39 @@ class BraillePractice {
         setTimeout(() => {
             window.location.href = 'main.html';
         }, 1500);
+    }
+
+    async handleExitToMain() {
+        const backBtn = document.getElementById('back-btn');
+        const originalText = backBtn ? backBtn.textContent : '';
+
+        if (backBtn) {
+            backBtn.disabled = true;
+            backBtn.textContent = '기록 저장 중...';
+        }
+
+        try {
+            await this.endPracticeSession();
+        } catch (error) {
+            console.error('❌ Failed to save session before exiting:', error);
+        } finally {
+            if (backBtn) {
+                backBtn.disabled = false;
+                backBtn.textContent = originalText || '메인으로';
+            }
+            window.location.href = 'main.html';
+        }
+    }
+
+    handleSessionEndOnUnload() {
+        this.clearInactivityTimer();
+        if (!this.sessionStartTime) {
+            return;
+        }
+
+        this.endPracticeSession().catch(error => {
+            console.error('❌ Failed to record session on unload:', error);
+        });
     }
 }
 
