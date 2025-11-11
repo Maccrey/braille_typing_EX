@@ -356,6 +356,67 @@ class FirebaseApiClient {
         };
     }
 
+    async getDailyRanking(limit = 5, maxLogsPerDay = 500) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dateKey = today.toISOString().split('T')[0];
+
+        const query = this.db
+            .collection('practice_logs')
+            .where('practice_date', '==', dateKey);
+
+        const snapshot = maxLogsPerDay
+            ? await query.limit(maxLogsPerDay).get()
+            : await query.get();
+
+        if (snapshot.empty) {
+            return [];
+        }
+
+        const rankingMap = new Map();
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const userId = data.user_id;
+            if (!userId) {
+                return;
+            }
+
+            const duration = data.duration_seconds || data.practice_time || 0;
+            if (!rankingMap.has(userId)) {
+                rankingMap.set(userId, {
+                    user_id: userId,
+                    username: data.username
+                        || (data.user_email ? data.user_email.split('@')[0] : '사용자'),
+                    totalDuration: 0,
+                    sessions: 0
+                });
+            }
+
+            const entry = rankingMap.get(userId);
+            entry.totalDuration += duration;
+            entry.sessions += 1;
+        });
+
+        const ranking = Array.from(rankingMap.values())
+            .sort((a, b) => {
+                if (b.totalDuration === a.totalDuration) {
+                    return a.username.localeCompare(b.username);
+                }
+                return b.totalDuration - a.totalDuration;
+            })
+            .slice(0, limit)
+            .map((entry, index) => ({
+                rank: index + 1,
+                user_id: entry.user_id,
+                username: entry.username,
+                total_duration: entry.totalDuration,
+                sessions: entry.sessions
+            }));
+
+        return ranking;
+    }
+
     async getPosts() {
         const snapshot = await this.db
             .collection('posts')

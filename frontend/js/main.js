@@ -8,6 +8,7 @@ class MainMenu {
         this.searchResults = [];
         this.userStats = {};
         this.attendanceData = {};
+        this.dailyRanking = [];
         this.currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
         this.currentUser = null;
         this.communityManager = new CommunityManager();
@@ -125,6 +126,7 @@ class MainMenu {
         try {
             this.attendanceData = await window.apiClient.getAttendance();
             this.renderAttendanceCalendar();
+            await this.loadDailyRanking();
         } catch (error) {
             console.error('Error loading attendance data:', error);
             this.showError('출석 데이터를 불러오는데 실패했습니다.');
@@ -155,6 +157,74 @@ class MainMenu {
             const isAttended = this.attendanceData.attendance_dates.includes(dateString);
             calendarGrid.innerHTML += `<div class="date-cell ${isAttended ? 'attended' : ''}">${i}</div>`;
         }
+    }
+
+    async loadDailyRanking() {
+        const loadingEl = document.getElementById('ranking-loading');
+        const listEl = document.getElementById('ranking-list');
+        const emptyEl = document.getElementById('no-ranking-message');
+
+        if (!loadingEl || !listEl || !emptyEl) {
+            return;
+        }
+
+        loadingEl.style.display = 'block';
+        emptyEl.style.display = 'none';
+        listEl.innerHTML = '';
+
+        try {
+            this.dailyRanking = await window.apiClient.getDailyRanking(10);
+            this.renderDailyRanking();
+        } catch (error) {
+            console.error('Error loading daily ranking:', error);
+            listEl.innerHTML = '<div class="ranking-error">랭킹을 불러오는데 실패했습니다.</div>';
+        } finally {
+            loadingEl.style.display = 'none';
+        }
+    }
+
+    renderDailyRanking() {
+        const listEl = document.getElementById('ranking-list');
+        const emptyEl = document.getElementById('no-ranking-message');
+
+        if (!listEl || !emptyEl) {
+            return;
+        }
+
+        if (!Array.isArray(this.dailyRanking) || this.dailyRanking.length === 0) {
+            emptyEl.style.display = 'block';
+            listEl.innerHTML = '';
+            return;
+        }
+
+        emptyEl.style.display = 'none';
+
+        listEl.innerHTML = this.dailyRanking.map(entry => {
+            const durationText = this.formatDuration(entry.total_duration);
+            const sessionText = `${entry.sessions || 0}회 연습`;
+            const rankClass = entry.rank <= 3 ? ` top-3 rank-${entry.rank}` : '';
+            const safeName = this.escapeHtml(entry.username || '사용자');
+            return `
+                <div class="ranking-item${rankClass}">
+                    <div class="rank-number">${entry.rank}</div>
+                    <div class="ranking-user-info">
+                        <div class="ranking-username">${safeName}</div>
+                        <div class="ranking-score">${sessionText} · ${durationText}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    formatDuration(totalSeconds = 0) {
+        const seconds = Math.max(0, Math.floor(totalSeconds));
+        const minutes = Math.floor(seconds / 60);
+        if (minutes >= 60) {
+            const hours = Math.floor(minutes / 60);
+            const remainingMinutes = minutes % 60;
+            return `${hours}시간 ${remainingMinutes}분`;
+        }
+        return `${minutes}분`;
     }
 
     navigateMonth(direction) {
@@ -271,7 +341,7 @@ class MainMenu {
 
     escapeHtml(text) {
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = text ?? '';
         return div.innerHTML;
     }
 
