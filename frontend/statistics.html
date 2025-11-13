@@ -257,6 +257,18 @@
             border-radius: 15px;
         }
 
+        .ad-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .ad-slot {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -359,6 +371,10 @@
                         <a href="main.html">점자 연습을 시작</a>해보세요!
                     </div>
                 </div>
+
+                <div class="ad-section">
+                    <div id="statistics-kakao-ad" class="ad-slot"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -373,5 +389,25 @@
     <script src="js/dark-mode.js"></script>
     <script src="js/utils/apiClient.js"></script>
     <script src="js/statistics.js"></script>
+    <script>
+        (function() {
+            const slot = document.getElementById('statistics-kakao-ad');
+            if (!slot) {
+                return;
+            }
+            const isMobile = window.matchMedia('(max-width: 600px)').matches;
+            const config = isMobile
+                ? { unit: 'DAN-zRjFEbrJr94EupDA', width: 320, height: 50 }
+                : { unit: 'DAN-IZATYaIdzmpyTB92', width: 728, height: 90 };
+            slot.innerHTML = `
+                <ins class="kakao_ad_area"
+                    style="display:block;width:${config.width}px;height:${config.height}px;max-width:100%;margin:0 auto;"
+                    data-ad-unit="${config.unit}"
+                    data-ad-width="${config.width}"
+                    data-ad-height="${config.height}"></ins>
+            `;
+        })();
+    </script>
+    <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </body>
 </html>
