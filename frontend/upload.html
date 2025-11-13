@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://static.cloudflareinsights.com https://t1.daumcdn.net https://cdn.jsdelivr.net; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app https://*.firebaseapp.com https://*.cloudfunctions.net https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://www.gstatic.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://display.ad.daum.net https://aem-kakao-collector.onkakao.net; frame-src 'self' https://t1.daumcdn.net https://display.ad.daum.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://firebasestorage.googleapis.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>점자 타자 연습기 - 파일 업로드</title>
     <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
@@ -28,8 +29,10 @@
             padding: 2rem;
             border-radius: 10px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 600px;
+            width: min(95vw, 760px);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
         }
 
         .upload-header {
@@ -286,6 +289,18 @@
             text-decoration: underline;
         }
 
+        .ad-section {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .ad-slot {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
         .progress-bar {
             width: 100%;
             height: 4px;
@@ -428,6 +443,9 @@
         <div class="navigation-links">
             <a href="main.html">메인으로</a>
         </div>
+        <div class="ad-section">
+            <div id="upload-kakao-ad" class="ad-slot"></div>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -441,5 +459,25 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
     <script src="js/utils/apiClient.js"></script>
     <script src="js/upload.js"></script>
+    <script>
+        (function() {
+            const slot = document.getElementById('upload-kakao-ad');
+            if (!slot) {
+                return;
+            }
+            const isMobile = window.matchMedia('(max-width: 600px)').matches;
+            const config = isMobile
+                ? { unit: 'DAN-zOZ4UiffJKH4ioe1', width: 320, height: 50 }
+                : { unit: 'DAN-zOZ4UiffJKH4ioe1', width: 728, height: 90 };
+            slot.innerHTML = `
+                <ins class="kakao_ad_area"
+                    style="display:block;width:${config.width}px;height:${config.height}px;max-width:100%;margin:0 auto;"
+                    data-ad-unit="${config.unit}"
+                    data-ad-width="${config.width}"
+                    data-ad-height="${config.height}"></ins>
+            `;
+        })();
+    </script>
+    <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </body>
 </html>
