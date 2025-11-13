@@ -334,7 +334,7 @@
                 if ((isMobile && device === 'mobile') || (!isMobile && device === 'desktop')) {
                     el.style.display = 'block';
                 } else {
-                    el.remove();
+                    el.style.display = 'none';
                 }
             });
         })();

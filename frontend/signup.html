@@ -347,24 +347,23 @@
         <div class="login-link">
             <p>이미 계정이 있으신가요? <a href="login.html">로그인</a></p>
         </div>
-    </div>
-
-    <div class="ad-section">
-        <div class="ad-desktop">
-            <ins class="kakao_ad_area"
-                style="display:block;width:728px;height:90px;max-width:100%;margin:0 auto;"
-                data-ad-device="desktop"
-                data-ad-unit="DAN-NG6hLftyGjlbAtyi"
-                data-ad-width="728"
-                data-ad-height="90"></ins>
-        </div>
-        <div class="ad-mobile">
-            <ins class="kakao_ad_area"
-                style="display:block;width:320px;height:50px;max-width:100%;margin:0 auto;"
-                data-ad-device="mobile"
-                data-ad-unit="DAN-9ehDv1Pvv3knFqmK"
-                data-ad-width="320"
-                data-ad-height="50"></ins>
+        <div class="ad-section">
+            <div class="ad-desktop">
+                <ins class="kakao_ad_area"
+                    style="display:block;width:728px;height:90px;max-width:100%;margin:0 auto;"
+                    data-ad-device="desktop"
+                    data-ad-unit="DAN-NG6hLftyGjlbAtyi"
+                    data-ad-width="728"
+                    data-ad-height="90"></ins>
+            </div>
+            <div class="ad-mobile">
+                <ins class="kakao_ad_area"
+                    style="display:block;width:320px;height:50px;max-width:100%;margin:0 auto;"
+                    data-ad-device="mobile"
+                    data-ad-unit="DAN-9ehDv1Pvv3knFqmK"
+                    data-ad-width="320"
+                    data-ad-height="50"></ins>
+            </div>
         </div>
     </div>
 
@@ -390,7 +389,7 @@
                 if ((isMobile && device === 'mobile') || (!isMobile && device === 'desktop')) {
                     el.style.display = 'block';
                 } else {
-                    el.remove();
+                    el.style.display = 'none';
                 }
             });
         })();
