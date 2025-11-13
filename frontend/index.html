@@ -184,13 +184,10 @@
             padding-top: 40px;
             width: 100%;
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            align-items: center;
+            justify-content: center;
         }
 
-        .ad-desktop,
-        .ad-mobile {
+        .ad-slot {
             width: 100%;
             display: flex;
             justify-content: center;
@@ -266,22 +263,7 @@
             </div>
         </div>
         <div class="ad-container">
-            <div class="ad-desktop">
-                <ins class="kakao_ad_area"
-                    style="display:block;width:728px;height:90px;max-width:100%;margin:0 auto;"
-                    data-ad-device="desktop"
-                    data-ad-unit="DAN-XeBVkn1BjqVVduN5"
-                    data-ad-width="728"
-                    data-ad-height="90"></ins>
-            </div>
-            <div class="ad-mobile">
-                <ins class="kakao_ad_area"
-                    style="display:block;width:320px;height:50px;max-width:100%;margin:0 auto;"
-                    data-ad-device="mobile"
-                    data-ad-unit="DAN-1J0fzbevGTphCJuk"
-                    data-ad-width="320"
-                    data-ad-height="50"></ins>
-            </div>
+            <div id="landing-kakao-ad" class="ad-slot"></div>
         </div>
     </div>
 
@@ -328,15 +310,21 @@
     <script src="js/dark-mode.js"></script>
     <script>
         (function() {
+            const slot = document.getElementById('landing-kakao-ad');
+            if (!slot) {
+                return;
+            }
             const isMobile = window.matchMedia('(max-width: 600px)').matches;
-            document.querySelectorAll('.kakao_ad_area[data-ad-device]').forEach(el => {
-                const device = el.getAttribute('data-ad-device');
-                if ((isMobile && device === 'mobile') || (!isMobile && device === 'desktop')) {
-                    el.style.display = 'block';
-                } else {
-                    el.style.display = 'none';
-                }
-            });
+            const config = isMobile
+                ? { unit: 'DAN-1J0fzbevGTphCJuk', width: 320, height: 50 }
+                : { unit: 'DAN-XeBVkn1BjqVVduN5', width: 728, height: 90 };
+            slot.innerHTML = `
+                <ins class="kakao_ad_area"
+                    style="display:block;width:${config.width}px;height:${config.height}px;max-width:100%;margin:0 auto;"
+                    data-ad-unit="${config.unit}"
+                    data-ad-width="${config.width}"
+                    data-ad-height="${config.height}"></ins>
+            `;
         })();
     </script>
     <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
