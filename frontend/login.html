@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://static.cloudflareinsights.com; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app https://*.firebaseapp.com https://*.cloudfunctions.net https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://www.gstatic.com https://firestore.googleapis.com https://firebasestorage.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://firebasestorage.googleapis.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://static.cloudflareinsights.com https://t1.daumcdn.net; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app https://*.firebaseapp.com https://*.cloudfunctions.net https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://www.gstatic.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://display.ad.daum.net https://aem-kakao-collector.onkakao.net; frame-src 'self' https://t1.daumcdn.net https://display.ad.daum.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://firebasestorage.googleapis.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>점자 타자 연습기 - 로그인</title>
     <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
@@ -19,8 +19,11 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 16px;
+            padding: 2rem 0;
         }
 
         .login-container {
@@ -160,10 +163,37 @@
             text-decoration: underline;
         }
 
+        .ad-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ad-desktop,
+        .ad-mobile {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .ad-mobile {
+            display: none;
+        }
+
         @media (max-width: 480px) {
             .login-container {
                 margin: 1rem;
                 padding: 1.5rem;
+            }
+
+            .ad-desktop {
+                display: none;
+            }
+
+            .ad-mobile {
+                display: flex;
             }
         }
     </style>
@@ -218,6 +248,23 @@
         </div>
     </div>
 
+    <div class="ad-section">
+        <div class="ad-desktop">
+            <ins class="kakao_ad_area"
+                style="display:none;"
+                data-ad-unit="DAN-9ehDv1Pvv3knFqmK"
+                data-ad-width="320"
+                data-ad-height="50"></ins>
+        </div>
+        <div class="ad-mobile">
+            <ins class="kakao_ad_area"
+                style="display:none;"
+                data-ad-unit="DAN-o6c6W3BJubzNX258"
+                data-ad-width="320"
+                data-ad-height="50"></ins>
+        </div>
+    </div>
+
     <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 
@@ -234,5 +281,6 @@
     <script src="js/dark-mode.js"></script>
     <script src="js/utils/apiClient.js"></script>
     <script src="js/auth.js"></script>
+    <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </body>
 </html>
