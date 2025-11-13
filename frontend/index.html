@@ -184,7 +184,20 @@
             padding-top: 40px;
             width: 100%;
             display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .ad-desktop,
+        .ad-mobile {
+            width: 100%;
+            display: flex;
             justify-content: center;
+        }
+
+        .ad-mobile {
+            display: none;
         }
 
         @media (max-width: 600px) {
@@ -209,6 +222,14 @@
 
             .feature-list {
                 grid-template-columns: 1fr;
+            }
+
+            .ad-desktop {
+                display: none;
+            }
+
+            .ad-mobile {
+                display: flex;
             }
         }
     </style>
@@ -256,11 +277,20 @@
             </div>
         </div>
         <div class="ad-container">
-            <ins class="kakao_ad_area"
-                style="display:none;"
-                data-ad-unit="DAN-XeBVkn1BjqVVduN5"
-                data-ad-width="728"
-                data-ad-height="90"></ins>
+            <div class="ad-desktop">
+                <ins class="kakao_ad_area"
+                    style="display:none;"
+                    data-ad-unit="DAN-XeBVkn1BjqVVduN5"
+                    data-ad-width="728"
+                    data-ad-height="90"></ins>
+            </div>
+            <div class="ad-mobile">
+                <ins class="kakao_ad_area"
+                    style="display:none;"
+                    data-ad-unit="DAN-1J0fzbevGTphCJuk"
+                    data-ad-width="320"
+                    data-ad-height="50"></ins>
+            </div>
         </div>
     </div>
 
