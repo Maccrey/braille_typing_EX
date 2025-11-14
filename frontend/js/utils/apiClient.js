@@ -335,12 +335,13 @@ class FirebaseApiClient {
             throw new Error('카테고리를 삭제할 권한이 없습니다.');
         }
 
-        const brailleSnapshot = await this.db
-            .collection('braille_data')
+        const ownFavoritesSnapshot = await this.db
+            .collection('favorites')
             .where('category_id', '==', categoryId)
+            .where('user_id', '==', userProfile.uid)
             .get();
-        const brailleIds = brailleSnapshot.docs.map(doc => doc.id);
-        await this.deleteDocumentsByIds('braille_data', brailleIds);
+        const ownFavoriteIds = ownFavoritesSnapshot.docs.map(doc => doc.id);
+        await this.deleteDocumentsByIds('favorites', ownFavoriteIds);
 
         await docRef.update({
             is_deleted: true,
@@ -398,6 +399,7 @@ class FirebaseApiClient {
                         description: entry.description,
                         braille_pattern: JSON.stringify(entry.braille_pattern),
                         created_at: now,
+                        created_by: userProfile.uid,
                         order: entry.order ?? (globalOrderOffset + indexInChunk)
                     });
                 });
