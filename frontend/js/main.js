@@ -12,6 +12,8 @@ class MainMenu {
         this.currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
         this.currentUser = null;
         this.communityManager = new CommunityManager();
+        this.passwordAdInitialized = false;
+        this.kakaoAdScriptAppended = false;
         this.init();
     }
 
@@ -386,6 +388,7 @@ class MainMenu {
         if (!modal) return;
         this.resetPasswordForm();
         modal.style.display = 'block';
+        this.initializePasswordAdSlot();
     }
 
     closePasswordModal() {
@@ -403,6 +406,55 @@ class MainMenu {
                 input.type = 'password';
             });
         }
+    }
+
+    initializePasswordAdSlot() {
+        if (this.passwordAdInitialized) {
+            return;
+        }
+
+        const slot = document.getElementById('password-kakao-ad');
+        if (!slot) {
+            return;
+        }
+
+        const isMobile = window.matchMedia('(max-width: 600px)').matches;
+        const config = isMobile
+            ? { unit: 'DAN-VRHTV0WQziQ2VDGz', width: 320, height: 50 }
+            : { unit: 'DAN-Briry0jF71lQmw1Y', width: 728, height: 90 };
+
+        slot.innerHTML = `
+            <ins class="kakao_ad_area"
+                style="display:block;width:${config.width}px;height:${config.height}px;max-width:100%;margin:0 auto;"
+                data-ad-unit="${config.unit}"
+                data-ad-width="${config.width}"
+                data-ad-height="${config.height}"></ins>
+        `;
+
+        this.loadKakaoAdScript();
+        this.passwordAdInitialized = true;
+    }
+
+    loadKakaoAdScript() {
+        if (this.kakaoAdScriptAppended) {
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = '//t1.daumcdn.net/kas/static/ba.min.js';
+        script.async = true;
+        script.dataset.kakaoAdScript = 'password';
+
+        script.onerror = () => {
+            console.error('Failed to load Kakao ad script for password modal.');
+            this.kakaoAdScriptAppended = false;
+            this.passwordAdInitialized = false;
+            script.remove();
+        };
+
+        document.body.appendChild(script);
+        this.kakaoAdScriptAppended = true;
     }
 
     async handlePasswordChange(event) {

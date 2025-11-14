@@ -2397,25 +2397,5 @@
     <script src="js/config.js"></script>
     <script src="js/main.js"></script>
     <script src="js/community.js"></script>
-    <script>
-        (function() {
-            const slot = document.getElementById('password-kakao-ad');
-            if (!slot) {
-                return;
-            }
-            const isMobile = window.matchMedia('(max-width: 600px)').matches;
-            const config = isMobile
-                ? { unit: 'DAN-VRHTV0WQziQ2VDGz', width: 320, height: 50 }
-                : { unit: 'DAN-Briry0jF71lQmw1Y', width: 728, height: 90 };
-            slot.innerHTML = `
-                <ins class="kakao_ad_area"
-                    style="display:block;width:${config.width}px;height:${config.height}px;max-width:100%;margin:0 auto;"
-                    data-ad-unit="${config.unit}"
-                    data-ad-width="${config.width}"
-                    data-ad-height="${config.height}"></ins>
-            `;
-        })();
-    </script>
-    <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </body>
 </html>
