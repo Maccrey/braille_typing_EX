@@ -517,15 +517,20 @@ class FirebaseApiClient {
         const snapshot = await this.db
             .collection('braille_data')
             .where('category_id', '==', categoryId)
-            .orderBy('order')
             .limit(limit)
             .get();
 
-        return snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            braille_pattern: this.normalizeBraillePattern(doc.data().braille_pattern)
-        }));
+        return snapshot.docs
+            .map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                braille_pattern: this.normalizeBraillePattern(doc.data().braille_pattern)
+            }))
+            .sort((a, b) => {
+                const orderA = typeof a.order === 'number' ? a.order : 0;
+                const orderB = typeof b.order === 'number' ? b.order : 0;
+                return orderA - orderB;
+            });
     }
 
     async updateBrailleEntry(entryId, { character, description = '', braillePattern = [] } = {}) {
