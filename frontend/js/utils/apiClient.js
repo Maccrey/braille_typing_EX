@@ -248,6 +248,107 @@ class FirebaseApiClient {
         return this.publicCategoryCache;
     }
 
+    async getCategory(categoryId) {
+        if (!categoryId) {
+            throw new Error('카테고리를 선택해주세요.');
+        }
+
+        const snapshot = await this.db.collection('categories').doc(categoryId).get();
+        if (!snapshot.exists) {
+            throw new Error('카테고리를 찾을 수 없습니다.');
+        }
+
+        return { id: snapshot.id, ...snapshot.data() };
+    }
+
+    async updateCategory(categoryId, updates = {}) {
+        if (!categoryId) {
+            throw new Error('카테고리를 선택해주세요.');
+        }
+
+        const userProfile = await this.ensureUserProfile();
+        const docRef = this.db.collection('categories').doc(categoryId);
+        const snapshot = await docRef.get();
+
+        if (!snapshot.exists) {
+            throw new Error('카테고리를 찾을 수 없습니다.');
+        }
+
+        const data = snapshot.data();
+        if (data.created_by !== userProfile.uid && userProfile.role !== 'admin') {
+            throw new Error('카테고리를 수정할 권한이 없습니다.');
+        }
+
+        const payload = {};
+        if (typeof updates.name === 'string') {
+            const trimmed = updates.name.trim();
+            if (!trimmed) {
+                throw new Error('카테고리 이름을 입력해주세요.');
+            }
+            payload.name = trimmed;
+        }
+
+        if (typeof updates.description === 'string') {
+            payload.description = updates.description.trim();
+        }
+
+        if (typeof updates.is_public === 'boolean') {
+            payload.is_public = updates.is_public;
+        }
+
+        if (Object.keys(payload).length === 0) {
+            return { id: categoryId, ...data };
+        }
+
+        payload.updated_at = FirestoreTimestamp.now();
+        await docRef.update(payload);
+
+        this.publicCategoryCache = [];
+        this.brailleCache.delete(categoryId);
+
+        return { id: categoryId, ...data, ...payload };
+    }
+
+    async deleteCategory(categoryId) {
+        if (!categoryId) {
+            throw new Error('카테고리를 선택해주세요.');
+        }
+
+        const userProfile = await this.ensureUserProfile();
+        const docRef = this.db.collection('categories').doc(categoryId);
+        const snapshot = await docRef.get();
+
+        if (!snapshot.exists) {
+            throw new Error('카테고리를 찾을 수 없습니다.');
+        }
+
+        const data = snapshot.data();
+        if (data.created_by !== userProfile.uid && userProfile.role !== 'admin') {
+            throw new Error('카테고리를 삭제할 권한이 없습니다.');
+        }
+
+        const brailleSnapshot = await this.db
+            .collection('braille_data')
+            .where('category_id', '==', categoryId)
+            .get();
+        const brailleIds = brailleSnapshot.docs.map(doc => doc.id);
+        await this.deleteDocumentsByIds('braille_data', brailleIds);
+
+        const favoritesSnapshot = await this.db
+            .collection('favorites')
+            .where('category_id', '==', categoryId)
+            .get();
+        const favoriteIds = favoritesSnapshot.docs.map(doc => doc.id);
+        await this.deleteDocumentsByIds('favorites', favoriteIds);
+
+        await docRef.delete();
+
+        this.brailleCache.delete(categoryId);
+        this.publicCategoryCache = [];
+
+        return true;
+    }
+
     async createCategoryWithBrailleData({ name, description = '', isPublic = false, brailleEntries = [] } = {}) {
         if (!name || !name.trim()) {
             throw new Error('카테고리 이름을 입력해주세요.');
