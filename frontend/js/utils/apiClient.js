@@ -209,7 +209,9 @@ class FirebaseApiClient {
             .where('created_by', '==', user.uid)
             .orderBy('created_at', 'desc')
             .get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(category => !category.is_deleted);
     }
 
     async getFavorites() {
@@ -232,7 +234,7 @@ class FirebaseApiClient {
                 .get();
             snapshot.forEach(doc => favorites.push({ id: doc.id, ...doc.data() }));
         }
-        return favorites;
+        return favorites.filter(category => !category.is_deleted);
     }
 
     async getPublicCategories(forceRefresh = false) {
@@ -244,7 +246,9 @@ class FirebaseApiClient {
             .where('is_public', '==', true)
             .orderBy('created_at', 'desc')
             .get();
-        this.publicCategoryCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        this.publicCategoryCache = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(category => !category.is_deleted);
         return this.publicCategoryCache;
     }
 
@@ -258,7 +262,11 @@ class FirebaseApiClient {
             throw new Error('카테고리를 찾을 수 없습니다.');
         }
 
-        return { id: snapshot.id, ...snapshot.data() };
+        const data = snapshot.data();
+        if (data.is_deleted) {
+            throw new Error('삭제된 카테고리입니다.');
+        }
+        return { id: snapshot.id, ...data };
     }
 
     async updateCategory(categoryId, updates = {}) {
@@ -334,7 +342,12 @@ class FirebaseApiClient {
         const brailleIds = brailleSnapshot.docs.map(doc => doc.id);
         await this.deleteDocumentsByIds('braille_data', brailleIds);
 
-        await docRef.delete();
+        await docRef.update({
+            is_deleted: true,
+            deleted_at: FirestoreTimestamp.now(),
+            deleted_by: userProfile.uid,
+            is_public: false
+        });
 
         this.brailleCache.delete(categoryId);
         this.publicCategoryCache = [];
@@ -396,6 +409,7 @@ class FirebaseApiClient {
                 name: name.trim(),
                 description: description ? description.trim() : '',
                 is_public: !!isPublic,
+                is_deleted: false,
                 created_by: userProfile.uid,
                 created_by_email: userProfile.email || '',
                 created_by_username: userProfile.username || '',

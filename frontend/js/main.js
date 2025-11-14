@@ -697,7 +697,7 @@ class MainMenu {
 
         const category = this.categories.find(cat => cat.id === categoryId);
         const message = category
-            ? `"${category.name}" 카테고리를 삭제하시겠습니까? 등록된 점자 데이터도 함께 삭제됩니다.`
+            ? `"${category.name}" 카테고리를 삭제하시겠습니까? 삭제 시 목록에서 숨겨지며 다시 사용할 수 없습니다.`
             : '선택한 카테고리를 삭제하시겠습니까?';
 
         if (!window.confirm(message)) {
