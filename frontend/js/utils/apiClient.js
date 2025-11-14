@@ -334,13 +334,6 @@ class FirebaseApiClient {
         const brailleIds = brailleSnapshot.docs.map(doc => doc.id);
         await this.deleteDocumentsByIds('braille_data', brailleIds);
 
-        const favoritesSnapshot = await this.db
-            .collection('favorites')
-            .where('category_id', '==', categoryId)
-            .get();
-        const favoriteIds = favoritesSnapshot.docs.map(doc => doc.id);
-        await this.deleteDocumentsByIds('favorites', favoriteIds);
-
         await docRef.delete();
 
         this.brailleCache.delete(categoryId);
