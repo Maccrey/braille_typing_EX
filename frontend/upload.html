@@ -75,7 +75,8 @@
         }
 
         .form-group input[type="text"],
-        .form-group textarea {
+        .form-group textarea,
+        .form-group select {
             width: 100%;
             padding: 0.8rem;
             border: 2px solid #e1e5e9;
@@ -85,7 +86,8 @@
         }
 
         .form-group input[type="text"]:focus,
-        .form-group textarea:focus {
+        .form-group textarea:focus,
+        .form-group select:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -208,6 +210,12 @@
             padding: 1rem;
             border-radius: 5px;
             margin-top: 1rem;
+        }
+
+        .form-hint {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.4rem;
         }
 
         .file-info.visible {
@@ -397,6 +405,22 @@
                     placeholder="카테고리에 대한 설명을 입력하세요 (선택사항)"
                     maxlength="1000"
                 ></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="languageCode">언어/국가 *</label>
+                <select id="languageCode" name="languageCode" required>
+                    <option value="" disabled selected>언어를 선택하세요</option>
+                    <option value="KR">한국어 (KR)</option>
+                    <option value="US">영어 (US)</option>
+                    <option value="JP">일본어 (JP)</option>
+                    <option value="CN">중국어 (CN)</option>
+                    <option value="FR">프랑스어 (FR)</option>
+                    <option value="ES">스페인어 (ES)</option>
+                    <option value="DE">독일어 (DE)</option>
+                    <option value="VN">베트남어 (VN)</option>
+                </select>
+                <p class="form-hint">카테고리에 맞는 언어를 선택하면 카드 제목 앞에 해당 국가 코드가 표시됩니다.</p>
             </div>
 
             <div class="form-group">

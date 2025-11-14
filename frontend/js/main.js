@@ -306,6 +306,7 @@ class MainMenu {
 
     createCategoryHTML(category, type) {
         const isOwnCategory = category.created_by === this.currentUser.uid;
+        const languageBadge = this.getCategoryLanguageBadge(category);
 
         const favoriteButton = (type === 'search' && !isOwnCategory) ? `
             <button class="btn favorite-btn" onclick="mainMenu.toggleFavorite('${category.id}')">
@@ -332,7 +333,7 @@ class MainMenu {
 
         return `
             <div class="category-item" data-category-id="${category.id}">
-                <div class="category-name">${this.escapeHtml(category.name)}</div>
+                <div class="category-name">${languageBadge}${this.escapeHtml(category.name)}</div>
                 <div class="category-description">${this.escapeHtml(category.description || '')}</div>
                 <div class="category-count">${category.braille_count || 0}개 문자</div>
                 <div class="category-actions">
@@ -348,6 +349,38 @@ class MainMenu {
         const div = document.createElement('div');
         div.textContent = text ?? '';
         return div.innerHTML;
+    }
+
+    getCategoryLanguageBadge(category) {
+        const code = this.getCategoryLanguageCode(category);
+        if (!code) {
+            return '';
+        }
+        const label = this.getCategoryLanguageLabel(category);
+        const titleAttr = label ? ` title="${this.escapeHtml(label)}"` : '';
+        return `<span class="category-language-tag"${titleAttr}>${this.escapeHtml(code)}</span>`;
+    }
+
+    getCategoryLanguageCode(category) {
+        if (!category) {
+            return '';
+        }
+        const rawCode = category.language_code || category.languageCode || category.language?.code || category.country_code || category.countryCode;
+        if (!rawCode || typeof rawCode !== 'string') {
+            return '';
+        }
+        return rawCode.trim().toUpperCase().slice(0, 5);
+    }
+
+    getCategoryLanguageLabel(category) {
+        if (!category) {
+            return '';
+        }
+        const rawLabel = category.language_label || category.languageLabel || category.language?.label || category.language?.name;
+        if (!rawLabel || typeof rawLabel !== 'string') {
+            return '';
+        }
+        return rawLabel.trim();
     }
 
     setupPasswordModalEvents() {

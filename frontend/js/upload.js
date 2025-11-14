@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const uploadForm = document.getElementById('upload-form');
     const categoryNameInput = document.getElementById('categoryName');
     const descriptionInput = document.getElementById('description');
+    const languageSelect = document.getElementById('languageCode');
     const fileUploadArea = document.getElementById('file-upload-area');
     const fileInput = document.getElementById('file-input');
     const fileInfo = document.getElementById('file-info');
@@ -259,9 +260,18 @@ document.addEventListener('DOMContentLoaded', function() {
     async function handleUpload() {
         const categoryName = categoryNameInput.value.trim();
         const description = descriptionInput.value.trim();
+        const languageCode = languageSelect?.value || '';
+        const languageLabel = languageSelect && languageSelect.selectedIndex >= 0
+            ? (languageSelect.options[languageSelect.selectedIndex]?.text || '')
+            : '';
 
         if (!categoryName) {
             showError('카테고리 이름을 입력해주세요.');
+            return;
+        }
+
+        if (!languageCode) {
+            showError('언어/국가를 선택해주세요.');
             return;
         }
 
@@ -287,7 +297,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 name: categoryName,
                 description,
                 isPublic: isPublicCheckbox.checked,
-                brailleEntries
+                brailleEntries,
+                languageCode,
+                languageLabel
             });
 
             showSuccess(`업로드가 완료되었습니다! ${result.brailleCount}개의 점자 데이터가 추가되었습니다.`);
@@ -310,6 +322,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetForm() {
         categoryNameInput.value = '';
         descriptionInput.value = '';
+        if (languageSelect) {
+            languageSelect.value = '';
+            languageSelect.selectedIndex = 0;
+        }
         isPublicCheckbox.checked = false;
         selectedFile = null;
         fileInput.value = '';

@@ -356,12 +356,22 @@ class FirebaseApiClient {
         return true;
     }
 
-    async createCategoryWithBrailleData({ name, description = '', isPublic = false, brailleEntries = [] } = {}) {
+    async createCategoryWithBrailleData({
+        name,
+        description = '',
+        isPublic = false,
+        brailleEntries = [],
+        languageCode = '',
+        languageLabel = ''
+    } = {}) {
         if (!name || !name.trim()) {
             throw new Error('카테고리 이름을 입력해주세요.');
         }
         if (!Array.isArray(brailleEntries) || brailleEntries.length === 0) {
             throw new Error('추가할 점자 데이터가 없습니다.');
+        }
+        if (!languageCode) {
+            throw new Error('언어/국가를 선택해주세요.');
         }
 
         const userProfile = await this.ensureUserProfile();
@@ -412,6 +422,8 @@ class FirebaseApiClient {
                 description: description ? description.trim() : '',
                 is_public: !!isPublic,
                 is_deleted: false,
+                language_code: languageCode.trim().toUpperCase(),
+                language_label: languageLabel ? languageLabel.trim() : '',
                 created_by: userProfile.uid,
                 created_by_email: userProfile.email || '',
                 created_by_username: userProfile.username || '',
