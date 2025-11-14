@@ -4,11 +4,27 @@
         return;
     }
 
-    const analyticsInstance = firebase.analytics();
+    let analyticsInstance = null;
+    try {
+        analyticsInstance = firebase.analytics();
+    } catch (error) {
+        console.warn('[Analytics] Firebase Analytics 초기화 실패:', error);
+        return;
+    }
+
     if (!analyticsInstance) {
         console.warn('[Analytics] Firebase Analytics 인스턴스를 초기화할 수 없습니다.');
         return;
     }
+
+    const basePageParams = () => ({
+        page_location: window.location.href,
+        page_path: window.location.pathname + window.location.search,
+        page_title: document.title || window.location.pathname
+    });
+
+    // 수동 page_view 로그 (GA4 실시간 확인용)
+    analyticsInstance.logEvent('page_view', basePageParams());
 
     window.analytics = window.analytics || {
         trackEvent(eventName, params = {}) {
@@ -29,6 +45,12 @@
                 return;
             }
             analyticsInstance.setCurrentScreen(screenName);
+        },
+        logPageView(extraParams = {}) {
+            analyticsInstance.logEvent('page_view', {
+                ...basePageParams(),
+                ...extraParams
+            });
         }
     };
 })();
