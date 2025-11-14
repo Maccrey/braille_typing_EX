@@ -14,6 +14,7 @@ class MainMenu {
         this.communityManager = new CommunityManager();
         this.passwordAdInitialized = false;
         this.kakaoAdScriptAppended = false;
+        this.currentEditingCategoryId = null;
         this.init();
     }
 
@@ -55,6 +56,7 @@ class MainMenu {
         document.getElementById('prev-month').addEventListener('click', () => this.navigateMonth('prev'));
         document.getElementById('next-month').addEventListener('click', () => this.navigateMonth('next'));
         this.setupPasswordModalEvents();
+        this.setupEditModalEvents();
     }
 
     async loadInitialData() {
@@ -522,15 +524,198 @@ class MainMenu {
     }
 
     editCategory(categoryId) {
-        console.log('editCategory not implemented yet', categoryId);
+        this.openCategoryEditModal(categoryId);
     }
 
     deleteCategory(categoryId) {
-        console.log('deleteCategory not implemented yet', categoryId);
+        this.confirmAndDeleteCategory(categoryId);
     }
 
     toggleFavorite(categoryId) {
         console.log('toggleFavorite not implemented yet', categoryId);
+    }
+
+    setupEditModalEvents() {
+        const modal = document.getElementById('edit-modal');
+        const closeBtn = document.getElementById('edit-modal-close');
+        const cancelBtn = document.getElementById('edit-cancel-btn');
+        const form = document.getElementById('edit-category-form');
+        const addBrailleBtn = document.getElementById('add-braille-item');
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.closeEditModal());
+        }
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => this.closeEditModal());
+        }
+        if (modal) {
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    this.closeEditModal();
+                }
+            });
+        }
+        if (form) {
+            form.addEventListener('submit', (event) => this.handleCategoryUpdate(event));
+        }
+        if (addBrailleBtn) {
+            addBrailleBtn.addEventListener('click', () => {
+                alert('점자 데이터 편집은 현재 업로드 페이지에서만 지원됩니다. 새 파일을 업로드해 갱신해주세요.');
+            });
+            addBrailleBtn.disabled = true;
+            addBrailleBtn.classList.add('disabled');
+        }
+    }
+
+    async openCategoryEditModal(categoryId) {
+        if (!categoryId) {
+            return;
+        }
+
+        try {
+            const category = this.categories.find(cat => cat.id === categoryId) || await window.apiClient.getCategory(categoryId);
+            if (!category) {
+                alert('카테고리를 찾을 수 없습니다.');
+                return;
+            }
+
+            this.currentEditingCategoryId = categoryId;
+            this.populateEditForm(category);
+            const modal = document.getElementById('edit-modal');
+            if (modal) {
+                modal.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Failed to load category for editing:', error);
+            alert(error.message || '카테고리를 불러오지 못했습니다.');
+        }
+    }
+
+    populateEditForm(category) {
+        const nameInput = document.getElementById('edit-category-name');
+        const descInput = document.getElementById('edit-category-description');
+        const publicCheckbox = document.getElementById('edit-category-public');
+        const brailleContainer = document.getElementById('braille-data-container');
+
+        if (nameInput) {
+            nameInput.value = category.name || '';
+        }
+        if (descInput) {
+            descInput.value = category.description || '';
+        }
+        if (publicCheckbox) {
+            publicCheckbox.checked = !!category.is_public;
+        }
+        if (brailleContainer) {
+            const count = category.braille_count || 0;
+            brailleContainer.innerHTML = `
+                <div style="background:#f9f9f9;border:1px solid #e0e0e0;border-radius:8px;padding:12px;font-size:0.9rem;color:#555;line-height:1.4;">
+                    현재 등록된 점자 항목: <strong>${count}</strong>개입니다.<br>
+                    점자 데이터 수정은 업로드 페이지에서 새 파일을 업로드하여 진행해주세요.
+                </div>
+            `;
+        }
+    }
+
+    closeEditModal() {
+        const modal = document.getElementById('edit-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        const form = document.getElementById('edit-category-form');
+        if (form) {
+            form.reset();
+        }
+        const brailleContainer = document.getElementById('braille-data-container');
+        if (brailleContainer) {
+            brailleContainer.innerHTML = `
+                <div class="loading-indicator" style="display:block;">
+                    점자 데이터를 불러오는 중...
+                </div>
+            `;
+        }
+        this.currentEditingCategoryId = null;
+    }
+
+    async handleCategoryUpdate(event) {
+        if (event) {
+            event.preventDefault();
+        }
+
+        if (!this.currentEditingCategoryId) {
+            alert('수정할 카테고리를 찾을 수 없습니다.');
+            return;
+        }
+
+        const nameInput = document.getElementById('edit-category-name');
+        const descInput = document.getElementById('edit-category-description');
+        const publicCheckbox = document.getElementById('edit-category-public');
+        const submitBtn = document.querySelector('#edit-category-form button[type="submit"]');
+
+        if (!nameInput || !descInput || !publicCheckbox || !submitBtn) {
+            alert('수정 양식을 찾을 수 없습니다.');
+            return;
+        }
+
+        const name = nameInput.value.trim();
+        const description = descInput.value.trim();
+        const isPublic = publicCheckbox.checked;
+
+        if (!name) {
+            alert('카테고리 이름을 입력해주세요.');
+            nameInput.focus();
+            return;
+        }
+
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = '저장 중...';
+
+        try {
+            await window.apiClient.updateCategory(this.currentEditingCategoryId, {
+                name,
+                description,
+                is_public: isPublic
+            });
+
+            await this.loadMyCategories();
+            this.closeEditModal();
+            alert('카테고리가 수정되었습니다.');
+        } catch (error) {
+            console.error('Failed to update category:', error);
+            alert(error.message || '카테고리를 수정하지 못했습니다.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    }
+
+    async confirmAndDeleteCategory(categoryId) {
+        if (!categoryId) {
+            return;
+        }
+
+        const category = this.categories.find(cat => cat.id === categoryId);
+        const message = category
+            ? `"${category.name}" 카테고리를 삭제하시겠습니까? 등록된 점자 데이터도 함께 삭제됩니다.`
+            : '선택한 카테고리를 삭제하시겠습니까?';
+
+        if (!window.confirm(message)) {
+            return;
+        }
+
+        this.showLoading(true);
+
+        try {
+            await window.apiClient.deleteCategory(categoryId);
+            await this.loadMyCategories();
+            alert('카테고리가 삭제되었습니다.');
+        } catch (error) {
+            console.error('Failed to delete category:', error);
+            alert(error.message || '카테고리를 삭제하지 못했습니다.');
+        } finally {
+            this.showLoading(false);
+        }
     }
 
     async logout() {
