@@ -447,6 +447,197 @@ class FirebaseApiClient {
         }
     }
 
+    async addBrailleEntry(categoryId, { character, description = '', braillePattern = [] } = {}) {
+        if (!categoryId) {
+            throw new Error('카테고리를 선택해주세요.');
+        }
+
+        const sanitizedCharacter = (character || '').trim();
+        if (!sanitizedCharacter) {
+            throw new Error('문자를 입력해주세요.');
+        }
+
+        if (!Array.isArray(braillePattern) || braillePattern.length === 0) {
+            throw new Error('점자 패턴을 입력해주세요.');
+        }
+
+        const userProfile = await this.ensureUserProfile();
+        const categoryRef = this.db.collection('categories').doc(categoryId);
+        const categorySnapshot = await categoryRef.get();
+
+        if (!categorySnapshot.exists) {
+            throw new Error('카테고리를 찾을 수 없습니다.');
+        }
+
+        const categoryData = categorySnapshot.data();
+        if (categoryData.is_deleted) {
+            throw new Error('삭제된 카테고리에는 항목을 추가할 수 없습니다.');
+        }
+
+        if (categoryData.created_by !== userProfile.uid && userProfile.role !== 'admin') {
+            throw new Error('카테고리를 수정할 권한이 없습니다.');
+        }
+
+        const now = FirestoreTimestamp.now();
+        const brailleCollection = this.db.collection('braille_data');
+        const docRef = brailleCollection.doc();
+        const currentCount = typeof categoryData.braille_count === 'number' ? categoryData.braille_count : 0;
+
+        await docRef.set({
+            category_id: categoryId,
+            character: sanitizedCharacter,
+            description: (description || '').trim(),
+            braille_pattern: JSON.stringify(braillePattern),
+            created_at: now,
+            created_by: userProfile.uid,
+            order: currentCount
+        });
+
+        await categoryRef.update({
+            braille_count: FirestoreFieldValue.increment(1),
+            updated_at: now,
+            last_imported_at: now
+        });
+
+        this.brailleCache.delete(categoryId);
+        this.publicCategoryCache = [];
+
+        return {
+            id: docRef.id,
+            character: sanitizedCharacter,
+            order: currentCount
+        };
+    }
+
+    async getBrailleEntries(categoryId, { limit = 500 } = {}) {
+        if (!categoryId) {
+            throw new Error('카테고리를 선택해주세요.');
+        }
+
+        const snapshot = await this.db
+            .collection('braille_data')
+            .where('category_id', '==', categoryId)
+            .orderBy('order')
+            .limit(limit)
+            .get();
+
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            braille_pattern: this.normalizeBraillePattern(doc.data().braille_pattern)
+        }));
+    }
+
+    async updateBrailleEntry(entryId, { character, description = '', braillePattern = [] } = {}) {
+        if (!entryId) {
+            throw new Error('점자 항목을 선택해주세요.');
+        }
+
+        const docRef = this.db.collection('braille_data').doc(entryId);
+        const snapshot = await docRef.get();
+
+        if (!snapshot.exists) {
+            throw new Error('점자 항목을 찾을 수 없습니다.');
+        }
+
+        const entryData = snapshot.data();
+        const categoryId = entryData.category_id;
+        if (!categoryId) {
+            throw new Error('점자 항목의 카테고리를 찾을 수 없습니다.');
+        }
+
+        const userProfile = await this.ensureUserProfile();
+        const categoryRef = this.db.collection('categories').doc(categoryId);
+        const categorySnapshot = await categoryRef.get();
+
+        if (!categorySnapshot.exists) {
+            throw new Error('카테고리를 찾을 수 없습니다.');
+        }
+
+        const categoryData = categorySnapshot.data();
+        if (categoryData.created_by !== userProfile.uid && userProfile.role !== 'admin') {
+            throw new Error('점자 항목을 수정할 권한이 없습니다.');
+        }
+
+        const sanitizedCharacter = typeof character === 'string' ? character.trim() : '';
+        if (!sanitizedCharacter) {
+            throw new Error('문자를 입력해주세요.');
+        }
+
+        if (!Array.isArray(braillePattern) || braillePattern.length === 0) {
+            throw new Error('점자 패턴을 입력해주세요.');
+        }
+
+        const now = FirestoreTimestamp.now();
+
+        await docRef.update({
+            character: sanitizedCharacter,
+            description: (description || '').trim(),
+            braille_pattern: JSON.stringify(braillePattern),
+            updated_at: now
+        });
+
+        await categoryRef.update({
+            updated_at: now,
+            last_imported_at: now
+        });
+
+        this.brailleCache.delete(categoryId);
+        this.publicCategoryCache = [];
+
+        return {
+            id: entryId,
+            category_id: categoryId,
+            character: sanitizedCharacter
+        };
+    }
+
+    async deleteBrailleEntry(entryId) {
+        if (!entryId) {
+            throw new Error('점자 항목을 선택해주세요.');
+        }
+
+        const docRef = this.db.collection('braille_data').doc(entryId);
+        const snapshot = await docRef.get();
+
+        if (!snapshot.exists) {
+            throw new Error('점자 항목을 찾을 수 없습니다.');
+        }
+
+        const entryData = snapshot.data();
+        const categoryId = entryData.category_id;
+        if (!categoryId) {
+            throw new Error('점자 항목의 카테고리를 찾을 수 없습니다.');
+        }
+
+        const userProfile = await this.ensureUserProfile();
+        const categoryRef = this.db.collection('categories').doc(categoryId);
+        const categorySnapshot = await categoryRef.get();
+
+        if (!categorySnapshot.exists) {
+            throw new Error('카테고리를 찾을 수 없습니다.');
+        }
+
+        const categoryData = categorySnapshot.data();
+        if (categoryData.created_by !== userProfile.uid && userProfile.role !== 'admin') {
+            throw new Error('점자 항목을 삭제할 권한이 없습니다.');
+        }
+
+        const now = FirestoreTimestamp.now();
+
+        await docRef.delete();
+        await categoryRef.update({
+            braille_count: FirestoreFieldValue.increment(-1),
+            updated_at: now,
+            last_imported_at: now
+        });
+
+        this.brailleCache.delete(categoryId);
+        this.publicCategoryCache = [];
+
+        return true;
+    }
+
     async getUserStats(options = {}) {
         const { recentLimit = 10, maxLogs = 500 } = options;
         const firebaseUser = await this.ensureFirebaseUser(true);

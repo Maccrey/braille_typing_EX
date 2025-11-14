@@ -380,6 +380,129 @@
             width: auto;
         }
 
+        .braille-summary {
+            background: #f9f9ff;
+            border: 1px solid #e3e4ff;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.9rem;
+            color: #4a4a68;
+            line-height: 1.5;
+        }
+
+        .braille-summary strong {
+            color: #4c51bf;
+        }
+
+        .braille-add-form {
+            background: #fdfdff;
+            border: 1px solid #e0e0f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .braille-form-status {
+            margin-bottom: 10px;
+            color: #4c51bf;
+            font-size: 0.85rem;
+        }
+
+        .braille-add-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .braille-field {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .braille-field .form-hint {
+            margin-top: 6px;
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .braille-pattern-preview {
+            color: #4c51bf;
+        }
+
+        .braille-pattern-preview.error {
+            color: #c53030;
+        }
+
+        .braille-add-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .braille-entries-list {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .braille-entry {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            background: #fff;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .braille-entry-info {
+            flex: 1;
+        }
+
+        .braille-entry-char {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .braille-entry-pattern {
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        .braille-entry-description {
+            font-size: 0.8rem;
+            color: #777;
+            margin-top: 4px;
+        }
+
+        .braille-entry-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .braille-entry-actions .btn {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .braille-empty {
+            margin-top: 12px;
+            padding: 16px;
+            border: 1px dashed #cbd5f5;
+            border-radius: 10px;
+            color: #6b7280;
+            background: #f8f9ff;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
         .modal-actions {
             display: flex;
             gap: 10px;
@@ -403,11 +526,9 @@
 
         /* Braille Data Edit Styles */
         #braille-data-container {
-            max-height: 400px;
-            overflow-y: auto;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
             background: #f9f9f9;
         }
 
@@ -2286,6 +2407,29 @@
                     <button type="button" class="btn btn-secondary" id="add-braille-item" style="margin-top: 10px;">
                         + 새 항목 추가
                     </button>
+                    <div id="braille-add-form" class="braille-add-form" data-visible="false" data-mode="create" data-entry-id="">
+                        <p id="braille-form-status" class="form-hint braille-form-status">새 항목을 추가합니다.</p>
+                        <div class="braille-add-row">
+                            <div class="braille-field">
+                                <label for="braille-character-input" class="form-label">문자 *</label>
+                                <input type="text" id="braille-character-input" class="form-input" maxlength="20" placeholder="예: 가">
+                            </div>
+                            <div class="braille-field">
+                                <label for="braille-pattern-input" class="form-label">점자 패턴 *</label>
+                                <input type="text" id="braille-pattern-input" class="form-input" placeholder="예: 1 2 / 3 4">
+                                <p class="form-hint">한 블록 안에서는 공백·콤마로 구분하고, 블록 사이에는 '/' 또는 '|'를 사용하세요.</p>
+                                <p id="braille-pattern-preview" class="form-hint braille-pattern-preview">예: 1 2 / 3 4</p>
+                            </div>
+                        </div>
+                        <div class="braille-field" style="margin-top: 10px;">
+                            <label for="braille-description-input" class="form-label">설명</label>
+                            <input type="text" id="braille-description-input" class="form-input" maxlength="200" placeholder="선택사항">
+                        </div>
+                        <div class="braille-add-actions">
+                            <button type="button" class="btn btn-secondary" id="braille-add-cancel">취소</button>
+                            <button type="button" class="btn btn-primary" id="braille-add-save">항목 추가</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="modal-actions">

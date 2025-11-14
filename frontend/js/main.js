@@ -15,6 +15,10 @@ class MainMenu {
         this.passwordAdInitialized = false;
         this.kakaoAdScriptAppended = false;
         this.currentEditingCategoryId = null;
+        this.currentBrailleCount = 0;
+        this.currentBrailleEntries = [];
+        this.brailleFormMode = 'create';
+        this.editingBrailleEntryId = null;
         this.init();
     }
 
@@ -574,6 +578,9 @@ class MainMenu {
         const cancelBtn = document.getElementById('edit-cancel-btn');
         const form = document.getElementById('edit-category-form');
         const addBrailleBtn = document.getElementById('add-braille-item');
+        const addBrailleCancelBtn = document.getElementById('braille-add-cancel');
+        const addBrailleSaveBtn = document.getElementById('braille-add-save');
+        const braillePatternInput = document.getElementById('braille-pattern-input');
 
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.closeEditModal());
@@ -593,11 +600,295 @@ class MainMenu {
         }
         if (addBrailleBtn) {
             addBrailleBtn.addEventListener('click', () => {
-                alert('점자 데이터 편집은 현재 업로드 페이지에서만 지원됩니다. 새 파일을 업로드해 갱신해주세요.');
+                if (this.isBrailleFormVisible() && this.brailleFormMode === 'create') {
+                    this.closeBrailleForm();
+                } else {
+                    this.openBrailleForm('create');
+                }
             });
-            addBrailleBtn.disabled = true;
-            addBrailleBtn.classList.add('disabled');
         }
+        if (addBrailleCancelBtn) {
+            addBrailleCancelBtn.addEventListener('click', () => this.closeBrailleForm());
+        }
+        if (addBrailleSaveBtn) {
+            addBrailleSaveBtn.addEventListener('click', () => this.handleBrailleAddSubmit());
+        }
+        if (braillePatternInput) {
+            braillePatternInput.addEventListener('input', (event) => this.updateBraillePatternPreview(event.target.value));
+            this.updateBraillePatternPreview(braillePatternInput.value);
+        }
+    }
+
+    isBrailleFormVisible() {
+        const form = document.getElementById('braille-add-form');
+        return form ? form.dataset.visible === 'true' : false;
+    }
+
+    openBrailleForm(mode = 'create', entry = null) {
+        const form = document.getElementById('braille-add-form');
+        const button = document.getElementById('add-braille-item');
+        const characterInput = document.getElementById('braille-character-input');
+        const patternInput = document.getElementById('braille-pattern-input');
+        const descriptionInput = document.getElementById('braille-description-input');
+        const statusText = document.getElementById('braille-form-status');
+        const saveBtn = document.getElementById('braille-add-save');
+
+        if (!form) {
+            return;
+        }
+
+        form.style.display = 'block';
+        form.dataset.visible = 'true';
+        form.dataset.mode = mode;
+        form.dataset.entryId = entry?.id || '';
+
+        this.brailleFormMode = mode;
+        this.editingBrailleEntryId = mode === 'edit' ? (entry?.id || null) : null;
+
+        if (mode === 'edit' && entry) {
+            if (characterInput) {
+                characterInput.value = entry.character || '';
+            }
+            if (patternInput) {
+                patternInput.value = this.patternArrayToInputValue(entry.braille_pattern);
+            }
+            if (descriptionInput) {
+                descriptionInput.value = entry.description || '';
+            }
+        } else {
+            this.resetBrailleAddForm();
+        }
+
+        if (statusText) {
+            statusText.textContent = mode === 'edit' ? '선택한 항목을 수정합니다.' : '새 항목을 추가합니다.';
+        }
+        if (saveBtn) {
+            saveBtn.textContent = mode === 'edit' ? '항목 수정' : '항목 추가';
+        }
+        if (button) {
+            button.dataset.originalLabel = button.dataset.originalLabel || button.textContent;
+            button.textContent = mode === 'edit' ? '수정 취소' : '입력창 닫기';
+        }
+
+        if (patternInput) {
+            this.updateBraillePatternPreview(patternInput.value);
+        }
+    }
+
+    closeBrailleForm() {
+        const form = document.getElementById('braille-add-form');
+        const button = document.getElementById('add-braille-item');
+        const statusText = document.getElementById('braille-form-status');
+        const saveBtn = document.getElementById('braille-add-save');
+        if (!form) {
+            return;
+        }
+
+        form.style.display = 'none';
+        form.dataset.visible = 'false';
+        form.dataset.mode = 'create';
+        form.dataset.entryId = '';
+        this.brailleFormMode = 'create';
+        this.editingBrailleEntryId = null;
+        this.resetBrailleAddForm();
+        this.updateBraillePatternPreview('');
+
+        if (statusText) {
+            statusText.textContent = '새 항목을 추가합니다.';
+        }
+        if (saveBtn) {
+            saveBtn.textContent = '항목 추가';
+        }
+        if (button && button.dataset.originalLabel) {
+            button.textContent = button.dataset.originalLabel;
+        }
+    }
+
+    resetBrailleAddForm() {
+        const characterInput = document.getElementById('braille-character-input');
+        const patternInput = document.getElementById('braille-pattern-input');
+        const descriptionInput = document.getElementById('braille-description-input');
+        if (characterInput) {
+            characterInput.value = '';
+        }
+        if (patternInput) {
+            patternInput.value = '';
+        }
+        if (descriptionInput) {
+            descriptionInput.value = '';
+        }
+    }
+
+    async handleBrailleAddSubmit() {
+        if (!this.currentEditingCategoryId) {
+            alert('먼저 카테고리를 불러온 뒤 다시 시도해주세요.');
+            return;
+        }
+
+        const characterInput = document.getElementById('braille-character-input');
+        const patternInput = document.getElementById('braille-pattern-input');
+        const descriptionInput = document.getElementById('braille-description-input');
+        const saveBtn = document.getElementById('braille-add-save');
+        const form = document.getElementById('braille-add-form');
+
+        if (!characterInput || !patternInput || !saveBtn) {
+            alert('점자 항목 입력 폼을 찾을 수 없습니다.');
+            return;
+        }
+
+        const character = characterInput.value.trim();
+        if (!character) {
+            alert('문자를 입력해주세요.');
+            characterInput.focus();
+            return;
+        }
+
+        const patternMeta = this.parseBraillePatternInputWithMeta(patternInput.value);
+        const pattern = patternMeta.blocks;
+        if (pattern.length === 0) {
+            alert('유효한 점자 패턴을 입력해주세요. (예: 1 2 / 3 4)');
+            patternInput.focus();
+            return;
+        }
+
+        const description = descriptionInput ? descriptionInput.value.trim() : '';
+
+        const mode = form?.dataset.mode || this.brailleFormMode || 'create';
+        const entryId = form?.dataset.entryId || this.editingBrailleEntryId;
+        const isEditMode = mode === 'edit' && !!entryId;
+
+        if (!window.apiClient) {
+            alert('점자 항목 편집 기능을 사용할 수 없습니다. 페이지를 새로고침해주세요.');
+            return;
+        }
+
+        saveBtn.disabled = true;
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = isEditMode ? '수정 중...' : '추가 중...';
+
+        try {
+            if (isEditMode) {
+                if (typeof window.apiClient.updateBrailleEntry !== 'function') {
+                    throw new Error('점자 항목 수정 기능을 사용할 수 없습니다.');
+                }
+                await window.apiClient.updateBrailleEntry(entryId, {
+                    character,
+                    description,
+                    braillePattern: pattern
+                });
+                alert('점자 항목이 수정되었습니다.');
+            } else {
+                if (typeof window.apiClient.addBrailleEntry !== 'function') {
+                    throw new Error('점자 항목 추가 기능을 사용할 수 없습니다.');
+                }
+                await window.apiClient.addBrailleEntry(this.currentEditingCategoryId, {
+                    character,
+                    description,
+                    braillePattern: pattern
+                });
+                alert('새 점자 항목이 추가되었습니다.');
+            }
+
+            await this.loadBrailleEntries(this.currentEditingCategoryId);
+            await this.loadMyCategories();
+            this.closeBrailleForm();
+        } catch (error) {
+            console.error('Failed to add braille entry:', error);
+            alert(error.message || '점자 항목을 추가하지 못했습니다.');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalText;
+        }
+    }
+
+    parseBraillePatternInput(input) {
+        return this.parseBraillePatternInputWithMeta(input).blocks;
+    }
+
+    parseBraillePatternInputWithMeta(input) {
+        const result = {
+            blocks: [],
+            invalidTokens: [],
+            hasInput: !!(input && input.trim())
+        };
+
+        if (!input) {
+            return result;
+        }
+
+        const normalized = input.replace(/\r?\n+/g, '/');
+
+        const blocks = normalized
+            .split(/[/|]+/)
+            .map(block => block.trim())
+            .filter(Boolean)
+            .map(block => {
+                const tokens = block.split(/[^0-9]+/).filter(Boolean);
+                const seen = new Set();
+                const filtered = [];
+                tokens.forEach(token => {
+                    const value = parseInt(token, 10);
+                    if (!Number.isInteger(value) || value < 1 || value > 6) {
+                        result.invalidTokens.push(token);
+                        return;
+                    }
+                    if (!seen.has(value)) {
+                        seen.add(value);
+                        filtered.push(value);
+                    }
+                });
+                return filtered.sort((a, b) => a - b);
+            })
+            .filter(block => block.length > 0);
+
+        result.blocks = blocks;
+        return result;
+    }
+
+    updateBraillePatternPreview(rawValue) {
+        const previewEl = document.getElementById('braille-pattern-preview');
+        if (!previewEl) {
+            return;
+        }
+
+        if (!rawValue || !rawValue.trim()) {
+            previewEl.textContent = '예: 1 2 / 3 4';
+            previewEl.classList.remove('error');
+            return;
+        }
+
+        const { blocks, invalidTokens } = this.parseBraillePatternInputWithMeta(rawValue);
+        if (blocks.length === 0) {
+            previewEl.textContent = '유효한 패턴을 입력해주세요. (사용 가능한 점은 1~6)';
+            previewEl.classList.add('error');
+            return;
+        }
+
+        const formatted = blocks
+            .map(block => block.join(' '))
+            .join(' | ');
+
+        let message = `미리보기: ${formatted}`;
+        if (invalidTokens.length > 0) {
+            message += ` (무시된 값: ${invalidTokens.join(', ')})`;
+        }
+
+        previewEl.textContent = message;
+        previewEl.classList.toggle('error', invalidTokens.length > 0);
+    }
+
+    patternArrayToInputValue(pattern) {
+        if (!Array.isArray(pattern) || pattern.length === 0) {
+            return '';
+        }
+        return pattern.map(block => (Array.isArray(block) ? block.join(' ') : '')).filter(Boolean).join(' / ');
+    }
+
+    formatBraillePattern(pattern) {
+        if (!Array.isArray(pattern) || pattern.length === 0) {
+            return '패턴 정보 없음';
+        }
+        return pattern.map(block => block.join(' ')).join(' | ');
     }
 
     async openCategoryEditModal(categoryId) {
@@ -640,14 +931,91 @@ class MainMenu {
             publicCheckbox.checked = !!category.is_public;
         }
         if (brailleContainer) {
-            const count = category.braille_count || 0;
             brailleContainer.innerHTML = `
-                <div style="background:#f9f9f9;border:1px solid #e0e0e0;border-radius:8px;padding:12px;font-size:0.9rem;color:#555;line-height:1.4;">
-                    현재 등록된 점자 항목: <strong>${count}</strong>개입니다.<br>
-                    점자 데이터 수정은 업로드 페이지에서 새 파일을 업로드하여 진행해주세요.
+                <div class="loading-indicator" style="display:block;">
+                    점자 데이터를 불러오는 중...
                 </div>
             `;
         }
+        this.closeBrailleForm();
+        this.currentBrailleEntries = [];
+        this.currentBrailleCount = category && typeof category.braille_count === 'number' ? category.braille_count : 0;
+        this.loadBrailleEntries(category.id);
+    }
+
+    async loadBrailleEntries(categoryId) {
+        const container = document.getElementById('braille-data-container');
+        if (!categoryId) {
+            if (container) {
+                container.innerHTML = '<div class="braille-empty">카테고리를 선택해주세요.</div>';
+            }
+            return;
+        }
+
+        if (container) {
+            container.innerHTML = `
+                <div class="loading-indicator" style="display:block;">
+                    점자 데이터를 불러오는 중...
+                </div>
+            `;
+        }
+
+        if (!window.apiClient || typeof window.apiClient.getBrailleEntries !== 'function') {
+            if (container) {
+                container.innerHTML = '<div class="braille-empty">점자 데이터를 불러올 수 없습니다. 페이지를 새로고침해주세요.</div>';
+            }
+            return;
+        }
+
+        try {
+            const entries = await window.apiClient.getBrailleEntries(categoryId);
+            this.currentBrailleEntries = Array.isArray(entries) ? entries : [];
+            this.currentBrailleCount = this.currentBrailleEntries.length;
+            this.renderBrailleEntries();
+        } catch (error) {
+            console.error('Failed to load braille entries:', error);
+            if (container) {
+                container.innerHTML = '<div class="braille-empty">점자 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</div>';
+            }
+        }
+    }
+
+    renderBrailleEntries() {
+        const container = document.getElementById('braille-data-container');
+        if (!container) {
+            return;
+        }
+
+        const count = this.currentBrailleEntries.length;
+        const entriesHtml = count > 0
+            ? `<div class="braille-entries-list">${this.currentBrailleEntries.map(entry => this.createBrailleEntryHTML(entry)).join('')}</div>`
+            : '<div class="braille-empty">등록된 점자 항목이 없습니다. 아래 입력창에서 새 항목을 추가해보세요.</div>';
+
+        container.innerHTML = `
+            <div class="braille-summary">
+                현재 등록된 점자 항목: <strong class="braille-summary-count">${count}</strong>개입니다.<br>
+                목록에서 항목을 선택해 바로 수정하거나 삭제할 수 있습니다.
+            </div>
+            ${entriesHtml}
+        `;
+    }
+
+    createBrailleEntryHTML(entry) {
+        const patternText = this.formatBraillePattern(entry.braille_pattern);
+        const description = entry.description ? `<div class="braille-entry-description">${this.escapeHtml(entry.description)}</div>` : '';
+        return `
+            <div class="braille-entry" data-entry-id="${entry.id}">
+                <div class="braille-entry-info">
+                    <div class="braille-entry-char">${this.escapeHtml(entry.character || '')}</div>
+                    <div class="braille-entry-pattern">${this.escapeHtml(patternText)}</div>
+                    ${description}
+                </div>
+                <div class="braille-entry-actions">
+                    <button type="button" class="btn edit-btn" onclick="mainMenu.editBrailleEntry('${entry.id}')">수정</button>
+                    <button type="button" class="btn delete-btn" onclick="mainMenu.deleteBrailleEntry('${entry.id}')">삭제</button>
+                </div>
+            </div>
+        `;
     }
 
     closeEditModal() {
@@ -667,6 +1035,9 @@ class MainMenu {
                 </div>
             `;
         }
+        this.closeBrailleForm();
+        this.currentBrailleCount = 0;
+        this.currentBrailleEntries = [];
         this.currentEditingCategoryId = null;
     }
 
@@ -720,6 +1091,47 @@ class MainMenu {
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
+        }
+    }
+
+    editBrailleEntry(entryId) {
+        if (!entryId) {
+            return;
+        }
+        const entry = this.currentBrailleEntries.find(item => item.id === entryId);
+        if (!entry) {
+            alert('선택한 점자 항목을 찾을 수 없습니다.');
+            return;
+        }
+        this.openBrailleForm('edit', entry);
+    }
+
+    async deleteBrailleEntry(entryId) {
+        if (!entryId) {
+            return;
+        }
+        const entry = this.currentBrailleEntries.find(item => item.id === entryId);
+        const targetCategoryId = entry?.category_id || this.currentEditingCategoryId;
+        const message = entry
+            ? `'${entry.character}' 항목을 삭제하시겠습니까? 삭제 후에는 되돌릴 수 없습니다.`
+            : '선택한 점자 항목을 삭제하시겠습니까?';
+        if (!window.confirm(message)) {
+            return;
+        }
+
+        if (!window.apiClient || typeof window.apiClient.deleteBrailleEntry !== 'function') {
+            alert('점자 항목 삭제 기능을 사용할 수 없습니다. 페이지를 새로고침해주세요.');
+            return;
+        }
+
+        try {
+            await window.apiClient.deleteBrailleEntry(entryId);
+            alert('점자 항목이 삭제되었습니다.');
+            await this.loadBrailleEntries(targetCategoryId);
+            await this.loadMyCategories();
+        } catch (error) {
+            console.error('Failed to delete braille entry:', error);
+            alert(error.message || '점자 항목을 삭제하지 못했습니다.');
         }
     }
 
