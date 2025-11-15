@@ -32,7 +32,7 @@ class StatisticsManager {
         this.hideLoading();
         this.hideError();
         document.getElementById('statistics-content').style.display = 'block';
-        this.renderInlineAd();
+        this.refreshAdSlots();
         console.log('📊 Showing default statistics state');
     }
 
@@ -67,7 +67,7 @@ class StatisticsManager {
 
         // Show statistics content
         document.getElementById('statistics-content').style.display = 'block';
-        this.renderInlineAd();
+        this.refreshAdSlots();
 
         // Update main statistics cards
         this.updateMainStats(stats);
@@ -213,10 +213,24 @@ class StatisticsManager {
         document.getElementById('error-message').style.display = 'none';
     }
 
-    renderInlineAd() {
-        if (typeof window.renderStatisticsInlineAd === 'function') {
-            window.renderStatisticsInlineAd();
-        }
+    refreshAdSlots(retries = 5) {
+        const attemptRefresh = () => {
+            if (window.kakaoAdFit && typeof window.kakaoAdFit.load === 'function') {
+                try {
+                    window.kakaoAdFit.load();
+                    return;
+                } catch (error) {
+                    console.warn('Failed to refresh Kakao ads:', error);
+                }
+            }
+
+            if (retries > 0) {
+                retries -= 1;
+                setTimeout(attemptRefresh, 500);
+            }
+        };
+
+        attemptRefresh();
     }
 }
 
