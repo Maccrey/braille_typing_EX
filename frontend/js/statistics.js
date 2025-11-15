@@ -32,6 +32,7 @@ class StatisticsManager {
         this.hideLoading();
         this.hideError();
         document.getElementById('statistics-content').style.display = 'block';
+        this.renderInlineAd();
         console.log('📊 Showing default statistics state');
     }
 
@@ -66,6 +67,7 @@ class StatisticsManager {
 
         // Show statistics content
         document.getElementById('statistics-content').style.display = 'block';
+        this.renderInlineAd();
 
         // Update main statistics cards
         this.updateMainStats(stats);
@@ -209,6 +211,12 @@ class StatisticsManager {
 
     hideError() {
         document.getElementById('error-message').style.display = 'none';
+    }
+
+    renderInlineAd() {
+        if (typeof window.renderStatisticsInlineAd === 'function') {
+            window.renderStatisticsInlineAd();
+        }
     }
 }
 

@@ -421,42 +421,105 @@
     <script src="js/statistics.js"></script>
     <script>
         (function() {
-            const slot = document.getElementById('statistics-inline-kakao-ad');
-            if (!slot) {
-                return;
+            const scriptState = {
+                loaded: false,
+                loading: false,
+                callbacks: []
+            };
+
+            function notifyAdScriptReady() {
+                if (window.kakaoAdFit && typeof window.kakaoAdFit.load === 'function') {
+                    try {
+                        window.kakaoAdFit.load();
+                    } catch (error) {
+                        console.warn('Failed to refresh Kakao ad slots:', error);
+                    }
+                }
             }
-            const isMobile = window.matchMedia('(max-width: 600px)').matches;
-            const config = isMobile
-                ? { unit: 'DAN-urq0LHVSaPAuRUtd', width: 320, height: 50 }
-                : { unit: 'DAN-ouqFc02TY3QBdPST', width: 728, height: 90 };
-            slot.innerHTML = `
-                <ins class="kakao_ad_area"
-                    style="display:block;width:${config.width}px;height:${config.height}px;max-width:100%;margin:0 auto;"
-                    data-ad-unit="${config.unit}"
-                    data-ad-width="${config.width}"
-                    data-ad-height="${config.height}"></ins>
-            `;
+
+            function loadKakaoAdScript(callback) {
+                if (scriptState.loaded) {
+                    if (callback) {
+                        callback();
+                    }
+                    notifyAdScriptReady();
+                    return;
+                }
+
+                if (callback) {
+                    scriptState.callbacks.push(callback);
+                }
+
+                if (scriptState.loading) {
+                    return;
+                }
+
+                scriptState.loading = true;
+                const script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.src = '//t1.daumcdn.net/kas/static/ba.min.js';
+                script.async = true;
+                script.onload = () => {
+                    scriptState.loaded = true;
+                    scriptState.loading = false;
+                    notifyAdScriptReady();
+                    scriptState.callbacks.forEach(cb => cb && cb());
+                    scriptState.callbacks = [];
+                };
+                script.onerror = () => {
+                    console.error('Failed to load Kakao ad script.');
+                    scriptState.loading = false;
+                    scriptState.callbacks = [];
+                };
+                document.body.appendChild(script);
+            }
+
+            function injectAd(slotId, desktopConfig, mobileConfig) {
+                const slot = document.getElementById(slotId);
+                if (!slot) {
+                    return false;
+                }
+
+                const isMobile = window.matchMedia('(max-width: 600px)').matches;
+                const config = isMobile ? mobileConfig : desktopConfig;
+
+                if (!config || !config.unit) {
+                    return false;
+                }
+
+                slot.innerHTML = `
+                    <ins class="kakao_ad_area"
+                        style="display:block;width:${config.width}px;height:${config.height}px;max-width:100%;margin:0 auto;"
+                        data-ad-unit="${config.unit}"
+                        data-ad-width="${config.width}"
+                        data-ad-height="${config.height}"></ins>
+                `;
+
+                loadKakaoAdScript();
+                return true;
+            }
+
+            window.renderStatisticsInlineAd = function() {
+                if (window.__statisticsInlineAdRendered) {
+                    return;
+                }
+                const rendered = injectAd(
+                    'statistics-inline-kakao-ad',
+                    { unit: 'DAN-ouqFc02TY3QBdPST', width: 728, height: 90 },
+                    { unit: 'DAN-urq0LHVSaPAuRUtd', width: 320, height: 50 }
+                );
+                if (rendered) {
+                    window.__statisticsInlineAdRendered = true;
+                }
+            };
+
+            // Immediately render the bottom ad
+            injectAd(
+                'statistics-kakao-ad',
+                { unit: 'DAN-IZATYaIdzmpyTB92', width: 728, height: 90 },
+                { unit: 'DAN-zRjFEbrJr94EupDA', width: 320, height: 50 }
+            );
         })();
     </script>
-    <script>
-        (function() {
-            const slot = document.getElementById('statistics-kakao-ad');
-            if (!slot) {
-                return;
-            }
-            const isMobile = window.matchMedia('(max-width: 600px)').matches;
-            const config = isMobile
-                ? { unit: 'DAN-zRjFEbrJr94EupDA', width: 320, height: 50 }
-                : { unit: 'DAN-IZATYaIdzmpyTB92', width: 728, height: 90 };
-            slot.innerHTML = `
-                <ins class="kakao_ad_area"
-                    style="display:block;width:${config.width}px;height:${config.height}px;max-width:100%;margin:0 auto;"
-                    data-ad-unit="${config.unit}"
-                    data-ad-width="${config.width}"
-                    data-ad-height="${config.height}"></ins>
-            `;
-        })();
-    </script>
-    <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </body>
 </html>
