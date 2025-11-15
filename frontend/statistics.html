@@ -421,6 +421,24 @@
             let kakaoScriptLoaded = false;
             let loadingKakaoScript = false;
             const pendingCallbacks = [];
+            let adRefreshScheduled = false;
+
+            function scheduleAdRefresh() {
+                if (adRefreshScheduled) {
+                    return;
+                }
+                adRefreshScheduled = true;
+                setTimeout(() => {
+                    adRefreshScheduled = false;
+                    if (window.kakaoAdFit && typeof window.kakaoAdFit.load === 'function') {
+                        try {
+                            window.kakaoAdFit.load();
+                        } catch (error) {
+                            console.warn('Failed to refresh Kakao ad slot:', error);
+                        }
+                    }
+                }, 200);
+            }
 
             function ensureKakaoScriptLoaded(callback) {
                 if (kakaoScriptLoaded) {
@@ -473,15 +491,7 @@
                         data-ad-height="${config.height}"></ins>
                 `;
 
-                ensureKakaoScriptLoaded(() => {
-                    if (window.kakaoAdFit && typeof window.kakaoAdFit.load === 'function') {
-                        try {
-                            window.kakaoAdFit.load();
-                        } catch (error) {
-                            console.warn('Failed to refresh Kakao ad slot:', error);
-                        }
-                    }
-                });
+                ensureKakaoScriptLoaded(scheduleAdRefresh);
             }
 
             function renderStatisticsAds() {
@@ -496,6 +506,8 @@
                     { unit: 'DAN-zRjFEbrJr94EupDA', width: 320, height: 50 }
                 );
             }
+
+            window.scheduleStatisticsAdRefresh = scheduleAdRefresh;
 
             document.addEventListener('DOMContentLoaded', () => {
                 renderStatisticsAds();

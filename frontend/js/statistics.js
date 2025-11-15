@@ -212,24 +212,19 @@ class StatisticsManager {
         document.getElementById('error-message').style.display = 'none';
     }
 
-    refreshAdSlots(retries = 5) {
-        const attemptRefresh = () => {
-            if (window.kakaoAdFit && typeof window.kakaoAdFit.load === 'function') {
-                try {
-                    window.kakaoAdFit.load();
-                    return;
-                } catch (error) {
-                    console.warn('Failed to refresh Kakao ads:', error);
-                }
-            }
+    refreshAdSlots() {
+        if (typeof window.scheduleStatisticsAdRefresh === 'function') {
+            window.scheduleStatisticsAdRefresh();
+            return;
+        }
 
-            if (retries > 0) {
-                retries -= 1;
-                setTimeout(attemptRefresh, 500);
+        if (window.kakaoAdFit && typeof window.kakaoAdFit.load === 'function') {
+            try {
+                window.kakaoAdFit.load();
+            } catch (error) {
+                console.warn('Failed to refresh Kakao ads:', error);
             }
-        };
-
-        attemptRefresh();
+        }
     }
 }
 

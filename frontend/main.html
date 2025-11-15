@@ -2610,6 +2610,7 @@
             let kakaoScriptLoading = false;
             let scriptEl = null;
             const pendingCallbacks = [];
+            let adRefreshScheduled = false;
 
             const adConfigs = [
                 {
@@ -2638,6 +2639,23 @@
                     mobile: { unit: 'DAN-txZH5ZyPKwAZu26b', width: 320, height: 50 }
                 }
             ];
+
+            function scheduleAdRefresh() {
+                if (adRefreshScheduled) {
+                    return;
+                }
+                adRefreshScheduled = true;
+                setTimeout(() => {
+                    adRefreshScheduled = false;
+                    if (window.kakaoAdFit && typeof window.kakaoAdFit.load === 'function') {
+                        try {
+                            window.kakaoAdFit.load();
+                        } catch (error) {
+                            console.warn('Failed to refresh Kakao ads on main page:', error);
+                        }
+                    }
+                }, 200);
+            }
 
             function ensureKakaoScriptLoaded(callback) {
                 if (window.kakaoAdFit && typeof window.kakaoAdFit.load === 'function') {
@@ -2702,15 +2720,7 @@
 
             function renderAllAds() {
                 adConfigs.forEach(cfg => renderAdSlot(cfg.slotId, cfg.desktop, cfg.mobile));
-                ensureKakaoScriptLoaded(() => {
-                    if (window.kakaoAdFit && typeof window.kakaoAdFit.load === 'function') {
-                        try {
-                            window.kakaoAdFit.load();
-                        } catch (error) {
-                            console.warn('Failed to refresh Kakao ads on main page:', error);
-                        }
-                    }
-                });
+                ensureKakaoScriptLoaded(scheduleAdRefresh);
             }
 
             document.addEventListener('DOMContentLoaded', renderAllAds);
