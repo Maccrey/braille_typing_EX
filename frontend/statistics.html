@@ -269,6 +269,33 @@
             border-radius: 15px;
         }
 
+        .inline-ad-section {
+            margin: 30px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .inline-ad-slot {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .inline-ad-slot .kakao_ad_area {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .inline-ad-slot-pc {
+            display: flex;
+        }
+
+        .inline-ad-slot-mobile {
+            display: none;
+        }
+
         .ad-section {
             margin-top: 40px;
             display: flex;
@@ -279,6 +306,16 @@
             width: 100%;
             display: flex;
             justify-content: center;
+        }
+
+        @media (max-width: 600px) {
+            .inline-ad-slot-pc {
+                display: none;
+            }
+
+            .inline-ad-slot-mobile {
+                display: flex;
+            }
         }
 
         @media (max-width: 768px) {
@@ -349,6 +386,21 @@
                     </div>
                 </div>
 
+                <div class="inline-ad-section" aria-label="광고 영역">
+                    <div class="inline-ad-slot inline-ad-slot-pc">
+                        <ins class="kakao_ad_area" style="display:none;"
+                            data-ad-unit="DAN-ouqFc02TY3QBdPST"
+                            data-ad-width="728"
+                            data-ad-height="90"></ins>
+                    </div>
+                    <div class="inline-ad-slot inline-ad-slot-mobile">
+                        <ins class="kakao_ad_area" style="display:none;"
+                            data-ad-unit="DAN-urq0LHVSaPAuRUtd"
+                            data-ad-width="320"
+                            data-ad-height="50"></ins>
+                    </div>
+                </div>
+
                 <!-- Progress Charts -->
                 <div class="chart-section">
                     <h3 class="chart-title">🎯 이번 주 목표 달성도</h3>
@@ -383,10 +435,10 @@
                         <a href="main.html">점자 연습을 시작</a>해보세요!
                     </div>
                 </div>
+            </div>
 
-                <div class="ad-section">
-                    <div id="statistics-kakao-ad" class="ad-slot"></div>
-                </div>
+            <div class="ad-section">
+                <div id="statistics-kakao-ad" class="ad-slot"></div>
             </div>
         </div>
     </div>
