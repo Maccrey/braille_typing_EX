@@ -670,6 +670,23 @@
             border-color: #667eea;
         }
 
+        .category-ad-section {
+            margin: 20px 0 30px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .category-ad-slot {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .category-ad-slot .kakao_ad_area {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
         .loading-indicator {
             text-align: center;
             padding: 50px;
@@ -2170,6 +2187,10 @@
                         </div>
                     </div>
 
+                    <div class="category-ad-section" aria-label="광고 영역">
+                        <div id="my-category-ad-slot" class="category-ad-slot"></div>
+                    </div>
+
                     <div id="category-list" class="category-list">
                         <!-- Categories will be dynamically loaded here -->
                     </div>
@@ -2181,6 +2202,9 @@
 
                 <!-- Favorites Tab -->
                 <div id="favorites-content" class="content-section">
+                    <div class="category-ad-section" aria-label="즐겨찾기 광고">
+                        <div id="favorites-ad-slot" class="category-ad-slot"></div>
+                    </div>
                     <div id="favorites-list" class="category-list">
                         <!-- Favorite categories will be loaded here -->
                     </div>
@@ -2194,6 +2218,9 @@
                 <div id="search-content" class="content-section">
                     <div class="search-container">
                         <input type="text" class="search-input" id="search-input" placeholder="공개 카테고리 검색..." />
+                    </div>
+                    <div class="category-ad-section" aria-label="검색 광고">
+                        <div id="search-ad-slot" class="category-ad-slot"></div>
                     </div>
 
                     <div id="search-results" class="category-list">
@@ -2214,6 +2241,10 @@
                             <p>점자 학습 관련 질문과 정보를 공유해보세요!</p>
                         </div>
                         <button class="btn btn-primary" id="create-post-btn">새 게시글 작성</button>
+                    </div>
+
+                    <div class="category-ad-section" aria-label="커뮤니티 광고">
+                        <div id="community-ad-slot" class="category-ad-slot"></div>
                     </div>
 
                     <!-- Posts List -->
@@ -2314,6 +2345,10 @@
                         <div id="no-attendance-message" style="display: none;">
                             아직 출석 기록이 없습니다.<br>
                             점자 연습을 시작해보세요!
+                        </div>
+
+                        <div class="category-ad-section" aria-label="랭킹 광고">
+                            <div id="attendance-ranking-ad-slot" class="category-ad-slot"></div>
                         </div>
 
                         <!-- Daily Ranking Section -->
@@ -2569,5 +2604,122 @@
     <script src="js/config.js"></script>
     <script src="js/main.js"></script>
     <script src="js/community.js"></script>
+    <script>
+        (function() {
+            const mediaQuery = window.matchMedia('(max-width: 600px)');
+            let kakaoScriptLoading = false;
+            let scriptEl = null;
+            const pendingCallbacks = [];
+
+            const adConfigs = [
+                {
+                    slotId: 'my-category-ad-slot',
+                    desktop: { unit: 'DAN-cpufZE5bWklk7nxo', width: 728, height: 90 },
+                    mobile: { unit: 'DAN-78yOfiaNNaOzfAG5', width: 320, height: 50 }
+                },
+                {
+                    slotId: 'favorites-ad-slot',
+                    desktop: { unit: 'DAN-SJ0nZTzgzF8MAGiG', width: 728, height: 90 },
+                    mobile: { unit: 'DAN-X6AJ2nmRqy8yk2XC', width: 320, height: 50 }
+                },
+                {
+                    slotId: 'search-ad-slot',
+                    desktop: { unit: 'DAN-dUoPxRDV6MJd6eMQ', width: 728, height: 90 },
+                    mobile: { unit: 'DAN-oWJpanpjTpzWaLga', width: 320, height: 50 }
+                },
+                {
+                    slotId: 'community-ad-slot',
+                    desktop: { unit: 'DAN-kDD7kamLYzpTEi6a', width: 728, height: 90 },
+                    mobile: { unit: 'DAN-jzN86vYmiJ03rkYh', width: 320, height: 50 }
+                },
+                {
+                    slotId: 'attendance-ranking-ad-slot',
+                    desktop: { unit: 'DAN-M7JwlbtJObq8cMu7', width: 728, height: 90 },
+                    mobile: { unit: 'DAN-txZH5ZyPKwAZu26b', width: 320, height: 50 }
+                }
+            ];
+
+            function ensureKakaoScriptLoaded(callback) {
+                if (window.kakaoAdFit && typeof window.kakaoAdFit.load === 'function') {
+                    callback();
+                    return;
+                }
+
+                if (callback) {
+                    pendingCallbacks.push(callback);
+                }
+
+                if (kakaoScriptLoading) {
+                    return;
+                }
+
+                kakaoScriptLoading = true;
+                scriptEl = document.createElement('script');
+                scriptEl.src = '//t1.daumcdn.net/kas/static/ba.min.js';
+                scriptEl.async = true;
+                scriptEl.onload = () => {
+                    kakaoScriptLoading = false;
+                    while (pendingCallbacks.length) {
+                        const cb = pendingCallbacks.shift();
+                        try {
+                            cb();
+                        } catch (error) {
+                            console.error('Error running Kakao ad callback:', error);
+                        }
+                    }
+                };
+                scriptEl.onerror = () => {
+                    console.error('Failed to load Kakao ad script for main page');
+                    kakaoScriptLoading = false;
+                    pendingCallbacks.length = 0;
+                    if (scriptEl) {
+                        scriptEl.remove();
+                        scriptEl = null;
+                    }
+                };
+                document.body.appendChild(scriptEl);
+            }
+
+            function renderAdSlot(slotId, desktopConfig, mobileConfig) {
+                const slot = document.getElementById(slotId);
+                if (!slot) {
+                    return;
+                }
+
+                const config = mediaQuery.matches ? mobileConfig : desktopConfig;
+                if (!config) {
+                    return;
+                }
+
+                slot.innerHTML = `
+                    <ins class="kakao_ad_area"
+                        style="display:block;width:${config.width}px;height:${config.height}px;max-width:100%;margin:0 auto;"
+                        data-ad-unit="${config.unit}"
+                        data-ad-width="${config.width}"
+                        data-ad-height="${config.height}"></ins>
+                `;
+            }
+
+            function renderAllAds() {
+                adConfigs.forEach(cfg => renderAdSlot(cfg.slotId, cfg.desktop, cfg.mobile));
+                ensureKakaoScriptLoaded(() => {
+                    if (window.kakaoAdFit && typeof window.kakaoAdFit.load === 'function') {
+                        try {
+                            window.kakaoAdFit.load();
+                        } catch (error) {
+                            console.warn('Failed to refresh Kakao ads on main page:', error);
+                        }
+                    }
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', renderAllAds);
+            if (typeof mediaQuery.addEventListener === 'function') {
+                mediaQuery.addEventListener('change', renderAllAds);
+            } else if (typeof mediaQuery.addListener === 'function') {
+                mediaQuery.addListener(renderAllAds);
+            }
+        })();
+    </script>
 </body>
 </html>
