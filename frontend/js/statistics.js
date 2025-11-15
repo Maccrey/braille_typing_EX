@@ -194,7 +194,6 @@ class StatisticsManager {
 
     showLoading() {
         document.getElementById('loading-indicator').style.display = 'block';
-        document.getElementById('statistics-content').style.display = 'none';
         this.hideError();
     }
 
