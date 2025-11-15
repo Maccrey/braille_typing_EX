@@ -1214,6 +1214,10 @@ function switchTab(tabName) {
     document.getElementById(`${tabName}-tab`).classList.add('active');
     document.getElementById(`${tabName}-content`).classList.add('active');
 
+    if (window.updateTabAds) {
+        window.updateTabAds(tabName);
+    }
+
     if (mainMenu) {
         mainMenu.currentTab = tabName;
         if (tabName === 'favorites') {

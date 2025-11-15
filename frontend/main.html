@@ -2615,26 +2615,31 @@
             const adConfigs = [
                 {
                     slotId: 'my-category-ad-slot',
+                    tab: 'my-categories',
                     desktop: { unit: 'DAN-cpufZE5bWklk7nxo', width: 728, height: 90 },
                     mobile: { unit: 'DAN-78yOfiaNNaOzfAG5', width: 320, height: 50 }
                 },
                 {
                     slotId: 'favorites-ad-slot',
+                    tab: 'favorites',
                     desktop: { unit: 'DAN-SJ0nZTzgzF8MAGiG', width: 728, height: 90 },
                     mobile: { unit: 'DAN-X6AJ2nmRqy8yk2XC', width: 320, height: 50 }
                 },
                 {
                     slotId: 'search-ad-slot',
+                    tab: 'search',
                     desktop: { unit: 'DAN-dUoPxRDV6MJd6eMQ', width: 728, height: 90 },
                     mobile: { unit: 'DAN-oWJpanpjTpzWaLga', width: 320, height: 50 }
                 },
                 {
                     slotId: 'community-ad-slot',
+                    tab: 'community',
                     desktop: { unit: 'DAN-kDD7kamLYzpTEi6a', width: 728, height: 90 },
                     mobile: { unit: 'DAN-jzN86vYmiJ03rkYh', width: 320, height: 50 }
                 },
                 {
                     slotId: 'attendance-ranking-ad-slot',
+                    tab: 'attendance',
                     desktop: { unit: 'DAN-M7JwlbtJObq8cMu7', width: 728, height: 90 },
                     mobile: { unit: 'DAN-txZH5ZyPKwAZu26b', width: 320, height: 50 }
                 }
@@ -2718,17 +2723,43 @@
                 `;
             }
 
-            function renderAllAds() {
-                adConfigs.forEach(cfg => renderAdSlot(cfg.slotId, cfg.desktop, cfg.mobile));
+            }
+
+            function clearInactiveAds(activeTab) {
+                adConfigs.forEach(cfg => {
+                    if (cfg.tab !== activeTab) {
+                        const slot = document.getElementById(cfg.slotId);
+                        if (slot) {
+                            slot.innerHTML = '';
+                        }
+                    }
+                });
+            }
+
+            function getActiveTabName() {
+                const activeTab = document.querySelector('.tab.active');
+                if (activeTab && activeTab.id.endsWith('-tab')) {
+                    return activeTab.id.replace('-tab', '');
+                }
+                return 'my-categories';
+            }
+
+            function renderVisibleAds(tabName = getActiveTabName()) {
+                clearInactiveAds(tabName);
+                adConfigs
+                    .filter(cfg => cfg.tab === tabName)
+                    .forEach(cfg => renderAdSlot(cfg.slotId, cfg.desktop, cfg.mobile));
                 ensureKakaoScriptLoaded(scheduleAdRefresh);
             }
 
-            document.addEventListener('DOMContentLoaded', renderAllAds);
+            document.addEventListener('DOMContentLoaded', () => renderVisibleAds());
             if (typeof mediaQuery.addEventListener === 'function') {
-                mediaQuery.addEventListener('change', renderAllAds);
+                mediaQuery.addEventListener('change', () => renderVisibleAds());
             } else if (typeof mediaQuery.addListener === 'function') {
-                mediaQuery.addListener(renderAllAds);
+                mediaQuery.addListener(() => renderVisibleAds());
             }
+
+            window.updateTabAds = renderVisibleAds;
         })();
     </script>
 </body>
